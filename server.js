@@ -6,8 +6,21 @@
 const http = require('http');
 const { WebSocketServer } = require('ws');
 const R2 = require('./r2');
+const fs = require('fs');
+const path = require('path');
 
 const PORT = process.env.PORT || 8080;
+
+// Serve the game HTML file — loaded once at startup, cached in memory.
+// Name it "game.html" and put it alongside server.js in the repo.
+let GAME_HTML = null;
+const GAME_PATH = path.join(__dirname, 'game.html');
+try {
+  GAME_HTML = fs.readFileSync(GAME_PATH, 'utf8');
+  console.log(`[game] Loaded game.html (${Math.round(GAME_HTML.length/1024)}KB)`);
+} catch (e) {
+  console.warn('[game] game.html not found — game serving disabled. Add game.html to the repo.');
+}
 
 // Read a request body up to a size cap, parse JSON.
 function readJsonBody(req, cap, cb) {
@@ -67,13 +80,29 @@ function cleanupRoom(code) {
   }
 }
 
-// ── HTTP server (health check + art upload + Railway listener) ──
+// ── HTTP server (game serving + health + art upload + Railway listener) ──
 const server = http.createServer((req, res) => {
   cors(res);
 
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
 
-  if (req.url === '/health' || req.url === '/') {
+  // Serve the game at / and /game
+  if ((req.url === '/' || req.url === '/game') && req.method === 'GET') {
+    if (GAME_HTML) {
+      res.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-cache' // always fresh — art bakes into file
+      });
+      res.end(GAME_HTML);
+    } else {
+      res.writeHead(503, { 'Content-Type': 'text/plain' });
+      res.end('Game file not found. Add game.html to the server repo and redeploy.');
+    }
+    return;
+  }
+
+  // Health check (moved to /health)
+  if (req.url === '/health' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ status: 'ok', rooms: rooms.size, uptime: process.uptime(), r2: R2.enabled() }));
     return;
@@ -93,7 +122,7 @@ const server = http.createServer((req, res) => {
       res.end(JSON.stringify({ error: 'r2_disabled' }));
       return;
     }
-    readJsonBody(req, 1024 * 1024, async (err, data) => { // 1MB cap on the request
+    readJsonBody(req, 1024 * 1024, async (err, data) => {
       if (err) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: err.message }));
