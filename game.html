@@ -3021,7 +3021,7 @@ function clickCard(card){
   if(card.type==='action'){playAct(card);return;}
   if(card.type==='medaforce'){openMFCard(card);return;}
   // Relay ALL card plays to opponent (before branching — catches action/equip/trap/mf)
-  if(G_online&&G_myTurn&&card.type!=='technique') MWNet.move({type:'card',uid:card.uid,id:card.id||card.uid,ctype:card.type});
+  if(G_online&&G_myTurn&&card.type!=='technique'){ MWNet.move({type:'card',uid:card.uid,id:card.id||card.uid,ctype:card.type}); _syncNow(); }
   if(card.type==='technique'){
     // Auto-select the active bot so techniques are one-tap usable
     if(G.p.selBot===null){const _ab=getActiveBot('p');if(_ab)G.p.selBot=G.p.bots.indexOf(_ab);}
@@ -3189,7 +3189,7 @@ function atkEnemy(idx){
   if(!a||a.def)return;
   const _atkCard=G.p.selCard; // capture before resolve clears state
   resolveAtk(a,d,'p',_atkCard);
-  if(G_online&&G_myTurn) MWNet.move({type:'attack',target:idx,card:_atkCard||null});
+  if(G_online&&G_myTurn){ MWNet.move({type:'attack',target:idx,card:_atkCard||null}); _syncNow(); }
   G.p.selBot=null;G.p.selCard=null;
 }
 
@@ -4643,7 +4643,7 @@ function applySupportPassives(sk){
 
 function switchActive(sk,newIdx){
   const side=G[sk];
-  if(sk==='p'&&G_online&&G_myTurn) MWNet.move({type:'switch',idx:newIdx});
+  if(sk==='p'&&G_online&&G_myTurn){ MWNet.move({type:'switch',idx:newIdx}); _syncNow(); }
   if(side.bots[newIdx]&&!side.bots[newIdx].def){
     // Check web — only CPU bots get webbed (player can always switch)
     if(sk==='c'&&side.bots[newIdx]._webbed>0){log('Cannot switch — '+side.bots[newIdx].name+' is webbed!','info');return;}
@@ -5913,6 +5913,14 @@ function _onlineBlockIfNotMyTurn(){
 
 
 // ── Authoritative side-state sync: my real state overwrites their mirror ──
+
+let _syncQueued=false;
+function _syncNow(){
+  if(!G_online||!G_myTurn||_syncQueued) return;
+  _syncQueued=true;
+  setTimeout(()=>{ _syncQueued=false; try{ MWNet.syncState(buildMySideState()); }catch(e){} }, 250);
+}
+
 function buildMySideState(){
   return {
     active: G.p.activeBot,
@@ -6075,7 +6083,7 @@ const artCloudUrls = {};
 async function publishDefaultArt(){
   const base = (typeof ArtCloud!=='undefined'&&ArtCloud.base)?ArtCloud.base():null;
   if(!base){ openM('Set as Default','Could not reach the server. Try again in a few seconds.',[{l:'OK',cls:'mb ok',cb:()=>closeM()}]); return; }
-  const keys = Object.keys(artCloudUrls||{});
+  const keys = Object.keys(artCloudUrls||{}).filter(k=>!k.startsWith('opp_'));
   if(keys.length===0){
     openM('Set as Default','No cloud art found. Tap \u2601 Sync first so your art has cloud URLs, then try again.',[{l:'OK',cls:'mb ok',cb:()=>closeM()}]);
     return;
@@ -6120,7 +6128,7 @@ async function syncAllArtToCloud(){
       [{l:'OK', cls:'mb ok', cb:()=>closeM()}]);
     return;
   }
-  const keys = Object.keys(artOverrides);
+  const keys = Object.keys(artOverrides).filter(k=>!k.startsWith('opp_')&&typeof artOverrides[k]==='string'&&artOverrides[k].startsWith('data:'));
   if(keys.length === 0){
     openM('Cloud Sync','No art to sync — upload some bot art first.',
       [{l:'OK', cls:'mb ok', cb:()=>closeM()}]);
