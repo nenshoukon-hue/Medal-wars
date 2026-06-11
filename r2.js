@@ -20,9 +20,17 @@ const {
   R2_ACCOUNT_ID,
   R2_ACCESS_KEY_ID,
   R2_SECRET_ACCESS_KEY,
-  R2_BUCKET,
   R2_PUBLIC_URL // e.g. https://art.yourdomain.com  OR  https://pub-xxxx.r2.dev
 } = process.env;
+
+// Accept either a bare bucket name or a pasted full endpoint URL
+// ("https://<acct>.r2.cloudflarestorage.com/mybucket" -> "mybucket")
+const R2_BUCKET = (process.env.R2_BUCKET || '')
+  .trim()
+  .replace(/^https?:\/\/[^/]+\//, '')
+  .replace(/\/+$/, '')
+  .split('/')
+  .pop();
 
 let client = null;
 function enabled() {
