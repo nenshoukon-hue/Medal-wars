@@ -2919,6 +2919,7 @@ function runPhase(){
   }else if(G.phase==='action'){
     renderAll();
   }else if(G.phase==='cpu_turn'){
+    if(G_online){renderAll();return;} // online: waiting for opponent, no CPU
     setTimeout(cpuTurn,600);
   }
 }
@@ -4774,7 +4775,7 @@ function renderHand(){
 function renderHeader(){
   (function(){const e=document.getElementById('tnum');if(e)e.textContent='T'+turn;})();
   const _mph=document.getElementById('mphase');
-  if(_mph){const _ml={charge:'CHARGE',action:'ACTION',cpu_turn:'CPU'};const _mc={charge:'charge',action:'action',cpu_turn:'cpu'};_mph.textContent=_ml[G.phase]||G.phase.toUpperCase();_mph.className='m-phase '+(_mc[G.phase]||'charge');}
+  if(_mph){const _ml={charge:'CHARGE',action:'ACTION',cpu_turn:(typeof G_online!=='undefined'&&G_online)?'OPP':'CPU'};const _mc={charge:'charge',action:'action',cpu_turn:'cpu'};_mph.textContent=_ml[G.phase]||G.phase.toUpperCase();_mph.className='m-phase '+(_mc[G.phase]||'charge');}
   ['ph0','ph1','ph2'].forEach(function(id){var e=document.getElementById(id);if(e)e.classList.remove('active');});
   var _phs={charge:'ph0',action:'ph1',cpu_turn:'ph2'};var _pid=_phs[G.phase];if(_pid){var _pe=document.getElementById(_pid);if(_pe)_pe.classList.add('active');}
   (function(){const e=document.getElementById('mfname');if(e)e.textContent=G.p.mf?G.p.mf.name:'';})();
@@ -6000,10 +6001,10 @@ const ArtCloud = (function(){
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ dataUrl })
       });
-      if(!r.ok) return null;
-      const j = await r.json();
+      const j = await r.json().catch(()=>({}));
+      if(!r.ok){ window._lastArtErr = j.error || ('http_'+r.status); return null; }
       return j.url || null;
-    }catch(e){ return null; }
+    }catch(e){ window._lastArtErr = e.message || 'network'; return null; }
   }
   return { check, upload, enabled(){ return _enabled===true; } };
 })();
@@ -6067,7 +6068,7 @@ async function syncAllArtToCloud(){
     '<div style="text-align:center">'+
     '<div style="font-size:28px;margin:8px 0">'+(failed===0?'✓':'⚠')+'</div>'+
     '<b style="color:var(--gold)">'+synced+' / '+total+'</b> images synced to cloud'+
-    (failed>0?'<br><span style="color:var(--red);font-size:11px">'+failed+' failed — try again</span>':'')+
+    (failed>0?'<br><span style="color:var(--red);font-size:11px">'+failed+' failed'+(window._lastArtErr?' ('+window._lastArtErr+')':'')+' — try again</span>':'')+
     '</div>',
     [{l:'Done', cls:'mb ok', cb:()=>closeM()}]);
   if(btn){ btn.disabled=false; btn.textContent='☁ Sync'; }

@@ -122,7 +122,7 @@ const server = http.createServer((req, res) => {
       res.end(JSON.stringify({ error: 'r2_disabled' }));
       return;
     }
-    readJsonBody(req, 1024 * 1024, async (err, data) => {
+    readJsonBody(req, 8 * 1024 * 1024, async (err, data) => {
       if (err) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: err.message }));

@@ -62,7 +62,7 @@ function publicUrlFor(key) {
 }
 
 // Upload a data URL; returns the public URL (or null if disabled/failed).
-async function uploadDataUrl(dataUrl, maxBytes = 600 * 1024) {
+async function uploadDataUrl(dataUrl, maxBytes = 4 * 1024 * 1024) {
   const c = getClient();
   if (!c) return null;
   const parsed = parseDataUrl(dataUrl);
