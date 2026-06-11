@@ -2971,8 +2971,8 @@ function endTurn(){
   const pAct=getActiveBot('p');
   if(pAct){pAct._supportAtk=0;pAct._supportDef=0;pAct._warbDraw=false;}
   log('Turn ends.','info');
-  doCharge('c');drw(G.c,2);
-  setTimeout(cpuTurn,300);
+  doCharge('c');drw(G.c,2); // mirrors opponent charge+draw online too
+  if(!G_online) setTimeout(cpuTurn,300); // online: opponent plays, not CPU
 }
 
 // ═══ PLAYER INPUT ═══
@@ -4118,6 +4118,7 @@ function cpuShouldMedachange(){
 
 function cpuTurn(){
   if(G.winner)return;
+  if(G_online)return; // online matches: remote moves drive the opponent side
   G.phase='cpu_turn';
   renderHeader();
   cpuBurnReaction();
@@ -5792,6 +5793,13 @@ function startOnlineMatch(firstSeat){
   if(_opp){ G._forcedCpuDeck = _opp; log('Opponent deck: '+_opp.toUpperCase(),'info'); }
   else { log('Warning: opponent deck unknown, using random.','info'); }
   init();
+  // Mark enemy bots as the remote opponent (enables their custom art display)
+  G.c.bots.forEach(b=>{ b._opp = true; });
+  // Send my art manifest (R2 URLs) so opponent can show my custom art
+  try{
+    const _manifest = buildArtManifest();
+    if(Object.keys(_manifest).length) MWNet.move({ type:'art', manifest:_manifest });
+  }catch(e){}
   log('Online match! You are '+(G_mySeat===0?'HOST':'GUEST')+'. '+(G_myTurn?'You go first!':'Opponent goes first.'), 'info');
   setTimeout(initTooltipDelegation, 100);
   setTimeout(updateArenaColor, 200);
@@ -5853,6 +5861,10 @@ function _onlineBlockIfNotMyTurn(){
 function applyRemoteMove(msg){
   const move = msg.move;
   if(!move || !G_online) return;
+  if(move.type === 'art'){
+    applyOpponentArt(move.manifest); // async fetch from R2, renders when done
+    return;
+  }
   if(move.type === 'attack'){
     // Opponent attacked one of our bots (their target idx maps to our G.p)
     const myBots = G.p.bots;
@@ -6439,7 +6451,8 @@ function renderCardArt(card, w, h) {
 }
 
 function renderBotArt(bot, w, h) {
-  const key = 'bot_' + bot.key + (bot.changed ? '_mc' : '');
+  let key = 'bot_' + bot.key + (bot.changed ? '_mc' : '');
+  if (bot._opp && artOverrides['opp_' + key]) key = 'opp_' + key;
   if (artOverrides[key]) {
     return '<img src="' + artOverrides[key] + '" width="' + w + '" height="' + h + '" onerror="this.style.display=\'none\'" style="width:' + w + 'px;height:' + h + 'px;object-fit:cover;display:block;border-bottom:1px solid var(--border)">';
   }
