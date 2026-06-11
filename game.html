@@ -5668,7 +5668,7 @@ function maybeShowTutorial(){
 // MWNet - online multiplayer client (room-code relay)
 const MWNet = (function(){
   const SERVER_URL = (window.MW_SERVER_URL || null);
-  let ws = null, _seat = null, _code = null, _seed = null, _connected = false;
+  let ws = null, _seat = null, _code = null, _seed = null, _connected = false, _oppDeck = null, _oppMf = null;
   const handlers = {};
   function on(type, fn){ handlers[type] = fn; }
   function fire(type, data){ if(handlers[type]) handlers[type](data); }
@@ -5690,7 +5690,8 @@ const MWNet = (function(){
           let m; try{ m = JSON.parse(e.data); }catch(_){ return; }
           if(m.type==='connected'){ clearTimeout(timer); done(resolve); return; }
           if(m.type==='created'){ _code=m.code; _seat=m.seat; _seed=m.seed; }
-          if(m.type==='joined'){ _code=m.code; _seat=m.seat; _seed=m.seed; }
+          if(m.type==='joined'){ _code=m.code; _seat=m.seat; _seed=m.seed; if(m.oppDeck)_oppDeck=m.oppDeck; if(m.oppMf)_oppMf=m.oppMf; }
+          if(m.type==='opponent_joined'){ if(m.oppDeck)_oppDeck=m.oppDeck; if(m.oppMf)_oppMf=m.oppMf; }
           if(m.type==='rematch'){ _seed=m.seed; }
           fire(m.type, m);
         };
@@ -5701,7 +5702,7 @@ const MWNet = (function(){
   return {
     available(){ return !!SERVER_URL; },
     connected(){ return _connected; },
-    seat(){ return _seat; }, code(){ return _code; }, seed(){ return _seed; },
+    seat(){ return _seat; }, code(){ return _code; }, seed(){ return _seed; }, oppDeck(){ return _oppDeck; }, oppMf(){ return _oppMf; },
     on,
     async create(deckName, mfName){ await connect(); sendRaw({type:'create', deck:deckName, mf:mfName}); },
     async join(code, deckName, mfName){ await connect(); sendRaw({type:'join', code:code, deck:deckName, mf:mfName}); },
@@ -5737,6 +5738,7 @@ function onlineCreate(){
       'Share this code with your opponent:<br><br><div style="font-family:Orbitron,monospace;font-size:32px;font-weight:800;color:var(--gold);letter-spacing:6px;text-align:center;margin:10px 0">'+m.code+'</div>Waiting for opponent to join...',
       [{l:'Cancel', cls:'mb', cb:()=>{ MWNet.leave(); closeM(); }}]);
   });
+  MWNet.on('opponent_joined', (m)=>{ G_oppDeck = m.oppDeck || null; });
   MWNet.on('match_start', (m)=>{ closeM(); startOnlineMatch(m.firstSeat); });
   MWNet.create(deck, mfName).catch((err)=>{
     const why = err && err.message==='timeout' ? 'The server did not respond in time. It may be waking up (free hosting sleeps when idle) - try again in a few seconds.' : 'Could not reach the match server. Check your connection and try again.';
@@ -5759,6 +5761,7 @@ function onlineJoinPrompt(){
 function onlineJoin(code){
   const mfName = (DECKS[deck] && DECKS[deck].mf) || 'ikki';
   MWNet.on('join_failed', (m)=>{ openM('Join Failed', m.msg||'Could not join.', [{l:'OK', cls:'mb', cb:()=>closeM()}]); });
+  MWNet.on('joined', (m)=>{ G_oppDeck = m.oppDeck || null; });
   MWNet.on('match_start', (m)=>{ closeM(); startOnlineMatch(m.firstSeat); });
   MWNet.join(code, deck, mfName).catch((err)=>{
     const why = err && err.message==='timeout' ? 'The server did not respond in time. It may be waking up - try again in a few seconds.' : 'Could not reach the match server. Check your connection and try again.';
@@ -5770,6 +5773,7 @@ function onlineJoin(code){
 // ONLINE TURN SYNC — binds the live match to MWNet relay
 // ═══════════════════════════════════════════════════════════
 let G_online = false;   // true when in an online match
+let G_oppDeck = null;   // opponent's chosen deck (from server handshake)
 let G_mySeat = null;    // 0 = host (goes first), 1 = guest
 let G_myTurn = false;   // true when it's this client's action phase
 
@@ -5778,8 +5782,15 @@ function startOnlineMatch(firstSeat){
   G_online = true;
   G_mySeat = MWNet.seat();
   G_myTurn = (G_mySeat === firstSeat);
-  // Hide title, init game with player's chosen deck
+  // Hide title, init game with player's chosen deck vs opponent's actual deck
   document.getElementById('title').classList.add('gone');
+  G = (typeof G==='object'&&G) ? G : {};
+  // Opponent's deck: prefer handler-captured value, fall back to MWNet's internal capture
+  const _opp = (G_oppDeck && DECKS[G_oppDeck]) ? G_oppDeck
+             : (MWNet.oppDeck && MWNet.oppDeck() && DECKS[MWNet.oppDeck()]) ? MWNet.oppDeck()
+             : null;
+  if(_opp){ G._forcedCpuDeck = _opp; log('Opponent deck: '+_opp.toUpperCase(),'info'); }
+  else { log('Warning: opponent deck unknown, using random.','info'); }
   init();
   log('Online match! You are '+(G_mySeat===0?'HOST':'GUEST')+'. '+(G_myTurn?'You go first!':'Opponent goes first.'), 'info');
   setTimeout(initTooltipDelegation, 100);
