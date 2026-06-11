@@ -649,6 +649,7 @@ body::after{
     <div style="display:flex;gap:6px">
       <button class="art-upload-btn" onclick="bakeArtIntoFile()" style="flex:1;padding:7px;background:rgba(64,216,152,.08);border-color:rgba(64,216,152,.3);color:var(--green);font-size:9px">💾 Bake+Save</button>
       <button class="art-upload-btn" onclick="syncAllArtToCloud()" style="flex:1;padding:7px;background:rgba(96,180,255,.08);border-color:rgba(96,180,255,.3);color:#60b4ff;font-size:9px">☁ Sync</button>
+      <button class="art-upload-btn" onclick="publishDefaultArt()" style="flex:1;padding:7px;background:rgba(240,176,48,.08);border-color:rgba(240,176,48,.3);color:var(--gold);font-size:9px">🌟 Default</button>
       <button class="art-upload-btn" onclick="document.getElementById('art-import-input').click()" style="flex:1;padding:7px;background:rgba(42,128,240,.08);border-color:rgba(42,128,240,.3);color:var(--storm2);font-size:9px">⬆ Import</button>
       <button class="art-upload-btn" onclick="clearAllArt()" style="flex:1;padding:7px;background:rgba(240,64,64,.06);border-color:rgba(240,64,64,.25);color:var(--red);font-size:9px">✕ Clear</button>
     </div>
@@ -2983,7 +2984,7 @@ function endTurn(){
   if(G_online&&!G_myTurn){log('Not your turn.','info');return;}
   G.p.selBot=null;G.p.selCard=null;
   G.phase='cpu_turn';atked=false;actionsLeft=0; // locked during CPU turn
-  if(G_online&&G_myTurn){ MWNet.endTurn(); lockForOpponentTurn(); }
+  if(G_online&&G_myTurn){ MWNet.syncState(buildMySideState()); MWNet.endTurn(); lockForOpponentTurn(); }
   // Clear support buff accumulators — recalculated next turn in applySupportPassives
   const pAct=getActiveBot('p');
   if(pAct){pAct._supportAtk=0;pAct._supportDef=0;pAct._warbDraw=false;}
@@ -4642,6 +4643,7 @@ function applySupportPassives(sk){
 
 function switchActive(sk,newIdx){
   const side=G[sk];
+  if(sk==='p'&&G_online&&G_myTurn) MWNet.move({type:'switch',idx:newIdx});
   if(side.bots[newIdx]&&!side.bots[newIdx].def){
     // Check web — only CPU bots get webbed (player can always switch)
     if(sk==='c'&&side.bots[newIdx]._webbed>0){log('Cannot switch — '+side.bots[newIdx].name+' is webbed!','info');return;}
@@ -5857,6 +5859,7 @@ function startOnlineMatch(firstSeat){
   banner('OPPONENT FOUND!', '#40d898');
   // Wire up incoming move handler
   MWNet.on('move', applyRemoteMove);
+  MWNet.on('sync', (m)=>applyOppSideState(m.state));
   MWNet.on('end_turn', applyRemoteEndTurn);
   MWNet.on('game_over', applyRemoteGameOver);
   MWNet.on('rematch', applyRemoteRematch);
@@ -5908,9 +5911,50 @@ function _onlineBlockIfNotMyTurn(){
 
 // ── Applying remote moves from opponent ─────────────────────
 
+
+// ── Authoritative side-state sync: my real state overwrites their mirror ──
+function buildMySideState(){
+  return {
+    active: G.p.activeBot,
+    hand: G.p.hand.length,
+    mcUsed: !!G.p.mcUsed,
+    bots: G.p.bots.map(b=>({
+      hp:b.hp, maxHp:b.maxHp, atk:b.atk, charge:b.charge,
+      changed:!!b.changed, def:!!b.def, burn:b.burn||0, exhst:!!b.exhst,
+      fusedMedal:b.fusedMedal||null, fusedMedal2:b.fusedMedal2||null
+    }))
+  };
+}
+function applyOppSideState(st){
+  if(!st || !st.bots) return;
+  st.bots.forEach((s,i)=>{
+    const b=G.c.bots[i]; if(!b) return;
+    b.hp=s.hp; b.maxHp=s.maxHp; b.atk=s.atk; b.charge=s.charge;
+    b.changed=s.changed; b.def=s.def; b.burn=s.burn; b.exhst=s.exhst;
+    b.fusedMedal=s.fusedMedal; b.fusedMedal2=s.fusedMedal2;
+  });
+  if(typeof st.active==='number') G.c.activeBot=st.active;
+  if(typeof st.mcUsed==='boolean') G.c.mcUsed=st.mcUsed;
+  // trim/pad mirrored hand to the true count (identity unknown, count matters)
+  if(typeof st.hand==='number'){
+    while(G.c.hand.length>st.hand) G.c.hand.pop();
+    while(G.c.hand.length<st.hand && G.c.deck.length) G.c.hand.push(G.c.deck.pop());
+  }
+  checkWin();
+  renderAll();
+}
+
 function applyRemoteMove(msg){
   const move = msg.move;
   if(!move || !G_online) return;
+  if(move.type === 'switch'){
+    if(typeof move.idx==='number' && G.c.bots[move.idx] && !G.c.bots[move.idx].def){
+      G.c.activeBot=move.idx;
+      log('Opponent switches '+G.c.bots[move.idx].name+' to the front!','cpu');
+      renderAll();
+    }
+    return;
+  }
   if(move.type === 'art'){
     applyOpponentArt(move.manifest); // async fetch from R2, renders when done
     return;
@@ -5944,7 +5988,11 @@ function applyRemoteMove(msg){
         if(mfFx) resolveMF(mfFx, 1); // 1 = cpu side
       } else if(card.type==='medachange'){
         const bot = G.c.bots.find(b=>b.key===card.fx?.replace('mc_bot_',''));
-        if(bot) triggerMCAnimation(bot, ()=>{});
+        if(bot){
+          bot.changed=true; bot.maxHp+=8; bot.hp=Math.min(bot.hp+8,bot.maxHp); G.c.mcUsed=true;
+          log('Opponent MEDACHANGE: '+bot.name+'!','mc'); banner('OPPONENT MEDACHANGE!','#f04880');
+          try{ triggerMCAnimation(bot, ()=>{renderAll();}); }catch(e){ renderAll(); }
+        }
       }
     }catch(e){ log('Sync card error: '+e.message,'info'); }
     renderAll();
@@ -6013,7 +6061,7 @@ const ArtCloud = (function(){
       return j.url || null;
     }catch(e){ window._lastArtErr = e.message || 'network'; return null; }
   }
-  return { check, upload, enabled(){ return _enabled===true; } };
+  return { check, upload, enabled(){ return _enabled===true; }, base(){ return httpBase(); } };
 })();
 
 // Map of artKey -> R2 URL for art we've uploaded (mirrors artOverrides).
@@ -6022,6 +6070,45 @@ const artCloudUrls = {};
 
 // When saving art: keep the local copy (instant display) AND upload to R2 in the
 // background so it can be shared with opponents online.
+
+// ── Default art: published manifest becomes everyone's base skin ──
+async function publishDefaultArt(){
+  const base = (typeof ArtCloud!=='undefined'&&ArtCloud.base)?ArtCloud.base():null;
+  if(!base){ openM('Set as Default','Could not reach the server. Try again in a few seconds.',[{l:'OK',cls:'mb ok',cb:()=>closeM()}]); return; }
+  const keys = Object.keys(artCloudUrls||{});
+  if(keys.length===0){
+    openM('Set as Default','No cloud art found. Tap \u2601 Sync first so your art has cloud URLs, then try again.',[{l:'OK',cls:'mb ok',cb:()=>closeM()}]);
+    return;
+  }
+  const manifest={}; keys.forEach(k=>{ if(artCloudUrls[k]) manifest[k]=artCloudUrls[k]; });
+  try{
+    const r = await fetch(base+'/art/manifest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({manifest})});
+    const j = await r.json().catch(()=>({}));
+    if(r.ok&&j.ok){
+      openM('Default Art Published','<div style="text-align:center"><div style="font-size:28px;margin:8px 0">\u2728</div><b style="color:var(--gold)">'+j.keys+'</b> images are now the default art for every player.<br><br><span style="font-size:10px;color:var(--text2)">Players see your art automatically. Their own uploads still override it on their device.</span></div>',[{l:'Done',cls:'mb ok',cb:()=>closeM()}]);
+    }else{
+      openM('Set as Default','Publish failed'+(j.error?' ('+j.error+')':'')+'. Try again.',[{l:'OK',cls:'mb ok',cb:()=>closeM()}]);
+    }
+  }catch(e){
+    openM('Set as Default','Could not reach the server: '+e.message,[{l:'OK',cls:'mb ok',cb:()=>closeM()}]);
+  }
+}
+
+async function loadDefaultArt(){
+  try{
+    const base = (typeof ArtCloud!=='undefined'&&ArtCloud.base)?ArtCloud.base():null;
+    if(!base) return;
+    const r = await fetch(base+'/art/manifest',{method:'GET'});
+    if(!r.ok) return;
+    const manifest = await r.json();
+    let applied=0;
+    Object.keys(manifest||{}).forEach(k=>{
+      if(!artOverrides[k]){ artOverrides[k]=manifest[k]; applied++; } // local uploads win
+    });
+    if(applied>0){ try{renderAll();}catch(_){} try{renderTitleDecks&&renderTitleDecks();}catch(_){} }
+  }catch(e){}
+}
+
 async function syncAllArtToCloud(){
   if(!ArtCloud.enabled()){
     // Try to initialize — server may have just woken up

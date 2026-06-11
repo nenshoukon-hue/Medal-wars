@@ -92,4 +92,21 @@ async function uploadDataUrl(dataUrl, maxBytes = 4 * 1024 * 1024) {
   return publicUrlFor(key);
 }
 
+async function putJson(key, obj){
+  const body = Buffer.from(JSON.stringify(obj));
+  await client().send(new PutObjectCommand({
+    Bucket: R2_BUCKET, Key: key, Body: body, ContentType: 'application/json'
+  }));
+  return true;
+}
+
+async function getJson(key){
+  try{
+    const r = await client().send(new GetObjectCommand({ Bucket: R2_BUCKET, Key: key }));
+    const chunks = [];
+    for await (const c of r.Body) chunks.push(c);
+    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  }catch(e){ return null; }
+}
+
 module.exports = { enabled, uploadDataUrl };

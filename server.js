@@ -115,6 +115,32 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Default art manifest: the published "default skin" for all players
+  if (req.url === '/art/manifest' && req.method === 'GET') {
+    if (!R2.enabled()) { res.writeHead(200, {'Content-Type':'application/json'}); res.end('{}'); return; }
+    R2.getJson('default_manifest.json').then(m => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(m || {}));
+    }).catch(() => { res.writeHead(200, {'Content-Type':'application/json'}); res.end('{}'); });
+    return;
+  }
+  if (req.url === '/art/manifest' && req.method === 'POST') {
+    if (!R2.enabled()) { res.writeHead(503, {'Content-Type':'application/json'}); res.end('{"error":"r2_disabled"}'); return; }
+    readJsonBody(req, 1024 * 1024, async (err, data) => {
+      if (err || !data || typeof data.manifest !== 'object') {
+        res.writeHead(400, {'Content-Type':'application/json'}); res.end('{"error":"bad_manifest"}'); return;
+      }
+      try {
+        await R2.putJson('default_manifest.json', data.manifest);
+        res.writeHead(200, {'Content-Type':'application/json'});
+        res.end(JSON.stringify({ ok: true, keys: Object.keys(data.manifest).length }));
+      } catch (e) {
+        res.writeHead(500, {'Content-Type':'application/json'}); res.end(JSON.stringify({error: e.message}));
+      }
+    });
+    return;
+  }
+
   // Upload one art image: POST { dataUrl } → { url }
   if (req.url === '/art/upload' && req.method === 'POST') {
     if (!R2.enabled()) {
