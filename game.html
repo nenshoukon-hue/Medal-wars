@@ -3189,7 +3189,11 @@ function atkEnemy(idx){
   if(!a||a.def)return;
   const _atkCard=G.p.selCard; // capture before resolve clears state
   resolveAtk(a,d,'p',_atkCard);
-  if(G_online&&G_myTurn){ MWNet.move({type:'attack',target:idx,card:_atkCard||null}); _syncNow(); }
+  if(G_online&&G_myTurn){
+    // Attacker's result is authoritative — send defender's exact post-attack state
+    MWNet.move({type:'attack',target:idx,card:_atkCard||null,after:{hp:d.hp,def:!!d.def,burn:d.burn||0}});
+    _syncNow();
+  }
   G.p.selBot=null;G.p.selCard=null;
 }
 
@@ -5857,6 +5861,7 @@ function startOnlineMatch(firstSeat){
   setTimeout(updateArenaColor, 200);
   offerMulligan();
   banner('OPPONENT FOUND!', '#40d898');
+  try{ loadDefaultArt(); }catch(e){}
   // Wire up incoming move handler
   MWNet.on('move', applyRemoteMove);
   MWNet.on('sync', (m)=>applyOppSideState(m.state));
@@ -5870,7 +5875,7 @@ function startOnlineMatch(firstSeat){
     }
   });
   // If we go second, suppress our action phase until opponent ends their turn
-  if(!G_myTurn) lockForOpponentTurn();
+  if(!G_myTurn){ turn=0; lockForOpponentTurn(); }
 }
 
 // Prevent local player from acting when it's not their turn
@@ -5883,9 +5888,8 @@ function lockForOpponentTurn(){
 
 function unlockForMyTurn(){
   G_myTurn = true;
-  // Run the charge phase then hand control to player
-  G.phase = 'charge';
-  runPhase();
+  // Full turn-start housekeeping (turn++, resets, trap expiry, draw 2, charge phase)
+  endCpu();
 }
 
 // ── Sending local moves to opponent ────────────────────────
@@ -5916,7 +5920,7 @@ function _onlineBlockIfNotMyTurn(){
 
 let _syncQueued=false;
 function _syncNow(){
-  if(!G_online||!G_myTurn||_syncQueued) return;
+  if(!G_online||_syncQueued) return;
   _syncQueued=true;
   setTimeout(()=>{ _syncQueued=false; try{ MWNet.syncState(buildMySideState()); }catch(e){} }, 250);
 }
@@ -5976,6 +5980,13 @@ function applyRemoteMove(msg){
     const theirActive = getActiveBot('c');
     if(!theirActive) return;
     resolveAtk(theirActive, target, 'c', move.card||null);
+    // Attacker is authoritative: snap defender to their exact result (kills can't un-happen)
+    if(move.after){
+      target.hp=move.after.hp; target.burn=move.after.burn||0;
+      if(move.after.def&&!target.def){ target.def=true; target.hp=Math.min(target.hp,0); log(target.name+' is defeated!','atk'); }
+      else if(!move.after.def){ target.def=false; }
+      checkWin();
+    }
     renderAll();
   } else if(move.type === 'card'){
     // Opponent played a card — find it in their hand by id and apply CPU-side
@@ -6003,12 +6014,14 @@ function applyRemoteMove(msg){
         }
       }
     }catch(e){ log('Sync card error: '+e.message,'info'); }
+    _syncNow();
     renderAll();
   }
 }
 
 function applyRemoteEndTurn(msg){
   if(!G_online) return;
+  if(G_myTurn) return; // already my turn — ignore duplicate
   log('Opponent ended their turn.','info');
   unlockForMyTurn();
 }
@@ -6894,5 +6907,6 @@ function updateArenaColor(){
     <button class="mcp-close" onclick="closeMobilePreview()">✕ CLOSE</button>
   </div>
 </div>
+<script>setTimeout(function(){try{loadDefaultArt()}catch(e){}},600);setTimeout(function(){try{loadDefaultArt()}catch(e){}},4000);</script>
 </body>
 </html>
