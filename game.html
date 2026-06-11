@@ -764,7 +764,7 @@ body::after{
     <div id="m-hhdr">
       <div>
         <span class="m-hlbl">HAND</span>
-        <span class="m-hcnt" id="hcnt">0</span>
+        <span class="m-hcnt" id="hcnt" onclick="openHandBrowser()" style="cursor:pointer;text-decoration:underline">0</span>
       </div>
       <span class="m-hhint" id="hhint">Select a card</span>
     </div>
@@ -2653,11 +2653,24 @@ function drw(s,n=1){for(let i=0;i<n;i++)if(s.deck.length)s.hand.push(s.deck.shif
 function dsc(s,id){const i=s.hand.findIndex(c=>c.uid===id);if(i>=0)s.hand.splice(i,1);}
 function alive(s){return s.bots.filter(b=>!b.def);}
 const LOG_NOISE=['Combo Cannon:','Cable Network:','Combo Core:','Missile Barrage:','+1 Combo','from the heat','Dramon Destroyer:'];
+let _tickerQ=[], _tickerTimer=null;
+function _setTicker(m){
+  const el=document.getElementById('m-ticker')||document.getElementById('lticker');
+  if(el)el.textContent=m;
+}
+function _queueTicker(m){
+  _tickerQ.push(m);
+  if(_tickerTimer)return;
+  _tickerTimer=setInterval(()=>{
+    if(_tickerQ.length===0){clearInterval(_tickerTimer);_tickerTimer=null;return;}
+    _setTicker(_tickerQ.shift());
+  },750);
+}
 function log(m,t='info'){
   // Filter repetitive low-value messages from the persistent log, but still ticker them
   const isNoise=LOG_NOISE.some(n=>m.indexOf(n)>=0);
-  const el=document.getElementById('m-ticker')||document.getElementById('lticker');
-  if(el)el.textContent=m;
+  if(typeof G==='object'&&G&&G.phase==='cpu_turn'&&(typeof G_online==='undefined'||!G_online)){_queueTicker(m);}
+  else{_setTicker(m);}
   if(!isNoise){logs.push({m,t});renderLog();}
   else{ // noise still shows in ticker but only batched into log occasionally
     logs.push({m,t,noise:true});
@@ -2972,7 +2985,7 @@ function endTurn(){
   if(pAct){pAct._supportAtk=0;pAct._supportDef=0;pAct._warbDraw=false;}
   log('Turn ends.','info');
   doCharge('c');drw(G.c,2); // mirrors opponent charge+draw online too
-  if(!G_online) setTimeout(cpuTurn,300); // online: opponent plays, not CPU
+  if(!G_online) setTimeout(cpuTurn,900); // online: opponent plays, not CPU
 }
 
 // ═══ PLAYER INPUT ═══
@@ -4175,7 +4188,7 @@ function cpuTurn(){
       const hasDigiStrike=mfs.find(c=>c.fx==='mf_digistrike');
       const digiStrikers=alive(G.c).filter(b=>['omegaknight','wargreymon','metalgurumemon'].includes(b.key)).length;
       const pref=hasDigiStrike&&digiStrikers>=2?hasDigiStrike:
-        pA>1?mfs.find(c=>c.fx==='mf_lightning'):mfs.find(c=>c.fx==='mf_blaze');const mf=pref||mfs[0];dsc(G.c,mf.uid);ign[0].charge=0;log('CPU MF: '+mf.name+'!','cpu');banner('CPU MEDAFORCE!','#f04040');const _mfTrap=checkPlayerTraps('medaforce',ign[0]);if(_mfTrap.negate){setTimeout(cpuAtk,600);return;}let bonus=0;if(ign[0].equip&&ign[0].equip.fx==='eq_lens'){bonus=3;ign[0].equip=null;}if(mf.fx==='mf_blaze'){const t=alive(G.p).sort((a,b)=>(b.charge*2+b.atk)-(a.charge*2+a.atk))[0];if(t)dmg(t,8+bonus,'p');}else if(mf.fx==='mf_lightning')alive(G.p).forEach(b=>dmg(b,4+bonus,'p'));else if(mf.fx==='mf_titan')alive(G.p).forEach(b=>b.exhst=true);setTimeout(cpuAtk,600);return;}}cpuAtk();},500);
+        pA>1?mfs.find(c=>c.fx==='mf_lightning'):mfs.find(c=>c.fx==='mf_blaze');const mf=pref||mfs[0];dsc(G.c,mf.uid);ign[0].charge=0;log('CPU MF: '+mf.name+'!','cpu');banner('CPU MEDAFORCE!','#f04040');const _mfTrap=checkPlayerTraps('medaforce',ign[0]);if(_mfTrap.negate){setTimeout(cpuAtk,1300);return;}let bonus=0;if(ign[0].equip&&ign[0].equip.fx==='eq_lens'){bonus=3;ign[0].equip=null;}if(mf.fx==='mf_blaze'){const t=alive(G.p).sort((a,b)=>(b.charge*2+b.atk)-(a.charge*2+a.atk))[0];if(t)dmg(t,8+bonus,'p');}else if(mf.fx==='mf_lightning')alive(G.p).forEach(b=>dmg(b,4+bonus,'p'));else if(mf.fx==='mf_titan')alive(G.p).forEach(b=>b.exhst=true);setTimeout(cpuAtk,1300);return;}}cpuAtk();},500);
     return;
   }
 
@@ -4216,7 +4229,7 @@ function cpuTurn(){
         else if(fx==='mf_titan') alive(G.p).forEach(b=>b.exhst=true);
         else if(fx==='mf_aqua') alive(G.c).forEach(b=>{b.hp=Math.min(b.maxHp,b.hp+4+bonus);});
         else if(fx==='mf_nature') alive(G.c).forEach(b=>addChg(b,2));
-        setTimeout(cpuAtk,600);return;
+        setTimeout(cpuAtk,1300);return;
       }
     }
     cpuAtk();
@@ -4714,10 +4727,40 @@ function canPlay(c){
   return false;
 }
 
+
+// Hand browser — full-screen grid of your hand, tap a card to play it
+function openHandBrowser(){
+  if(!G||!G.p||!G.p.hand)return;
+  const cards=G.p.hand;
+  if(cards.length===0){openM('Your Hand','No cards in hand.',[{l:'Close',cls:'mb ok',cb:()=>closeM()}]);return;}
+  const grid=cards.map((c,i)=>{
+    const playable=(typeof canPlay==='function')?canPlay(c):false;
+    return '<div onclick="_handBrowserPlay('+i+')" style="border:1.5px solid '+(playable?(c.color||'#888'):'rgba(255,255,255,.08)')+';border-radius:10px;padding:8px;background:rgba(0,0,0,.3);opacity:'+(playable?'1':'.45')+';cursor:pointer">'+
+      '<div style="font-family:Orbitron,monospace;font-size:10px;font-weight:700;color:'+(c.color||'#fff')+'">'+c.name+'</div>'+
+      '<div style="font-size:8px;color:var(--text3);margin:2px 0">'+(c.type||'').toUpperCase()+' · '+(c.stat||'')+'</div>'+
+      '<div style="font-size:9px;color:var(--text2);line-height:1.35">'+(c.desc||'')+'</div>'+
+      (playable?'':'<div style="font-size:8px;color:var(--red);margin-top:3px">Cannot play now</div>')+
+    '</div>';
+  }).join('');
+  openM('Your Hand ('+cards.length+')',
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:55vh;overflow-y:auto;padding:2px">'+grid+'</div>',
+    [{l:'Close',cls:'mb ok',cb:()=>closeM()}]);
+}
+function _handBrowserPlay(i){
+  const c=G.p.hand[i];
+  if(!c)return;
+  if(typeof canPlay==='function'&&!canPlay(c)){return;}
+  closeM();
+  clickCard(c);
+}
+
 function renderHand(){
-  const el=document.getElementById('m-hscroll');el.innerHTML='';
+  const el=document.getElementById('m-hscroll');if(!el)return;
+  const _scroll=el.scrollLeft; // preserve scroll so screen doesn't jump
+  el.innerHTML='';
   const n=G.p.hand.length;
   G.p.hand.forEach((c,i)=>el.appendChild(mkCardEl(c,i,n)));
+  el.scrollLeft=_scroll;
   (function(){const e=document.getElementById('hcnt');if(e)e.textContent=G.p.hand.length;})();
   (function(){const e=document.getElementById('hhint');if(e)e.textContent=getHint();})();
   // Center when cards fit; scroll mode when they overflow
@@ -5937,15 +5980,15 @@ const ArtCloud = (function(){
     return u.replace(/^wss:/,'https:').replace(/^ws:/,'http:');
   }
   async function check(){
-    if(_enabled !== null) return _enabled;
+    if(_enabled === true) return true; // only cache success — failures retry next time
     const base = httpBase();
-    if(!base){ _enabled = false; return false; }
+    if(!base){ return false; }
     try{
       const r = await fetch(base + '/art/config', {method:'GET'});
       const j = await r.json();
-      _enabled = !!j.enabled;
-    }catch(e){ _enabled = false; }
-    return _enabled;
+      _enabled = j.enabled ? true : null; // null = unknown, retry later
+    }catch(e){ _enabled = null; }
+    return _enabled === true;
   }
   // Upload one data URL, return its public R2 URL (or null on failure/disabled).
   async function upload(dataUrl){
