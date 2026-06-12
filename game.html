@@ -582,6 +582,16 @@ body::after{
 
 .diff-btn-m{font-family:'Orbitron',monospace;font-size:8px;font-weight:700;padding:5px 10px;border-radius:5px;border:1.5px solid rgba(255,200,160,.15);background:rgba(255,200,160,.04);color:var(--text3);cursor:pointer;-webkit-tap-highlight-color:transparent;}
 
+
+/* ── Gokudo Combo Cannon animation ── */
+@keyframes comboSlash{0%{transform:translateX(-120%) skewX(-18deg);opacity:0}20%{opacity:1}100%{transform:translateX(120%) skewX(-18deg);opacity:0}}
+@keyframes comboPulse{0%{transform:scale(.4);opacity:0}40%{transform:scale(1.1);opacity:1}100%{transform:scale(1.5);opacity:0}}
+.combo-fx{position:fixed;inset:0;z-index:480;pointer-events:none;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.combo-slash{position:absolute;top:0;height:100%;width:40%;background:linear-gradient(90deg,transparent,rgba(240,64,32,.55),rgba(255,140,40,.85),rgba(240,64,32,.55),transparent);filter:blur(2px);animation:comboSlash .5s ease-out forwards}
+.combo-burst{font-family:'Orbitron',monospace;font-weight:900;font-size:34px;color:#ff7028;text-shadow:0 0 18px rgba(240,64,32,.9),0 0 40px rgba(255,120,40,.6);animation:comboPulse .7s ease-out forwards;letter-spacing:2px;text-align:center}
+.combo-burst small{display:block;font-size:13px;color:#ffd0a0;letter-spacing:3px;margin-top:2px}
+
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 
 <style>
@@ -710,6 +720,7 @@ body::after{
 
   <!-- Action buttons -->
   <button class="sbtn" onclick="startGame()">▶ START ROBATTLE</button>
+  <button class="sbtn" style="margin-top:8px;border-color:rgba(96,180,255,.3);color:#60b4ff" onclick="openDeckEditor()">EDIT DECK</button>
   <button class="sbtn" style="margin-top:8px;border-color:rgba(64,216,152,.4);color:var(--green);font-size:10px" onclick="openPreMatchArt()">🎨 CUSTOMIZE ART</button>
   <button class="sbtn" style="margin-top:6px;border-color:rgba(240,176,48,.4);color:var(--gold);font-size:10px" onclick="startTutorial()">📖 HOW TO PLAY</button>
   <button class="sbtn" style="margin-top:6px;border-color:rgba(64,160,240,.5);color:#60b4ff;font-size:10px" onclick="openOnlineLobby()">🌐 ONLINE (BETA)</button>
@@ -2217,13 +2228,13 @@ const MEDAL={
   blaze:    {name:'Blaze',    hp:20,color:'#f06424',passive:'+2 DMG on attacks',mfFx:'mf_blaze'},
   lightning:{name:'Lightning',hp:16,color:'#2a80f0',passive:'Double atk if dmg ≥4',mfFx:'mf_lightning'},
   psycho:   {name:'Psycho',   hp:16,color:'#9070f0',passive:'Draw 1 on Medaforce',mfFx:'mf_psycho'},
-  titan:    {name:'Titan',    hp:22,color:'#8090a0',passive:'-1 DMG taken',mfFx:'mf_titan'},
+  titan:    {name:'Titan',    hp:19,color:'#8090a0',passive:'-1 DMG taken',mfFx:'mf_titan'},
   aqua:     {name:'Aqua',     hp:16,color:'#10c090',passive:'Heal 1 HP per turn',mfFx:'mf_aqua'},
   nature:   {name:'Nature',   hp:17,color:'#60c020',passive:'+2 Charge per turn',mfFx:'mf_nature'},
   royal:    {name:'Royal',     hp:18,color:'#f0c040',passive:'+1 ATK per fallen ally this turn',mfFx:'mf_royal'},
   digicore: {name:'Digi-Core', hp:17,color:'#00ff80',passive:'Gain 1 Charge when taking 4+ damage',mfFx:'mf_digistrike'},
   chain:    {name:'Chain',    hp:18,color:'#e060f0',passive:'3rd action each turn is free',mfFx:'mf_chain_strike'},
-  emperor:  {name:'Emperor',  hp:34,color:'#60c030',passive:'Charge 2/turn. Medaforce fires at 4 Charge',mfFx:'mf_imperial'},
+  emperor:  {name:'Emperor',  hp:42,color:'#60c030',passive:'Charge 2/turn. Medaforce fires at 4 Charge',mfFx:'mf_imperial'},
 };
 const BOTS={
   metabee:  {name:'Metabee',  atk:5,medal:'blaze',   art:'metabee',  mcart:'mc_meta',color:'#f06424',passive:'On attack: if target has burn, deal +2 extra dmg.'},
@@ -2231,7 +2242,7 @@ const BOTS={
   warbandit:{name:'Warbandit',atk:4,medal:'psycho',   art:'warbandit',mcart:'mc_war', color:'#9070f0',passive:'When you play a Technique: draw 1 if hand ≤2 cards.'},
   rokusho:  {name:'Rokusho',  atk:3,medal:'titan',    art:'rokusho',  mcart:'mc_rok', color:'#8090a0',passive:'Takes 1 less damage (stacks with Titan Medal).'},
   sumilidon:{name:'Sumilidon',atk:3,medal:'aqua',     art:'sumilidon',mcart:'mc_meta',color:'#10c090',passive:'After healing: gain +1 Charge on Aqua Medal.'},
-  machairodus:{name:'Machairodus',atk:5,medal:'titan',art:'machairodus',mcart:'mc_mach',color:'#9050d0',passive:'Stalk: if did NOT attack last turn, next attack +3 DMG.'},
+  machairodus:{name:'Machairodus',atk:5,medal:'titan',art:'machairodus',mcart:'mc_mach',color:'#9050d0',passive:'Stalk: if did NOT attack last turn, next attack +2 DMG.'},
   omegaknight:{name:'Omegaknight',atk:6,medal:'royal',art:'omegaknight',mcart:'mc_omega',color:'#f0c040',passive:'Vanguard: attacks on support bots redirect to Omegaknight.'},
   robo_emperor:{name:'Robo Emperor',atk:7,medal:'emperor',art:'robo_emperor',mcart:'mc_robo',color:'#60c030',passive:'Cable Network: start of turn, deal 2 DMG to highest-charge enemy and drain 1 Charge.'},
   nin_ninja:  {name:'Nin-Ninja', atk:4,medal:'chain',art:'nin_ninja', mcart:'mc_nin',  color:'#4080f0',passive:'Dual Technique: may play 2 technique cards per turn when active.'},
@@ -2294,6 +2305,18 @@ const CDEFS={
   mirror_plate:  C('mirror_plate','trap','Mirror Plate','eq_art','Reflect 4','trap_reflect','#2a80f0','TRAP: Set face-down. Reflects the next enemy attack — deal 4 to attacker, take none.'),
   // ── MEDAL LOCATOR — tutor a Medaforce ──
   medal_locator: C('medal_locator','action','Medal Locator','act_art','Find Medaforce','act_locate','#f0b820','Search your deck for a Medaforce, reveal it, add to hand, shuffle. Once per game.'),
+  // ═══ GENERIC NEUTRAL POOL (swap-in, up to 3 per deck) ═══
+  gen_field_medic:  C('gen_field_medic','action','Field Medic','act_art','Heal 5/8','gen_heal','#40d898','Heal a bot 5 HP (8 if below half). Generic.'),
+  gen_bulwark:      C('gen_bulwark','equipment','Bulwark','eq_art','-1 DMG taken','gen_bulwark','#8090a0','Equipped bot takes -1 from attacks this turn and next. Generic.'),
+  gen_static_field: C('gen_static_field','trap','Static Field','trap_art','Trap: drain+exhaust','gen_static','#2a80f0','TRAP: next enemy attacker loses 2 Charge and is exhausted next turn. Generic.'),
+  gen_recharge:     C('gen_recharge','action','Recharge','act_art','+2 Charge','gen_recharge','#f0b820','Active bot +2 Charge. Draw a card if already at max. Generic.'),
+  gen_salvage:      C('gen_salvage','action','Scrap Salvage','act_art','Draw 2 disc 1','gen_salvage','#60c020','Draw 2 cards, then discard 1. Generic.'),
+  gen_override:     C('gen_override','action','Override','act_art','Cancel next','gen_override','#c060f0','Cancel the next technique or action your opponent plays this turn. Generic.'),
+  gen_power_surge:  C('gen_power_surge','technique','Power Surge','wind_art','+4/+6 DMG','gen_surge','#f06424','+4 DMG (+6 if your bot below half HP). Generic.'),
+  gen_pile_driver:  C('gen_pile_driver','technique','Pile Driver','earth_art','+3 no-switch','gen_pile','#8090a0','+3 DMG. Target cannot switch next turn. Generic.'),
+  gen_last_resort:  C('gen_last_resort','action','Last Resort','act_art','6 unblockable','gen_lastresort','#f04040','Only if you have 2 or fewer cards in hand: deal 6 unblockable damage. Generic.'),
+  gen_medal_reboot: C('gen_medal_reboot','action','Medal Reboot','act_art','Revive 6HP','gen_reboot','#f0b820','Once per game: return a defeated friendly bot with 6 HP. Generic.'),
+
   // ── BLAZE EXCLUSIVE ──────────────────────────────────────────
   counter_strike:C('counter_strike','technique','Counter Strike','fire_art','+3 +Burn Back','deal3_counter','#f06424','Deal +3 dmg. If target attacks next turn, they take 3 burn damage first.'),
   heat_wave:     C('heat_wave','action','Heat Wave','fire_art','All Burn Tick','act_heatwave','#f06424','All burning enemies take 2 extra damage this turn. Free burn engine.'),
@@ -2543,6 +2566,7 @@ function mkBot(k){
 }
 function init(){
   const pd=JSON.parse(JSON.stringify(DECKS[deck]));
+  if(typeof applyDeckSwaps==='function'){ pd.deck=shuffle(applyDeckSwaps(deck, pd.deck)); }
   // CPU picks a random deck — can mirror the player's choice
   const allDecks=['blaze','titan','royal','shadow','throne'];
   const cpuDeckPick=(typeof G!=='undefined'&&G._forcedCpuDeck)?G._forcedCpuDeck:allDecks[Math.floor(Math.random()*allDecks.length)];
@@ -2723,8 +2747,8 @@ function dmg(bot,raw,sk){
   const _sovereign = getLastStand(sk==='p'?'p':'p'); // attacker side
   const _pierceAll = sk==='p' && alive(G.p).length===1 && alive(G.p)[0] && alive(G.p)[0].key==='omegaknight' && alive(G.p)[0]._sovereignLS;
   if(!G._pierceDmg && !_pierceAll){
-    if(bot.medal==='titan'){const r=bot.changed?4:1;d=Math.max(0,d-r);}
-    if(bot.key==='rokusho'&&d>0)d=Math.max(0,d-1);
+    if(bot.medal==='titan'){const r=bot.changed?2:1;d=Math.max(0,d-r);}
+    // (Rokusho extra -1 removed in balance pass — Titan medal already grants -1)
     // Robo Emperor: Throne Armor (permanent) + Emperor Shield (equip)
     if(bot.key==='robo_emperor'){
       const ta=bot._throneArmor||0;
@@ -2748,7 +2772,18 @@ function dmg(bot,raw,sk){
   bot.hp=Math.max(0,bot.hp-d);
   log(bot.name+' takes '+d+' → '+bot.hp+'/'+bot.maxHp+' HP','dmg');
   // Seaslug passive: Robo Emperor drops below 20 HP → +3 charge, draw 1 (once)
-  if(bot.key==='robo_emperor'&&G.p.bots.includes(bot)&&bot.hp<20&&bot.hp>0&&!bot._seaslugFired&&G.p.mf&&G.p.mf.pass.includes('below 20 HP')){
+  if(bot.key==='robo_emperor'&&G.p.bots.includes(bot)&&bot.hp>0&&G.p.mf&&G.p.mf.pass.includes('below 20 HP')){
+    const band=Math.floor(bot.hp/14); // re-arms each 14-HP band crossed
+    if(bot._seaslugBand===undefined) bot._seaslugBand=Math.floor(bot.maxHp/14);
+    if(band<bot._seaslugBand){
+      bot._seaslugBand=band;
+      bot.charge=Math.min(10,bot.charge+3);
+      drw(G.p,1);
+      log('Seaslug: Emperor wounded! +3 Charge, drew 1 card!','chg');
+      banner('SEASLUG!','#60c030');
+    }
+  }
+  if(false&&bot.key==='robo_emperor'&&bot.hp<20&&!bot._seaslugFired){
     bot._seaslugFired=true;
     bot.charge=Math.min(10,bot.charge+3);
     drw(G.p,1);
@@ -2910,6 +2945,57 @@ function showBurnAll(){
   el.textContent='🔥 BURN ALL 🔥';
   document.body.appendChild(el);setTimeout(()=>el.remove(),1300);
 }
+
+// ── Gokudo Combo Cannon visual ──
+let _comboFxBusy=false;
+function triggerComboAnim(count){
+  if(_comboFxBusy)return; _comboFxBusy=true;
+  try{ if(typeof SFX==='object'){ (SFX.combo?SFX.combo():(SFX.attack&&SFX.attack())); } }catch(e){}
+  const wrap=document.createElement('div'); wrap.className='combo-fx';
+  // three staggered slashes
+  for(let i=0;i<3;i++){
+    const s=document.createElement('div'); s.className='combo-slash';
+    s.style.animationDelay=(i*0.09)+'s';
+    s.style.top=(i*8-8)+'%';
+    wrap.appendChild(s);
+  }
+  const burst=document.createElement('div'); burst.className='combo-burst';
+  burst.innerHTML='COMBO &times;'+count+'<small>COMBO CANNON</small>';
+  burst.style.animationDelay='.18s';
+  wrap.appendChild(burst);
+  document.body.appendChild(wrap);
+  setTimeout(()=>{ wrap.remove(); _comboFxBusy=false; }, 800);
+}
+
+
+// ── Bot passive viewer: tap the \u24d8 badge on a bot ──
+function showBotPassive(sk, idx){
+  const side=G[sk]; if(!side)return;
+  const bot=side.bots[idx]; if(!bot)return;
+  const medalName=(bot.mName||bot.medal||'').toString();
+  const botPassive=bot.passive||'No unique passive.';
+  const medalInfo=(typeof MEDAL==='object'&&MEDAL[bot.medal])?MEDAL[bot.medal]:null;
+  const medalPassive=medalInfo?medalInfo.passive:'';
+  let html='<div style="text-align:left">';
+  html+='<div style="font-family:Orbitron,monospace;font-weight:800;color:'+(bot.color||'#fff')+';font-size:15px;margin-bottom:2px">'+bot.name+(bot.changed?' \u26a1':'')+'</div>';
+  html+='<div style="font-size:9px;color:var(--text3);margin-bottom:8px">'+medalName+' Medal \u00b7 '+(bot.def?'DEFEATED':bot.hp+'/'+bot.maxHp+' HP \u00b7 \u2694'+bot.atk)+'</div>';
+  html+='<div style="background:rgba(0,0,0,.3);border-radius:8px;padding:9px;margin-bottom:6px;border-left:3px solid '+(bot.color||'#888')+'">';
+  html+='<div style="font-size:9px;color:var(--gold);font-weight:700;margin-bottom:3px">BOT PASSIVE</div>';
+  html+='<div style="font-size:11px;color:var(--text);line-height:1.4">'+botPassive+'</div></div>';
+  if(medalPassive){
+    html+='<div style="background:rgba(0,0,0,.3);border-radius:8px;padding:9px;border-left:3px solid var(--storm2)">';
+    html+='<div style="font-size:9px;color:var(--storm2);font-weight:700;margin-bottom:3px">'+medalName.toUpperCase()+' MEDAL</div>';
+    html+='<div style="font-size:11px;color:var(--text);line-height:1.4">'+medalPassive+'</div></div>';
+  }
+  if(bot.equip){
+    html+='<div style="background:rgba(0,0,0,.3);border-radius:8px;padding:9px;margin-top:6px;border-left:3px solid #78c88c">';
+    html+='<div style="font-size:9px;color:#78c88c;font-weight:700;margin-bottom:3px">EQUIPPED</div>';
+    html+='<div style="font-size:11px;color:var(--text);line-height:1.4">'+bot.equip.name+' \u2014 '+(bot.equip.desc||'')+'</div></div>';
+  }
+  html+='</div>';
+  openM('Bot Info', html, [{l:'Close', cls:'mb ok', cb:()=>closeM()}]);
+}
+
 function banner(txt,color='#f0b820'){
   const el=document.createElement('div');
   el.className='bnr';el.textContent=txt;el.style.color=color;
@@ -3205,6 +3291,11 @@ function atkEnemy(idx){
 
 function resolveAtk(a,d,sk,techId){
   let total=a.atk;
+  // Iron Throne: solo Emperor takes -1 from each attack (outnumbered 1v3)
+  let _emperorSoak=(d&&d.key==='robo_emperor'&&G.c.bots&&G.c.bots.includes(d)&&G.c.bots.filter(b=>!b.def).length===1)?1:0;
+  if(d&&d.equip&&d.equip.fx==='gen_bulwark') _emperorSoak+=1; // Bulwark: -1 dmg
+  if(d&&d.key!=='robo_emperor') _emperorSoak=Math.min(_emperorSoak,1); // cap stacked reduction
+  if(!_emperorSoak && d&&d.key==='robo_emperor'&&G.p.bots&&G.p.bots.includes(d)&&G.p.bots.filter(b=>!b.def).length===1) _emperorSoak=1;
   // Counter Strike — if attacker was marked, they take burn before hitting
   if(a._counterMarked){
     a._counterMarked=false;
@@ -3286,6 +3377,7 @@ function resolveAtk(a,d,sk,techId){
   // Machairodus support pierce (when in support zone)
   const activeP=getActiveBot(sk);
   if(activeP&&activeP._machPierce){G._pierceDmg=true;activeP._machPierce=false;}
+  total=Math.max(0,total-(_emperorSoak||0));
   dmg(d,total,sk==='p'?'c':'p');
   G._pierceDmg=false;
   atked=true;
@@ -3306,6 +3398,7 @@ function resolveAtk(a,d,sk,techId){
   // Gokudo Combo Cannon: +1 DMG per technique played this turn
   if(a.key==='gokudo'&&sk==='p'&&(a._comboCount||0)>0){
     log('Combo Cannon: +'+a._comboCount+' DMG from '+a._comboCount+' techniques this turn!','chg');
+    try{ triggerComboAnim(a._comboCount); }catch(e){}
   }
   // CPU MetalGurumemon missile barrage
   if(a.key==='metalgurumemon'&&sk==='c'){
@@ -3357,6 +3450,8 @@ function resolveAtk(a,d,sk,techId){
 
 function applyTech(c,a,d,sk){
   const fx=c.fx;let b=0;
+  if(fx==='gen_surge'){ b=(a.hp<a.maxHp/2)?6:4; return b; }
+  if(fx==='gen_pile'){ b=3; d._noSwitch=true; return b; }
   if(fx==='deal5_burn'||fx==='deal6_burn'){
     b=fx==='deal6_burn'?6:5;d.burn=true;d.burnAmt=fx==='deal6_burn'?2:1;
   }else if(fx==='deal3_burn_all'){
@@ -3394,6 +3489,37 @@ function playAct(card){
   if(henryFree){G.p._henryUsed=true;log('Henry: first action is free!','chg');}
   else{actionsLeft--;log(actionsLeft>0?'Action used — '+actionsLeft+' remaining.':'Action used.','info');}
   const fx=card.fx;
+  if(fx==='gen_heal'){
+    const wounded=alive(G.p).filter(b=>!b.def);
+    openM('Field Medic','Heal which bot?', wounded.map(b=>({l:b.name+' ('+b.hp+'/'+b.maxHp+')',cls:'mb',cb:()=>{const amt=(b.hp<b.maxHp/2)?8:5;b.hp=Math.min(b.maxHp,b.hp+amt);log('Field Medic: +'+amt+' HP to '+b.name+'.','eq');closeM();renderAll();if(G_online&&G_myTurn)_syncNow();}})).concat([{l:'Cancel',cls:'mb ok',cb:()=>{closeM();}}]));
+    return;
+  }
+  if(fx==='gen_recharge'){
+    const ab=getActiveBot('p');
+    if(ab){ if(ab.charge>=10){ drw(G.p,1); log('Recharge: already max — drew a card.','chg'); } else { ab.charge=Math.min(10,ab.charge+2); log('Recharge: +2 Charge.','chg'); } }
+    renderAll(); if(G_online&&G_myTurn)_syncNow(); return;
+  }
+  if(fx==='gen_salvage'){
+    drw(G.p,2);
+    openM('Scrap Salvage','Discard one card:', G.p.hand.map((c,i)=>({l:c.name,cls:'mb',cb:()=>{dsc(G.p,c.uid);log('Salvage: discarded '+c.name+'.','info');closeM();renderAll();}})).concat([{l:'Skip',cls:'mb ok',cb:()=>closeM()}]));
+    return;
+  }
+  if(fx==='gen_override'){
+    G.p._override=true; log('Override armed — next enemy technique/action is cancelled.','chg');
+    renderAll(); if(G_online&&G_myTurn)_syncNow(); return;
+  }
+  if(fx==='gen_lastresort'){
+    if(G.p.hand.length>2){ log('Last Resort needs 2 or fewer cards in hand.','info'); return; }
+    const tgt=getActiveBot('c'); if(tgt){ dmg(tgt,6,'p'); log('Last Resort: 6 unblockable to '+tgt.name+'!','atk'); }
+    checkWin(); renderAll(); if(G_online&&G_myTurn)_syncNow(); return;
+  }
+  if(fx==='gen_reboot'){
+    if(G.p._rebootUsed){ log('Medal Reboot already used this game.','info'); return; }
+    const dead=G.p.bots.filter(b=>b.def);
+    if(!dead.length){ log('No defeated bots to revive.','info'); return; }
+    openM('Medal Reboot','Revive which bot at 6 HP?', dead.map(b=>({l:b.name,cls:'mb',cb:()=>{b.def=false;b.hp=6;G.p._rebootUsed=true;log('Medal Reboot: '+b.name+' returns with 6 HP!','mc');banner('MEDAL REBOOT!','#f0b820');closeM();renderAll();if(G_online&&G_myTurn)_syncNow();}})).concat([{l:'Cancel',cls:'mb ok',cb:()=>closeM()}]));
+    return;
+  }
   if(fx==='act_charge'){
     openM('Press Forward','Choose a bot to give +2 Charge:',
       alive(G.p).map(b=>({l:b.name+'  '+b.charge+'/5',cls:'mb ok',cb:()=>{addChg(b,2);closeM();renderAll();}})));
@@ -4556,7 +4682,7 @@ function mkBotEl(bot,idx,sk){
   div.innerHTML=`${botArtHtml}
 <div class="binfo" title="Click 🎨 Art to change bot artwork">
   <div class="btop">
-    <span class="bname" style="color:${bot.color}${bot.changed?';text-shadow:0 0 8px '+bot.color:''}">${bot.name}${bot.changed?'⚡':''}</span>
+    <span class="bname" style="color:${bot.color}${bot.changed?';text-shadow:0 0 8px '+bot.color:''}">${bot.name}${bot.changed?'⚡':''}</span><span class="bpassive-i" onclick="event.stopPropagation();showBotPassive('${sk}',${idx})" style="margin-left:4px;font-size:10px;color:var(--text3);cursor:pointer;border:1px solid var(--text3);border-radius:50%;width:13px;height:13px;display:inline-flex;align-items:center;justify-content:center;line-height:1">\u24d8</span>
     <div style="display:flex;align-items:baseline;gap:4px">
       <span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:${bot.color};opacity:.85">⚔${atkDisplay}${defBonus>0?' 🛡-'+defBonus:''}</span>
       <span class="bhp" style="color:${hpPct<=25?'#f04040':hpPct<=50?'#f0a820':'#40d898'}">${bot.def?'KO':bot.hp}</span>
@@ -4656,6 +4782,7 @@ function applySupportPassives(sk){
 function switchActive(sk,newIdx){
   const side=G[sk];
   if(sk==='p'&&G_online&&G_myTurn){ MWNet.move({type:'switch',idx:newIdx}); _syncNow(); }
+  if(side.bots[side.activeBot]&&side.bots[side.activeBot]._noSwitch){ log('Pinned — cannot switch this turn!','info'); return; }
   if(side.bots[newIdx]&&!side.bots[newIdx].def){
     // Check web — only CPU bots get webbed (player can always switch)
     if(sk==='c'&&side.bots[newIdx]._webbed>0){log('Cannot switch — '+side.bots[newIdx].name+' is webbed!','info');return;}
@@ -4884,10 +5011,49 @@ function renderLog(){
 // ── In-game menu (☰): decklist viewer, surrender, music, rules ──
 const DECK_GUIDE = {"blaze": {"name": "BLAZE CHAIN", "color": "#f06424", "mf": "Ikki", "plan": "Burn aggro. Ignite enemies early, then Metabee\u2019s passive adds damage to every burning target. Chain techniques for burst and close with Medachange.", "combo": "Flame Whip (burn ALL) \u2192 Scorch a burning target for 8 free \u2192 Metabee passive fires on each burning bot."}, "titan": {"name": "TITAN GUARD", "color": "#8090a0", "mf": "Henry", "plan": "Defensive bruiser. Soak hits, drain enemy Charge with Iron Strike, and grind value as Sumilidon/Machairodus scale in Last Stand.", "combo": "Iron Strike to strip 2 Charge \u2192 Guard Break their wall \u2192 Machairodus Last Stand bonus swings the race."}, "royal": {"name": "ROYAL COURT", "color": "#f0b020", "mf": "Tai", "plan": "Charge-control midrange. Build Charge across the team, protect Omegaknight\u2019s Vanguard, then convert with a big Medaforce turn.", "combo": "Royal Decree (draw 2, +1 Charge all) \u2192 Medaforce with Medal Lens bonus \u2192 WarGreymon Digi-Core finish."}, "shadow": {"name": "SHADOW BLADE", "color": "#9050d0", "mf": "Karin", "plan": "Tempo combo. Nin-Ninja chains multiple techniques per turn, Foxuno heals to outlast, Gokudo punishes with combo triggers.", "combo": "Nin-Ninja plays 2\u20133 techniques in one turn \u2192 Karin 3-card trigger draws \u2192 Gokudo combo count detonates."}, "throne": {"name": "IRON THRONE", "color": "#30b050", "mf": "Seaslug", "plan": "Solo emperor control. Robo Emperor tanks alone, drawing extra cards as it\u2019s wounded, snowballing Charge into unblockable Medaforce.", "combo": "Take damage \u2192 Seaslug wound-draws fuel the hand \u2192 Emperor Decree (+3 cards) \u2192 unblockable MF for lethal."}};
 
+
+// ── Per-deck records + stats profile ──
+function _recordDeckResult(deckKey, won){
+  try{
+    const raw=localStorage.getItem('mw_deckstats')||'{}';
+    const stats=JSON.parse(raw);
+    if(!stats[deckKey]) stats[deckKey]={w:0,l:0};
+    if(won) stats[deckKey].w++; else stats[deckKey].l++;
+    localStorage.setItem('mw_deckstats', JSON.stringify(stats));
+    // longest streak
+    const best=parseInt(localStorage.getItem('mw_beststreak')||'0');
+    if(streakCount>best) localStorage.setItem('mw_beststreak', String(streakCount));
+  }catch(e){}
+}
+function openStatsProfile(){
+  const names={blaze:'Blaze Chain',titan:'Titan Guard',royal:'Royal Court',shadow:'Shadow Blade',throne:'Iron Throne'};
+  const cols={blaze:'#f06424',titan:'#8090a0',royal:'#f0b020',shadow:'#9050d0',throne:'#30b050'};
+  let stats={}; try{ stats=JSON.parse(localStorage.getItem('mw_deckstats')||'{}'); }catch(e){}
+  const best=parseInt(localStorage.getItem('mw_beststreak')||'0');
+  const totalW=winCount, totalL=lossCount, totalG=totalW+totalL;
+  const wr=totalG>0?Math.round(totalW/totalG*100):0;
+  let html='<div style="text-align:center;margin-bottom:10px">';
+  html+='<div style="font-family:Orbitron,monospace;font-size:24px;color:var(--gold)">'+totalW+'\u2013'+totalL+'</div>';
+  html+='<div style="font-size:10px;color:var(--text2)">'+wr+'% win rate \u00b7 '+totalG+' games</div>';
+  html+='<div style="font-size:10px;color:var(--text2);margin-top:3px">Current streak: <b style="color:var(--gold)">'+streakCount+'</b> \u00b7 Best: <b style="color:#40d898">'+best+'</b></div>';
+  html+='</div><div style="border-top:1px solid rgba(255,255,255,.08);padding-top:8px">';
+  ['blaze','titan','royal','shadow','throne'].forEach(k=>{
+    const s=stats[k]||{w:0,l:0}; const g=s.w+s.l; const r=g>0?Math.round(s.w/g*100):0;
+    const barW=g>0?r:0;
+    html+='<div style="margin-bottom:7px">';
+    html+='<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px"><span style="color:'+cols[k]+';font-weight:700">'+names[k]+'</span><span style="color:var(--text2)">'+s.w+'\u2013'+s.l+(g>0?' ('+r+'%)':'')+'</span></div>';
+    html+='<div style="height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+barW+'%;background:'+cols[k]+'"></div></div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  openM('Your Record', html, [{l:'Reset Stats', cls:'mb', style:'color:var(--text3);font-size:10px', cb:()=>{ if(confirm('Reset all stats?')){ ['mw_wins','mw_losses','mw_streak','mw_beststreak','mw_deckstats'].forEach(k=>localStorage.removeItem(k)); winCount=0;lossCount=0;streakCount=0; closeM(); } }},{l:'Close', cls:'mb ok', cb:()=>closeM()}]);
+}
+
 function openGameMenu(){
   const inMatch = (typeof G==='object'&&G&&G.p&&!G.winner);
   const btns=[
     {l:'\ud83d\udcd6 Decklists', cls:'mb', cb:()=>{ closeM(); openDeckViewer(); }},
+    {l:'\ud83c\udfc6 Your Record', cls:'mb', cb:()=>{ closeM(); openStatsProfile(); }},
     {l:'\ud83d\udcdc Battle Log', cls:'mb', cb:()=>{ closeM(); toggleLog(); }},
     {l:(_musicOn?'\ud83d\udd07 Music: ON':'\ud83c\udfb5 Music: OFF'), cls:'mb', cb:()=>{ toggleMusic(); closeM(); openGameMenu(); }},
     {l:'\u2753 How to Play', cls:'mb', cb:()=>{ closeM(); showRules(); }},
@@ -4979,11 +5145,13 @@ function toggleLog(){document.getElementById('logp').classList.toggle('open');re
 
 // ═══ END ═══
 function showEnd(){
+  try{ if(G_online && MWNet.clearSession) MWNet.clearSession(); }catch(e){}
   setTimeout(()=>{
     const win=G.winner==='p';
     setTimeout(()=>win ? SFX.victory() : SFX.defeat(), 400);
     if(win){winCount++;streakCount++;localStorage.setItem('mw_wins',winCount);localStorage.setItem('mw_streak',streakCount);}
     else{lossCount++;streakCount=0;localStorage.setItem('mw_losses',lossCount);localStorage.setItem('mw_streak','0');}
+    _recordDeckResult(deck,win);
     document.getElementById('ettl').textContent=win?'VICTORY':'DEFEAT';
     document.getElementById('ettl').style.color=win?'#f0b820':'#f04040';
     document.getElementById('esub').textContent=G.reason;
@@ -5037,6 +5205,82 @@ const DECK_IDENTITY={
   shadow:'Chain combo — dual techniques feed Combo Cannon and Chain Strike.',
   throne:'Solo siege fortress — one bot, Cable Network, Imperial Barrage.',
 };
+
+// ── Constrained Deck Editor: swap up to 3 cards for generics ──
+const GENERIC_POOL=['gen_field_medic','gen_bulwark','gen_static_field','gen_recharge','gen_salvage','gen_override','gen_power_surge','gen_pile_driver','gen_last_resort','gen_medal_reboot'];
+const MAX_SWAPS=3;
+function _maxSwapsFor(dk){ return dk==='titan'?2:3; } // Titan capped: too strong with full defensive generics
+function _getSwaps(deckKey){ try{ return JSON.parse(localStorage.getItem('mw_swaps_'+deckKey)||'[]'); }catch(e){ return []; } }
+function _setSwaps(deckKey, arr){ try{ localStorage.setItem('mw_swaps_'+deckKey, JSON.stringify(arr)); }catch(e){} }
+
+// Apply saved swaps to a freshly-built deck array (called in init)
+function applyDeckSwaps(deckKey, deckArr){
+  const swaps=_getSwaps(deckKey);
+  if(!swaps.length) return deckArr;
+  const result=deckArr.slice();
+  swaps.forEach(sw=>{
+    // remove one copy of sw.out, add sw.in
+    const idx=result.findIndex(c=>c.id===sw.out);
+    if(idx>=0 && CDEFS[sw.in]){
+      result.splice(idx,1);
+      result.push({...CDEFS[sw.in], uid:uid()});
+    }
+  });
+  return result;
+}
+
+function openDeckEditor(){
+  const names={blaze:'Blaze Chain',titan:'Titan Guard',royal:'Royal Court',shadow:'Shadow Blade',throne:'Iron Throne'};
+  const dk=deck;
+  const swaps=_getSwaps(dk);
+  // Build the deck's current card list (counts)
+  const base=DECKS[dk].deck;
+  const counts={};
+  base.forEach(c=>{ counts[c.id]=counts[c.id]||{name:c.name,n:0,id:c.id}; counts[c.id].n++; });
+  let html='<div style="font-size:10px;color:var(--text2);text-align:center;margin-bottom:8px">Swap up to '+MAX_SWAPS+' cards for generics. <b style="color:var(--gold)">'+swaps.length+'/'+_maxSwapsFor(dk)+'</b> used.</div>';
+  // Current swaps
+  if(swaps.length){
+    html+='<div style="background:rgba(96,180,255,.08);border-radius:8px;padding:7px;margin-bottom:8px">';
+    swaps.forEach((sw,i)=>{
+      const outN=(CDEFS[sw.out]||{}).name||sw.out, inN=(CDEFS[sw.in]||{}).name||sw.in;
+      html+='<div style="font-size:10px;display:flex;justify-content:space-between;align-items:center;margin:2px 0"><span><span style="color:var(--storm2)">'+outN+'</span> \u2192 <span style="color:#60d8a0">'+inN+'</span></span><span onclick="_removeSwap('+i+')" style="color:var(--red);cursor:pointer;padding:0 6px">\u2715</span></div>';
+    });
+    html+='</div>';
+  }
+  html+='<div style="max-height:38vh;overflow-y:auto">';
+  html+='<div style="font-size:9px;color:var(--gold);font-weight:700;margin-bottom:4px">YOUR DECK \u2014 tap a card to swap it out</div>';
+  Object.values(counts).forEach(c=>{
+    const swappedOut=swaps.filter(s=>s.out===c.id).length;
+    const avail=c.n-swappedOut;
+    if(avail<=0) return;
+    const disabled=swaps.length>=_maxSwapsFor(dk);
+    html+='<div onclick="'+(disabled?'':"_pickSwapOut('"+c.id+"')")+'" style="font-size:11px;padding:6px 8px;border-radius:6px;margin-bottom:3px;background:rgba(0,0,0,.25);border:1px solid var(--border);'+(disabled?'opacity:.4':'cursor:pointer')+'"><span style="color:var(--text2)">'+avail+'\u00d7</span> '+c.name+'</div>';
+  });
+  html+='</div>';
+  openM(names[dk]+' \u2014 Editor', html, [{l:'Reset', cls:'mb', style:'font-size:10px;color:var(--text3)', cb:()=>{ _setSwaps(dk,[]); openDeckEditor(); }},{l:'Done', cls:'mb ok', cb:()=>{ closeM(); renderDeckPreview&&renderDeckPreview(dk); }}]);
+}
+function _pickSwapOut(outId){
+  const dk=deck;
+  let html='<div style="font-size:10px;color:var(--text2);text-align:center;margin-bottom:8px">Swap <b style="color:var(--storm2)">'+(CDEFS[outId]||{}).name+'</b> for:</div><div style="max-height:42vh;overflow-y:auto">';
+  GENERIC_POOL.forEach(gid=>{
+    const c=CDEFS[gid]; if(!c) return;
+    html+='<div onclick="_confirmSwap(\''+outId+'\',\''+gid+'\')" style="padding:7px 8px;border-radius:6px;margin-bottom:4px;background:rgba(0,0,0,.25);border:1px solid '+c.color+'44;cursor:pointer">';
+    html+='<div style="font-size:11px;font-weight:700;color:'+c.color+'">'+c.name+' <span style="font-size:8px;color:var(--text3)">'+c.type.toUpperCase()+'</span></div>';
+    html+='<div style="font-size:9px;color:var(--text2);line-height:1.35">'+c.desc.replace(' Generic.','')+'</div></div>';
+  });
+  html+='</div>';
+  openM('Choose Replacement', html, [{l:'Back', cls:'mb ok', cb:()=>openDeckEditor()}]);
+}
+function _confirmSwap(outId, inId){
+  const dk=deck; const swaps=_getSwaps(dk);
+  if(swaps.length>=_maxSwapsFor(dk)){ closeM(); return; }
+  swaps.push({out:outId, in:inId}); _setSwaps(dk, swaps);
+  openDeckEditor();
+}
+function _removeSwap(i){
+  const dk=deck; const swaps=_getSwaps(dk); swaps.splice(i,1); _setSwaps(dk,swaps); openDeckEditor();
+}
+
 function pickDeck(el){
   document.querySelectorAll('.dpk').forEach(d=>d.classList.remove('sel'));
   el.classList.add('sel');deck=el.dataset.deck;
@@ -5857,6 +6101,8 @@ function maybeShowTutorial(){
 // MWNet - online multiplayer client (room-code relay)
 const MWNet = (function(){
   const SERVER_URL = (window.MW_SERVER_URL || null);
+  function _saveReconnect(){ try{ if(_code&&_seat!==null) localStorage.setItem('mw_reconnect', JSON.stringify({code:_code, seat:_seat, t:Date.now()})); }catch(e){} }
+  function _loadReconnect(){ try{ const r=JSON.parse(localStorage.getItem('mw_reconnect')||'null'); if(r&&Date.now()-r.t<120000) return r; }catch(e){} return null; }
   let ws = null, _seat = null, _code = null, _seed = null, _connected = false, _oppDeck = null, _oppMf = null;
   const handlers = {};
   function on(type, fn){ handlers[type] = fn; }
@@ -5873,13 +6119,14 @@ const MWNet = (function(){
       try{
         ws = new WebSocket(SERVER_URL);
         ws.onopen = ()=>{ _connected = true; };
-        ws.onclose = ()=>{ _connected = false; fire('disconnected'); };
+        ws.onclose = ()=>{ _connected = false; fire('disconnected'); try{ if(typeof attemptReconnect==='function') attemptReconnect(); }catch(e){} };
         ws.onerror = ()=>{ clearTimeout(timer); done(reject, new Error('connect_failed')); };
         ws.onmessage = (e)=>{
           let m; try{ m = JSON.parse(e.data); }catch(_){ return; }
           if(m.type==='connected'){ clearTimeout(timer); done(resolve); return; }
-          if(m.type==='created'){ _code=m.code; _seat=m.seat; _seed=m.seed; }
-          if(m.type==='joined'){ _code=m.code; _seat=m.seat; _seed=m.seed; if(m.oppDeck)_oppDeck=m.oppDeck; if(m.oppMf)_oppMf=m.oppMf; }
+          if(m.type==='created'){ _code=m.code; _seat=m.seat; _seed=m.seed; _saveReconnect(); }
+          if(m.type==='reconnected'){ _code=m.code; _seat=m.seat; if(m.oppDeck)_oppDeck=m.oppDeck; if(m.oppMf)_oppMf=m.oppMf; }
+          if(m.type==='joined'){ _code=m.code; _seat=m.seat; _seed=m.seed; if(m.oppDeck)_oppDeck=m.oppDeck; if(m.oppMf)_oppMf=m.oppMf; _saveReconnect(); }
           if(m.type==='opponent_joined'){ if(m.oppDeck)_oppDeck=m.oppDeck; if(m.oppMf)_oppMf=m.oppMf; }
           if(m.type==='rematch'){ _seed=m.seed; if(m.oppDeck)_oppDeck=m.oppDeck; if(m.deck)_oppDeck=m.deck; }
           fire(m.type, m);
@@ -5892,6 +6139,9 @@ const MWNet = (function(){
     available(){ return !!SERVER_URL; },
     connected(){ return _connected; },
     seat(){ return _seat; }, code(){ return _code; }, seed(){ return _seed; }, oppDeck(){ return _oppDeck; }, oppMf(){ return _oppMf; },
+    reconnect(){ const info=_loadReconnect(); if(!info) return false; connect().then(()=>{ sendRaw({type:'reconnect', code:info.code, seat:info.seat}); }).catch(()=>{}); return true; },
+    hasSession(){ return !!_loadReconnect(); },
+    clearSession(){ try{ localStorage.removeItem('mw_reconnect'); }catch(e){} },
     on,
     async create(deckName, mfName){ await connect(); sendRaw({type:'create', deck:deckName, mf:mfName}); },
     async join(code, deckName, mfName){ await connect(); sendRaw({type:'join', code:code, deck:deckName, mf:mfName}); },
@@ -5967,6 +6217,66 @@ let G_mySeat = null;    // 0 = host (goes first), 1 = guest
 let G_myTurn = false;   // true when it's this client's action phase
 
 // Called when both players are in and match_start fires
+
+// ── Reconnect handling: pause overlay + auto-rejoin ──
+let _oppPaused=false;
+function showPauseOverlay(msg){
+  let el=document.getElementById('pause-overlay');
+  if(!el){
+    el=document.createElement('div'); el.id='pause-overlay';
+    el.style.cssText='position:fixed;inset:0;z-index:600;background:rgba(4,6,12,.86);backdrop-filter:blur(6px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px';
+    document.body.appendChild(el);
+  }
+  el.innerHTML='<div style="font-family:Orbitron,monospace;font-size:18px;color:var(--gold);margin-bottom:10px">\u23f8 '+(msg||'Connection interrupted')+'</div>'+
+    '<div style="font-size:12px;color:var(--text2);max-width:300px;line-height:1.5" id="pause-sub">Waiting to reconnect\u2026</div>'+
+    '<div style="margin-top:14px"><div class="spinner" style="width:28px;height:28px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto"></div></div>';
+  el.style.display='flex';
+}
+function hidePauseOverlay(){ const el=document.getElementById('pause-overlay'); if(el) el.style.display='none'; }
+
+// Opponent dropped — show paused state, don't end the game
+function onOpponentDisconnected(m){
+  if(!G_online) return;
+  _oppPaused=true;
+  showPauseOverlay('Opponent disconnected');
+  const sub=document.getElementById('pause-sub');
+  if(sub) sub.textContent='Waiting for them to reconnect (up to 45s)\u2026';
+}
+// Opponent came back — push them our authoritative state so they resync
+function onOpponentReconnected(m){
+  if(!G_online) return;
+  _oppPaused=false;
+  hidePauseOverlay();
+  banner('OPPONENT RECONNECTED','#40d898');
+  try{ MWNet.syncState(buildMySideState()); }catch(e){}
+}
+// I reconnected — restore my view and ask for fresh state
+function onSelfReconnected(m){
+  hidePauseOverlay();
+  banner('RECONNECTED','#40d898');
+  // opponent will push their state; we keep our own side as-is
+}
+
+// Try to auto-reconnect when our own socket drops mid-match
+function attemptReconnect(){
+  if(!G_online || G.winner) return;
+  if(!MWNet.hasSession || !MWNet.hasSession()) return;
+  showPauseOverlay('Reconnecting\u2026');
+  let tries=0;
+  const tryOnce=()=>{
+    tries++;
+    if(tries>8 || !MWNet.hasSession()){ 
+      const sub=document.getElementById('pause-sub');
+      if(sub) sub.innerHTML='Could not reconnect. <span style="color:var(--storm2);text-decoration:underline" onclick="location.reload()">Return to title</span>';
+      return; 
+    }
+    MWNet.reconnect();
+    setTimeout(()=>{ if(_selfReconnected){ return; } tryOnce(); }, 3000);
+  };
+  tryOnce();
+}
+let _selfReconnected=false;
+
 function startOnlineMatch(firstSeat){
   G_online = true;
   G_mySeat = MWNet.seat();
@@ -6000,6 +6310,10 @@ function startOnlineMatch(firstSeat){
   MWNet.on('end_turn', applyRemoteEndTurn);
   MWNet.on('game_over', applyRemoteGameOver);
   MWNet.on('rematch', applyRemoteRematch);
+  MWNet.on('opponent_disconnected', onOpponentDisconnected);
+  MWNet.on('opponent_reconnected', onOpponentReconnected);
+  MWNet.on('reconnected', (m)=>{ _selfReconnected=true; onSelfReconnected(m); });
+  MWNet.on('reconnect_failed', (m)=>{ const sub=document.getElementById('pause-sub'); if(sub) sub.innerHTML='Match ended. <span style="color:var(--storm2);text-decoration:underline" onclick="location.reload()">Return to title</span>'; });
   MWNet.on('opponent_left', ()=>{
     if(!G.winner){
       G.winner='p'; G.reason='Opponent disconnected.';
@@ -6065,7 +6379,10 @@ function buildMySideState(){
     bots: G.p.bots.map(b=>({
       hp:b.hp, maxHp:b.maxHp, atk:b.atk, charge:b.charge,
       changed:!!b.changed, def:!!b.def, burn:b.burn||0, exhst:!!b.exhst,
-      fusedMedal:b.fusedMedal||null, fusedMedal2:b.fusedMedal2||null
+      fusedMedal:b.fusedMedal||null, fusedMedal2:b.fusedMedal2||null,
+      // passive/combo accumulators that drift mid-turn (Gokudo/Karin/Foxuno/etc.)
+      _comboCount:b._comboCount||0, _webbed:b._webbed||0, wallStacks:b.wallStacks||0,
+      _counterMarked:!!b._counterMarked, equipFx:(b.equip&&b.equip.fx)||null, equipName:(b.equip&&b.equip.name)||null
     }))
   };
 }
@@ -6076,6 +6393,13 @@ function applyOppSideState(st){
     b.hp=s.hp; b.maxHp=s.maxHp; b.atk=s.atk; b.charge=s.charge;
     b.changed=s.changed; b.def=s.def; b.burn=s.burn; b.exhst=s.exhst;
     b.fusedMedal=s.fusedMedal; b.fusedMedal2=s.fusedMedal2;
+    if(s._comboCount!==undefined) b._comboCount=s._comboCount;
+    if(s._webbed!==undefined) b._webbed=s._webbed;
+    if(s.wallStacks!==undefined) b.wallStacks=s.wallStacks;
+    if(s._counterMarked!==undefined) b._counterMarked=s._counterMarked;
+    // mirror equip presence (visual) without re-running its effect
+    if(s.equipFx && (!b.equip || b.equip.fx!==s.equipFx)) b.equip={fx:s.equipFx, name:s.equipName||'Equipment'};
+    else if(!s.equipFx && b.equip) b.equip=null;
   });
   if(typeof st.active==='number') G.c.activeBot=st.active;
   if(typeof st.mcUsed==='boolean') G.c.mcUsed=st.mcUsed;
