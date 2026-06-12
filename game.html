@@ -592,6 +592,65 @@ body::after{
 .combo-burst small{display:block;font-size:13px;color:#ffd0a0;letter-spacing:3px;margin-top:2px}
 
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Equipped bot indicator ── */
+.bot-slot.equipped{
+  border-color:rgba(120,200,140,.55)!important;
+}
+.bot-slot.equipped .bart{
+  box-shadow:inset 0 0 18px rgba(120,200,140,.25);
+}
+@keyframes equipGlow{0%,100%{box-shadow:0 4px 18px rgba(0,0,0,.6),0 0 10px rgba(120,200,140,.25)}50%{box-shadow:0 4px 18px rgba(0,0,0,.6),0 0 18px rgba(120,200,140,.5)}}
+.bot-slot.equipped:not(.changed):not(.def){ animation:equipGlow 2.6s ease-in-out infinite; }
+.equip-badge{
+  position:absolute;top:5px;left:5px;z-index:5;
+  width:19px;height:19px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(120,200,140,.95),rgba(80,160,110,.9));
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;box-shadow:0 1px 5px rgba(0,0,0,.5);
+  border:1px solid rgba(180,240,200,.6);
+}
+.btag.tgeq{
+  background:rgba(120,200,140,.18)!important;color:#78c88c!important;
+  border:1px solid rgba(120,200,140,.4)!important;
+}
+
+
+/* ── Robo Emperor Cable Network animation ── */
+@keyframes cableZap{0%{stroke-dashoffset:100;opacity:0}30%{opacity:1}100%{stroke-dashoffset:0;opacity:0}}
+@keyframes cablePulse{0%{transform:scale(.6);opacity:0}50%{opacity:1}100%{transform:scale(1.4);opacity:0}}
+.cable-fx{position:fixed;inset:0;z-index:470;pointer-events:none}
+.cable-bolt{position:absolute;width:3px;background:linear-gradient(180deg,transparent,#60d030,#a0ff60,#60d030,transparent);box-shadow:0 0 10px #60d030,0 0 20px rgba(96,208,48,.6);animation:cableZap .5s ease-out forwards;transform-origin:top}
+.cable-node{position:absolute;width:24px;height:24px;border-radius:50%;border:2px solid #80ff60;box-shadow:0 0 16px #60d030;animation:cablePulse .6s ease-out forwards}
+
+
+/* ═══ DESKTOP WIDESCREEN (ported into mobile build) ═══ */
+@media(min-width:900px){
+  /* Center the play column at a phone-like width so the bot triangle keeps
+     the same comfortable spacing it has on mobile. */
+  #app{
+    max-width:480px;
+    margin:0 auto;
+    border-left:1px solid rgba(255,255,255,.08);
+    border-right:1px solid rgba(255,255,255,.08);
+    box-shadow:0 0 60px rgba(0,0,0,.5);
+    background:linear-gradient(180deg,rgba(6,8,15,.28),rgba(6,8,15,.16));
+    backdrop-filter:blur(1.5px);
+    min-height:100vh;
+    position:relative;z-index:1;
+  }
+  /* Keep the mobile triangle spacing (18% slots) — do NOT pull them in,
+     the narrow column already gives the right gap between bots. */
+  .m-zone{min-height:150px}
+  #m-hand{max-width:480px;margin:0 auto}
+  #arena{z-index:0}
+}
+/* On very large monitors, allow the column to grow a little for readability */
+@media(min-width:1500px){
+  #app{max-width:540px}
+  #m-hand{max-width:540px}
+}
+
 </style>
 
 <style>
@@ -705,6 +764,10 @@ body::after{
     <div class="dpk" data-deck="throne" onclick="pickDeck(this)" style="border-color:rgba(96,192,48,.3)">
       <div class="dn" style="color:#60c030">⚙ Iron Throne</div>
       <div class="dd">Robo Emperor (solo)<br>Siege fortress — one unstoppable bot</div>
+    </div>
+    <div class="dpk" data-deck="forge" onclick="pickDeck(this)" style="border-color:rgba(224,160,32,.3)">
+      <div class="dn" style="color:#e0a020">⚒ Forge Barons</div>
+      <div class="dd">Grand Beetle · Neutranurse · Blackram<br>Equipment engine — build a juggernaut</div>
     </div>
   </div>
 
@@ -2235,6 +2298,7 @@ const MEDAL={
   digicore: {name:'Digi-Core', hp:17,color:'#00ff80',passive:'Gain 1 Charge when taking 4+ damage',mfFx:'mf_digistrike'},
   chain:    {name:'Chain',    hp:18,color:'#e060f0',passive:'3rd action each turn is free',mfFx:'mf_chain_strike'},
   emperor:  {name:'Emperor',  hp:42,color:'#60c030',passive:'Charge 2/turn. Medaforce fires at 4 Charge',mfFx:'mf_imperial'},
+  forge:    {name:'Forge',    hp:18,color:'#e0a020',passive:'Attacks ignore 1 damage reduction.',mfFx:'mf_overforge'},
 };
 const BOTS={
   metabee:  {name:'Metabee',  atk:5,medal:'blaze',   art:'metabee',  mcart:'mc_meta',color:'#f06424',passive:'On attack: if target has burn, deal +2 extra dmg.'},
@@ -2245,6 +2309,9 @@ const BOTS={
   machairodus:{name:'Machairodus',atk:5,medal:'titan',art:'machairodus',mcart:'mc_mach',color:'#9050d0',passive:'Stalk: if did NOT attack last turn, next attack +2 DMG.'},
   omegaknight:{name:'Omegaknight',atk:6,medal:'royal',art:'omegaknight',mcart:'mc_omega',color:'#f0c040',passive:'Vanguard: attacks on support bots redirect to Omegaknight.'},
   robo_emperor:{name:'Robo Emperor',atk:7,medal:'emperor',art:'robo_emperor',mcart:'mc_robo',color:'#60c030',passive:'Cable Network: start of turn, deal 2 DMG to highest-charge enemy and drain 1 Charge.'},
+  grand_beetle:{name:'Grand Beetle',atk:5,medal:'forge',art:'grand_beetle',mcart:'mc_grand_beetle',color:'#e0a020',passive:'Master Frame: holds up to 3 equipment. +1 ATK per equipment attached.'},
+  neutranurse:{name:'Neutranurse',atk:3,medal:'forge',art:'neutranurse',mcart:'mc_neutranurse',color:'#40c0a0',passive:'Hot Forge: when you play an equipment card, draw a card.'},
+  blackram:{name:'Blackram',atk:4,medal:'forge',art:'blackram',mcart:'mc_blackram',color:'#a08060',passive:'Scrap & Rebuild: when an equipped bot is defeated, return one of its equipment to your hand.'},
   nin_ninja:  {name:'Nin-Ninja', atk:4,medal:'chain',art:'nin_ninja', mcart:'mc_nin',  color:'#4080f0',passive:'Dual Technique: may play 2 technique cards per turn when active.'},
   foxuno:     {name:'Foxuno',    atk:3,medal:'chain',art:'foxuno',    mcart:'mc_foxuno',color:'#40d898',passive:'Battle Remedy: on attack, heal the lowest-HP ally for 2 HP.'},
   gokudo:     {name:'Gokudo',    atk:6,medal:'chain',art:'gokudo',    mcart:'mc_gokudo',color:'#f04020',passive:'Combo Cannon: deals +1 DMG per technique card played this turn before attacking.'},
@@ -2258,6 +2325,7 @@ const MFR={
   tai:{name:'Tai Kamiya',pass:'When any bot defeats an enemy, all your bots gain +1 ATK this turn.'},
   karin:{name:'Karin Junko',pass:'When you play 3+ cards in one turn, draw 1 and Gokudo gains +1 Charge.'},
   seaslug:{name:'Seaslug',pass:'When Robo Emperor drops below 20 HP, gain 3 Charge and draw 1 card.'},
+  kasumi:{name:'Kasumi Asano',pass:'When you play an equipment card, that bot gains +1 Charge.'},
 };
 let _uid=0;
 function uid(){return 'c'+(++_uid);}
@@ -2316,6 +2384,21 @@ const CDEFS={
   gen_pile_driver:  C('gen_pile_driver','technique','Pile Driver','earth_art','+3 no-switch','gen_pile','#8090a0','+3 DMG. Target cannot switch next turn. Generic.'),
   gen_last_resort:  C('gen_last_resort','action','Last Resort','act_art','6 unblockable','gen_lastresort','#f04040','Only if you have 2 or fewer cards in hand: deal 6 unblockable damage. Generic.'),
   gen_medal_reboot: C('gen_medal_reboot','action','Medal Reboot','act_art','Revive 6HP','gen_reboot','#f0b820','Once per game: return a defeated friendly bot with 6 HP. Generic.'),
+  // ═══ FORGE BARONS EQUIPMENT ENGINE ═══
+  fb_sentry_drone:  C('fb_sentry_drone','equipment','Sentry Drone','eq_art','EOT: 1 dmg','fb_sentry','#e0a020','End of turn: deal 1 DMG to enemy active bot.'),
+  fb_swarm_bay:     C('fb_swarm_bay','equipment','Swarm Bay','eq_art','SOT: 2 dmg','fb_swarm','#e0a020','Start of your turn: launch a drone dealing 2 DMG to enemy active.'),
+  fb_corrosion:     C('fb_corrosion','equipment','Corrosion Plating','eq_art','Thorns 2','fb_corrosion','#c08040','When this bot is attacked, attacker takes 2 DMG.'),
+  fb_autoloader:    C('fb_autoloader','equipment','Auto-Loader','eq_art','SOT: +1 Chg','fb_autoload','#e0a020','Start of your turn: this bot gains +1 Charge.'),
+  fb_bellows:       C('fb_bellows','equipment','Forge Bellows','eq_art','SOT: draw','fb_bellows','#e0a020','Start of turn: if you have 2+ equipment in play, draw a card.'),
+  fb_targeting:     C('fb_targeting','equipment','Targeting Array','eq_art','Pierce 2','fb_targeting','#e0a020','Start of turn: your next attack ignores 2 damage reduction.'),
+  fb_repair_bay:    C('fb_repair_bay','equipment','Repair Bay','eq_art','EOT: heal 2','fb_repair','#40c0a0','End of your turn: heal this bot 2 HP.'),
+  fb_overclock:     C('fb_overclock','equipment','Overclock Coil','eq_art','EOT: +1 ATK','fb_overclock','#e0a020','End of your turn: this bot gains +1 ATK permanently (max +4).'),
+  fb_heat_vents:    C('fb_heat_vents','equipment','Heat Vents','eq_art','Retaliate','fb_heatvents','#f06424','End of turn: if this bot took damage, deal that much to one enemy.'),
+  fb_conduit:       C('fb_conduit','equipment','Power Conduit','eq_art','3+: team ATK','fb_conduit','#e0a020','While you have 3+ equipment in play, all your bots +1 ATK.'),
+  fb_forge_core:    C('fb_forge_core','equipment','Forge Core','eq_art','5+: pierce','fb_forgecore','#f0c040','While you have 5+ equipment in play, your attacks are unblockable.'),
+  fb_master_forge:  C('fb_master_forge','equipment','Master Forge','eq_art','Scaling','fb_masterforge','#f0c040','On equip: draw a card. If 5+ equipment in play, equipped bot +2 ATK.'),
+  fb_overforge_mf:  C('fb_overforge_mf','medaforce','Overforge','mf_art','2x ATK','mf_overforge','#f0c040','MEDAFORCE: double active bot ATK this turn. It loses all equipment after.'),
+
 
   // ── BLAZE EXCLUSIVE ──────────────────────────────────────────
   counter_strike:C('counter_strike','technique','Counter Strike','fire_art','+3 +Burn Back','deal3_counter','#f06424','Deal +3 dmg. If target attacks next turn, they take 3 burn damage first.'),
@@ -2543,6 +2626,19 @@ const DECKS={
       ['mc_wargreymon',1],      // WarGreymon — Dramon bonus doubles
       ['mc_metalgurumemon',1],  // MetalGurumemon — double missile barrage
     ])},
+  forge:{bots:['grand_beetle','neutranurse','blackram'],mf:'kasumi',
+    deck:mkDeck([
+      // Equipment engine (10)
+      ['fb_sentry_drone',2],['fb_swarm_bay',1],['fb_autoloader',2],
+      ['fb_overclock',1],['fb_repair_bay',1],['fb_conduit',1],
+      ['fb_forge_core',1],['fb_targeting',1],['fb_heat_vents',1],
+      // Techniques (4)
+      ['iron_strike',2],['gen_power_surge',2],
+      // Actions (3)
+      ['gen_salvage',2],['medal_locator',1],
+      // Medaforce (2)
+      ['fb_overforge_mf',1],['inferno_surge',1],
+    ])},
 };
 
 // ═══ STATE ═══
@@ -2723,6 +2819,11 @@ function addChg(bot,n){
 function dmg(bot,raw,sk){
   if(bot.def)return;
   let d=raw;
+  bot._tookDmgThisTurn=(bot._tookDmgThisTurn||0)+raw;
+  // Corrosion Plating thorns: attacker takes 2
+  if(typeof botEquips==='function' && botEquips(bot).some(e=>e.fx==='fb_corrosion') && G._curAtkr && G._curAtkr!==bot){
+    const atkr=G._curAtkr; setTimeout(()=>{ if(atkr&&!atkr.def){ const oside=G.p.bots.includes(atkr)?'p':'c'; dmg(atkr,2,oside); flt('-2','dmg'); log('Corrosion Plating: attacker takes 2!','atk'); } },10);
+  }
   // Wall Stance: if targeting a player bot that isn't Rokusho, redirect to Rokusho
   if(sk==='p'&&bot.key!=='rokusho'){
     const rok=G.p.bots.find(b=>b.key==='rokusho'&&!b.def&&(b.wallStacks||0)>0);
@@ -2746,8 +2847,12 @@ function dmg(bot,raw,sk){
   // Sovereign Last Stand: pierce ALL reduction
   const _sovereign = getLastStand(sk==='p'?'p':'p'); // attacker side
   const _pierceAll = sk==='p' && alive(G.p).length===1 && alive(G.p)[0] && alive(G.p)[0].key==='omegaknight' && alive(G.p)[0]._sovereignLS;
-  if(!G._pierceDmg && !_pierceAll){
-    if(bot.medal==='titan'){const r=bot.changed?2:1;d=Math.max(0,d-r);}
+  // Forge pierce: attacker ignores N points of reduction this hit
+  let _forgePierce=0;
+  if(G._curAtkr&&(G._curAtkr._pierceThisHit||0)>0){ _forgePierce=G._curAtkr._pierceThisHit; G._curAtkr._pierceThisHit=0; }
+  const _unblock=(G._curAtkr&&G._curAtkr._forgeUnblock);
+  if(!G._pierceDmg && !_pierceAll && !_unblock){
+    if(bot.medal==='titan'){let r=bot.changed?2:1; r=Math.max(0,r-_forgePierce); d=Math.max(0,d-r);}
     // (Rokusho extra -1 removed in balance pass — Titan medal already grants -1)
     // Robo Emperor: Throne Armor (permanent) + Emperor Shield (equip)
     if(bot.key==='robo_emperor'){
@@ -2810,7 +2915,10 @@ function defeat(bot,sk){
     log(bot.name+' revives via Ghost Shell! (5 HP)','eq');
     banner('GHOST SHELL!','#2a80f0');return;
   }
-  bot.def=true;bot.hp=0;bot.equip=null;
+  // Blackram Scrap & Rebuild: return one equipment to hand
+  { const _eqs=(typeof botEquips==='function')?botEquips(bot):[]; const _side=G.p.bots.includes(bot)?G.p:(G.c.bots.includes(bot)?G.c:null);
+    if(_eqs.length&&_side&&_side.bots.some(b=>b.key==='blackram'&&!b.def)){ const _sal=_eqs[0]; if(CDEFS[_sal.id]){ _side.hand.push({...CDEFS[_sal.id],uid:uid()}); log('Scrap & Rebuild: recovered '+_sal.name+'!','eq'); } } }
+  bot.def=true;bot.hp=0;bot.equip=null;bot.equips=[];
   // Trigger death burst animation
   setTimeout(()=>{ const _e=getBotEl(bot,sk)||document.querySelector('.bc.dying'); if(_e)showDeathBurst(_e); },10);
   log(bot.name+' DEFEATED!','dmg');
@@ -2948,6 +3056,25 @@ function showBurnAll(){
 
 // ── Gokudo Combo Cannon visual ──
 let _comboFxBusy=false;
+
+// ── Robo Emperor Cable Network visual ──
+function triggerCableAnim(){
+  const wrap=document.createElement('div'); wrap.className='cable-fx';
+  for(let i=0;i<4;i++){
+    const bolt=document.createElement('div'); bolt.className='cable-bolt';
+    bolt.style.left=(20+Math.random()*60)+'%';
+    bolt.style.top='15%'; bolt.style.height=(30+Math.random()*30)+'%';
+    bolt.style.transform='rotate('+(Math.random()*30-15)+'deg)';
+    bolt.style.animationDelay=(i*0.06)+'s';
+    wrap.appendChild(bolt);
+  }
+  const node=document.createElement('div'); node.className='cable-node';
+  node.style.left='48%'; node.style.top='30%';
+  wrap.appendChild(node);
+  document.body.appendChild(wrap);
+  setTimeout(()=>wrap.remove(), 700);
+}
+
 function triggerComboAnim(count){
   if(_comboFxBusy)return; _comboFxBusy=true;
   try{ if(typeof SFX==='object'){ (SFX.combo?SFX.combo():(SFX.attack&&SFX.attack())); } }catch(e){}
@@ -3008,6 +3135,7 @@ function runPhase(){
   renderAll();
   if(G.phase==='charge'){
     doCharge('p');
+    forgeStartOfTurn('p');
     applySupportPassives('p'); // re-apply so buffs show during action phase
     G._lsBannerThisTurn=false; // fresh turn — allow banner
     actionsLeft=calcActionsLeft();
@@ -3050,6 +3178,7 @@ function doCharge(sk){
   if(sk==='p'){
     const emperor=G.p.bots.find(b=>b.key==='robo_emperor'&&!b.def);
     if(emperor){
+      try{ if(typeof triggerCableAnim==='function') triggerCableAnim(); }catch(e){}
       const strikes=emperor._dominionLS?(1+( (emperor.fusedMedal?1:0)+(emperor.fusedMedal2?1:0) )):1;
       for(let i=0;i<strikes;i++){
         const targets=alive(G.c).sort((a,b)=>b.charge-a.charge);
@@ -3080,6 +3209,9 @@ function endTurn(){
   // Clear support buff accumulators — recalculated next turn in applySupportPassives
   const pAct=getActiveBot('p');
   if(pAct){pAct._supportAtk=0;pAct._supportDef=0;pAct._warbDraw=false;}
+  // Overforge cleanup: shed equipment, restore base ATK
+  G.p.bots.forEach(b=>{ if(b._overforged!==undefined){ b.atk=b._overforged; delete b._overforged; if(b.key==='grand_beetle'){b.equips=[];} else {b.equip=null;} log(b.name+' sheds all equipment after Overforge.','eq'); } });
+  forgeEndOfTurn('p');
   log('Turn ends.','info');
   doCharge('c');drw(G.c,2); // mirrors opponent charge+draw online too
   if(!G_online) setTimeout(cpuTurn,900); // online: opponent plays, not CPU
@@ -3291,6 +3423,15 @@ function atkEnemy(idx){
 
 function resolveAtk(a,d,sk,techId){
   let total=a.atk;
+  // Grand Beetle Master Frame: +1 ATK per equipment attached
+  if(a&&a.key==='grand_beetle'){ total+=(a.equips||[]).length; }
+  // Power Conduit threshold: 3+ equipment in play → +1 ATK to all your bots
+  if(a&&forgeCount(sk)>=3 && G[sk].bots.some(b=>!b.def&&botEquips(b).some(e=>e.fx==='fb_conduit'))){ total+=1; }
+  // Forge medal + Targeting Array: pierce damage reduction
+  if(a&&(a.medal==='forge'||a.fusedMedal==='forge')){ a._pierceThisHit=(a._pierceThisHit||0)+1; }
+  if(a&&a._pierceNext){ a._pierceThisHit=(a._pierceThisHit||0)+a._pierceNext; a._pierceNext=0; }
+  // Forge Core threshold: 5+ equipment → unblockable
+  if(a&&forgeCount(sk)>=5 && G[sk].bots.some(b=>!b.def&&botEquips(b).some(e=>e.fx==='fb_forgecore'))){ a._forgeUnblock=true; }
   // Iron Throne: solo Emperor takes -1 from each attack (outnumbered 1v3)
   let _emperorSoak=(d&&d.key==='robo_emperor'&&G.c.bots&&G.c.bots.includes(d)&&G.c.bots.filter(b=>!b.def).length===1)?1:0;
   if(d&&d.equip&&d.equip.fx==='gen_bulwark') _emperorSoak+=1; // Bulwark: -1 dmg
@@ -3679,19 +3820,80 @@ function playAct(card){
   renderAll();
 }
 
+
+
+// ── Forge equipment triggers ──
+function forgeStartOfTurn(sk){
+  const cnt=forgeCount(sk);
+  G[sk].bots.forEach(bot=>{
+    if(bot.def)return;
+    botEquips(bot).forEach(eq=>{
+      if(eq.fx==='fb_swarm'){ const t=getActiveBot(sk==='p'?'c':'p'); if(t){ dmg(t,2,sk==='p'?'c':'p'); flt('-2','dmg'); log('Swarm Bay drone: 2 DMG!','atk'); } }
+      if(eq.fx==='fb_autoload'){ addChg(bot,1); }
+      if(eq.fx==='fb_bellows' && cnt>=2){ drw(G[sk],1); log('Forge Bellows: drew a card.','chg'); }
+      if(eq.fx==='fb_targeting'){ bot._pierceNext=2; }
+    });
+  });
+}
+function forgeEndOfTurn(sk){
+  G[sk].bots.forEach(bot=>{
+    if(bot.def)return;
+    botEquips(bot).forEach(eq=>{
+      if(eq.fx==='fb_sentry'){ const t=getActiveBot(sk==='p'?'c':'p'); if(t){ dmg(t,1,sk==='p'?'c':'p'); flt('-1','dmg'); } }
+      if(eq.fx==='fb_repair'){ bot.hp=Math.min(bot.maxHp,bot.hp+2); flt('+2','heal'); }
+      if(eq.fx==='fb_overclock'){ if((bot._overclockStacks||0)<4){ bot.atk++; bot._overclockStacks=(bot._overclockStacks||0)+1; log('Overclock Coil: '+bot.name+' +1 ATK.','chg'); } }
+      if(eq.fx==='fb_heatvents' && (bot._tookDmgThisTurn||0)>0){ const t=getActiveBot(sk==='p'?'c':'p'); if(t){ const d=bot._tookDmgThisTurn; dmg(t,d,sk==='p'?'c':'p'); flt('-'+d,'dmg'); log('Heat Vents retaliate: '+d+' DMG!','atk'); } }
+    });
+    bot._tookDmgThisTurn=0;
+  });
+}
+
+// ── Forge Barons engine: multi-equip + Forge Counter ──
+function botEquips(bot){
+  // Grand Beetle holds an array; others use the single .equip slot.
+  if(bot.key==='grand_beetle'){ if(!bot.equips) bot.equips=[]; return bot.equips; }
+  return bot.equip?[bot.equip]:[];
+}
+function forgeCount(sk){
+  let n=0;
+  G[sk].bots.forEach(b=>{ if(b.def)return; if(b.key==='grand_beetle'){ n+=(b.equips||[]).length; } else if(b.equip){ n++; } });
+  return n;
+}
+function attachEquip(bot, card){
+  if(bot.key==='grand_beetle'){
+    if(!bot.equips) bot.equips=[];
+    if(bot.equips.length>=3){ log('Grand Beetle already holds 3 equipment.','info'); return false; }
+    bot.equips.push({...card});
+  } else {
+    if(bot.equip) log('Replaced '+bot.equip.name+' on '+bot.name,'eq');
+    bot.equip={...card};
+  }
+  return true;
+}
+function hasEquipFx(bot, fx){
+  return botEquips(bot).some(e=>e.fx===fx);
+}
+
 function playEquip(card){
   if(actionsLeft<=0)return;
   dsc(G.p,card.uid);
   const henryFree = G.p.mf.pass.includes('free') && !G.p._henryUsed;
   if(henryFree){G.p._henryUsed=true;log('Henry: first action is free!','chg');}
   else{actionsLeft--;log(actionsLeft>0?'Action used — '+actionsLeft+' remaining.':'Action used.','info');}
+  const slotLabel=(b)=>{ if(b.key==='grand_beetle'){ const n=(b.equips||[]).length; return b.name+' ['+n+'/3]'+(n>=3?' FULL':''); } return b.name+(b.equip?' (replaces '+b.equip.name+')':''); };
   openM('Equip: '+card.name,'Choose a bot to equip this to:',
-    alive(G.p).map(b=>({l:b.name+(b.equip?' (replaces '+b.equip.name+')':''),cls:'mb ok',cb:()=>{
-      if(b.equip)log('Replaced '+b.equip.name+' on '+b.name,'eq');
-      b.equip={...card};
+    alive(G.p).map(b=>({l:slotLabel(b),cls:'mb ok',cb:()=>{
+      if(!attachEquip(b,card)){ return; } // full slots — abort
       if(card.fx==='eq_resonator')addChg(b,2);
-      log(card.name+' → '+b.name,'eq');
+      // Neutranurse passive: drawing a card when ANY equipment is played
+      if(alive(G.p).some(x=>x.key==='neutranurse')){ drw(G.p,1); log('Hot Forge: drew a card!','chg'); }
+      // Kasumi MF: equipped bot +1 Charge
+      if(G.p.mf&&G.p.mf.pass&&G.p.mf.pass.includes('+1 Charge')){ addChg(b,1); }
+      // Master Forge on-equip: draw, and +2 ATK if 5+ equipment
+      if(card.fx==='fb_masterforge'){ drw(G.p,1); log('Master Forge: drew a card!','chg'); if(forgeCount('p')>=5){ b.atk+=2; log('Master Forge: '+b.name+' +2 ATK (5+ gear)!','chg'); } }
+      log(card.name+' \u2192 '+b.name,'eq');
       closeM();renderAll();
+      if(G_online&&G_myTurn){ MWNet.move({type:'card',uid:card.uid,id:card.id,ctype:'equipment'}); _syncNow(); }
     }})));
 }
 
@@ -3749,6 +3951,16 @@ function openMFCard(card){
 }
 
 function fireMF(card,caster){
+  // Overforge: double active bot ATK this turn, then it sheds all equipment
+  if(card.fx==='mf_overforge'){
+    dsc(G.p,card.uid); caster.charge=0;
+    const base=caster.atk; caster.atk=caster.atk*2; caster._overforged=base;
+    log('OVERFORGE! '+caster.name+' ATK doubled to '+caster.atk+'!','atk');
+    banner('OVERFORGE!','#f0c040');
+    if(typeof triggerComboAnim==='function'){} // reuse FX if desired
+    renderAll();
+    return;
+  }
   // Consume resources
   dsc(G.p,card.uid);
   caster.charge=0;
@@ -4280,6 +4492,7 @@ function cpuTurn(){
   if(G_online)return; // online matches: remote moves drive the opponent side
   G.phase='cpu_turn';
   renderHeader();
+  forgeStartOfTurn('c');
   cpuBurnReaction();
   // CPU: consider switching active bot
   if(!G.c.switched){
@@ -4572,6 +4785,7 @@ function executeCpuAction(act){
 
 function endCpu(){
   if(G.winner)return;
+  forgeEndOfTurn('c');
   G.c.bots.forEach(b=>{b.exhst=false;b._dbl=false;b._fury=false;});
   G.p.bots.forEach(b=>{b._dbl=false;b._fury=false;b.wallStacks=0;});
   turn++;G.phase='charge';atked=false;G.supportUsed=false;G.boostActive=null;G.tauntActive=false;G.p.switched=false;if(G.p._henryUsed)G.p._henryUsed=false;
@@ -4679,7 +4893,9 @@ function mkBotEl(bot,idx,sk){
   const atkDisplay = bot.atk + mcBonus + (bot.equip&&bot.equip.fx==='eq_blaze_arm'?2:0) + (bot.medal==='blaze'||bot.fusedMedal==='blaze'?2:0) + (bot._supportAtk||0);
   const defBonus = (bot._supportDef||0) + (bot.medal==='titan'?1:0) + (bot.key==='rokusho'?1:0);
   const botArtHtml=renderBotArt(bot,baseBotW,artH);
-  div.innerHTML=`${botArtHtml}
+  const _eqList=(typeof botEquips==='function')?botEquips(bot):(bot.equip?[bot.equip]:[]);
+  const equipBadge=(_eqList.length&&!bot.def)?`<div class="equip-badge" title="${_eqList.map(e=>e.name).join(', ')}">\u{1F527}${_eqList.length>1?'<span style="font-size:8px;font-weight:800;margin-left:1px">'+_eqList.length+'</span>':''}</div>`:'';
+  div.innerHTML=`${equipBadge}${botArtHtml}
 <div class="binfo" title="Click 🎨 Art to change bot artwork">
   <div class="btop">
     <span class="bname" style="color:${bot.color}${bot.changed?';text-shadow:0 0 8px '+bot.color:''}">${bot.name}${bot.changed?'⚡':''}</span><span class="bpassive-i" onclick="event.stopPropagation();showBotPassive('${sk}',${idx})" style="margin-left:4px;font-size:10px;color:var(--text3);cursor:pointer;border:1px solid var(--text3);border-radius:50%;width:13px;height:13px;display:inline-flex;align-items:center;justify-content:center;line-height:1">\u24d8</span>
@@ -5009,7 +5225,7 @@ function renderLog(){
 // ═══ MODAL ═══
 
 // ── In-game menu (☰): decklist viewer, surrender, music, rules ──
-const DECK_GUIDE = {"blaze": {"name": "BLAZE CHAIN", "color": "#f06424", "mf": "Ikki", "plan": "Burn aggro. Ignite enemies early, then Metabee\u2019s passive adds damage to every burning target. Chain techniques for burst and close with Medachange.", "combo": "Flame Whip (burn ALL) \u2192 Scorch a burning target for 8 free \u2192 Metabee passive fires on each burning bot."}, "titan": {"name": "TITAN GUARD", "color": "#8090a0", "mf": "Henry", "plan": "Defensive bruiser. Soak hits, drain enemy Charge with Iron Strike, and grind value as Sumilidon/Machairodus scale in Last Stand.", "combo": "Iron Strike to strip 2 Charge \u2192 Guard Break their wall \u2192 Machairodus Last Stand bonus swings the race."}, "royal": {"name": "ROYAL COURT", "color": "#f0b020", "mf": "Tai", "plan": "Charge-control midrange. Build Charge across the team, protect Omegaknight\u2019s Vanguard, then convert with a big Medaforce turn.", "combo": "Royal Decree (draw 2, +1 Charge all) \u2192 Medaforce with Medal Lens bonus \u2192 WarGreymon Digi-Core finish."}, "shadow": {"name": "SHADOW BLADE", "color": "#9050d0", "mf": "Karin", "plan": "Tempo combo. Nin-Ninja chains multiple techniques per turn, Foxuno heals to outlast, Gokudo punishes with combo triggers.", "combo": "Nin-Ninja plays 2\u20133 techniques in one turn \u2192 Karin 3-card trigger draws \u2192 Gokudo combo count detonates."}, "throne": {"name": "IRON THRONE", "color": "#30b050", "mf": "Seaslug", "plan": "Solo emperor control. Robo Emperor tanks alone, drawing extra cards as it\u2019s wounded, snowballing Charge into unblockable Medaforce.", "combo": "Take damage \u2192 Seaslug wound-draws fuel the hand \u2192 Emperor Decree (+3 cards) \u2192 unblockable MF for lethal."}};
+const DECK_GUIDE = {"blaze": {"name": "BLAZE CHAIN", "color": "#f06424", "mf": "Ikki", "plan": "Burn aggro. Ignite enemies early, then Metabee\u2019s passive adds damage to every burning target. Chain techniques for burst and close with Medachange.", "combo": "Flame Whip (burn ALL) \u2192 Scorch a burning target for 8 free \u2192 Metabee passive fires on each burning bot."}, "titan": {"name": "TITAN GUARD", "color": "#8090a0", "mf": "Henry", "plan": "Defensive bruiser. Soak hits, drain enemy Charge with Iron Strike, and grind value as Sumilidon/Machairodus scale in Last Stand.", "combo": "Iron Strike to strip 2 Charge \u2192 Guard Break their wall \u2192 Machairodus Last Stand bonus swings the race."}, "royal": {"name": "ROYAL COURT", "color": "#f0b020", "mf": "Tai", "plan": "Charge-control midrange. Build Charge across the team, protect Omegaknight\u2019s Vanguard, then convert with a big Medaforce turn.", "combo": "Royal Decree (draw 2, +1 Charge all) \u2192 Medaforce with Medal Lens bonus \u2192 WarGreymon Digi-Core finish."}, "shadow": {"name": "SHADOW BLADE", "color": "#9050d0", "mf": "Karin", "plan": "Tempo combo. Nin-Ninja chains multiple techniques per turn, Foxuno heals to outlast, Gokudo punishes with combo triggers.", "combo": "Nin-Ninja plays 2\u20133 techniques in one turn \u2192 Karin 3-card trigger draws \u2192 Gokudo combo count detonates."}, "throne": {"name": "IRON THRONE", "color": "#30b050", "mf": "Seaslug", "plan": "Solo emperor control. Robo Emperor tanks alone, drawing extra cards as it\u2019s wounded, snowballing Charge into unblockable Medaforce.", "combo": "Take damage \u2192 Seaslug wound-draws fuel the hand \u2192 Emperor Decree (+3 cards) \u2192 unblockable MF for lethal."},"forge":{"name":"FORGE BARONS","color":"#e0a020","mf":"Kasumi Asano","plan":"Equipment engine. Bolt gear onto Grand Beetle (holds 3), trigger start/end-of-turn effects, and cross Forge Counter thresholds (3+ team ATK, 5+ unblockable) to build an unstoppable juggernaut.","combo":"Stack 5+ equipment \u2192 Forge Core makes attacks unblockable \u2192 Overforge doubles ATK for a one-shot finish."}};
 
 
 // ── Per-deck records + stats profile ──
