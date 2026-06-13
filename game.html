@@ -7564,8 +7564,8 @@ const MWNet = (function(){
     hasSession(){ return !!_loadReconnect(); },
     clearSession(){ try{ localStorage.removeItem('mw_reconnect'); }catch(e){} },
     on,
-    async create(deckName, mfName){ await connect(); sendRaw({type:'create', deck:deckName, mf:mfName}); },
-    async join(code, deckName, mfName){ await connect(); sendRaw({type:'join', code:code, deck:deckName, mf:mfName}); },
+    async create(deckName, mfName){ await connect(); sendRaw({type:'create',token:(typeof MWBeta!=='undefined'?MWBeta.token():null), deck:deckName, mf:mfName}); },
+    async join(code, deckName, mfName){ await connect(); sendRaw({type:'join',token:(typeof MWBeta!=='undefined'?MWBeta.token():null), code:code, deck:deckName, mf:mfName}); },
     move(moveObj){ sendRaw({type:'move', move:moveObj}); },
     syncState(state){ sendRaw({type:'sync', state:state}); },
     endTurn(){ sendRaw({type:'end_turn'}); },
@@ -7576,7 +7576,73 @@ const MWNet = (function(){
   };
 })();
 
+
+// ═══ BETA KEY (client) ═══
+const MWBeta = (function(){
+  let _gate=null; // null=unknown, true/false once checked
+  function token(){ try{ return localStorage.getItem('mw_beta_token')||null; }catch(e){ return null; } }
+  function setToken(t){ try{ if(t) localStorage.setItem('mw_beta_token',t); }catch(e){} }
+  function base(){ return (typeof ArtCloud!=='undefined'&&ArtCloud.base)?ArtCloud.base():null; }
+  async function checkGate(){
+    const b=base(); if(!b){ _gate=false; return false; }
+    try{ const r=await fetch(b+'/beta/config'); const j=await r.json(); _gate=!!j.gate; }
+    catch(e){ _gate=false; }
+    return _gate;
+  }
+  function gateKnown(){ return _gate; }
+  async function redeem(code){
+    const b=base(); if(!b) return {ok:false,error:'no_server'};
+    try{
+      const r=await fetch(b+'/redeem',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});
+      const j=await r.json();
+      if(j.ok&&j.token){ setToken(j.token); }
+      return j;
+    }catch(e){ return {ok:false,error:'network'}; }
+  }
+  async function hasValidAccess(){
+    if(_gate===false) return true;          // gating off → everyone allowed
+    const t=token(); if(!t) return false;
+    const b=base(); if(!b) return false;
+    try{ const r=await fetch(b+'/beta/validate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:t})}); const j=await r.json(); return !!j.ok; }
+    catch(e){ return false; }
+  }
+  return { token, setToken, checkGate, gateKnown, redeem, hasValidAccess };
+})();
+
+// Show the beta-key entry modal; calls onOk() when access is granted.
+function promptBetaKey(onOk){
+  openM('Beta Access Required',
+    'Online play is in private beta. Enter your beta key to unlock it:<br><br>'+
+    '<input id="beta-key-input" placeholder="MW-XXXX-XXXX" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,.3);color:var(--text);font-family:Orbitron,monospace;font-size:13px;text-align:center;text-transform:uppercase">'+
+    '<div id="beta-key-msg" style="font-size:11px;color:var(--red);margin-top:8px;min-height:14px;text-align:center"></div>',
+    [{l:'REDEEM',cls:'mb ok',cb:async()=>{
+        const inp=document.getElementById('beta-key-input');
+        const msg=document.getElementById('beta-key-msg');
+        const code=(inp&&inp.value||'').trim().toUpperCase();
+        if(!code){ if(msg)msg.textContent='Enter a key.'; return; }
+        if(msg){ msg.style.color='var(--text3)'; msg.textContent='Checking…'; }
+        const res=await MWBeta.redeem(code);
+        if(res.ok){ closeM(); if(onOk)onOk(); }
+        else {
+          const errs={invalid_format:'That key format looks wrong.',not_found:'Key not found.',network:'Could not reach the server.',no_server:'Server unavailable.'};
+          if(msg){ msg.style.color='var(--red)'; msg.textContent=errs[res.error]||'Could not redeem that key.'; }
+        }
+      }},
+     {l:'Cancel',cls:'mb',cb:()=>closeM()}]);
+}
+
 function openOnlineLobby(){
+  // Beta gate: if the server requires keys and we don't have access, prompt first.
+  (async()=>{
+    if(MWBeta.gateKnown()===null){ try{ await MWBeta.checkGate(); }catch(e){} }
+    if(MWBeta.gateKnown()===true){
+      const ok=await MWBeta.hasValidAccess();
+      if(!ok){ promptBetaKey(()=>openOnlineLobby()); return; }
+    }
+    _openOnlineLobbyInner();
+  })();
+}
+function _openOnlineLobbyInner(){
   if(!MWNet.available()){
     openM('Online Play',
       'Online multiplayer is almost ready! The match server needs to be deployed first. Once it is live, you will be able to create a room, share a 4-letter code with a friend, and battle in real time.<br><br>For now, enjoy solo play against the CPU.',
@@ -7951,7 +8017,7 @@ const ArtCloud = (function(){
       const r = await fetch(base + '/art/upload', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ dataUrl })
+        body: JSON.stringify({ dataUrl, secret:(typeof _mwAdminSecret!=='undefined'?_mwAdminSecret:null) })
       });
       const j = await r.json().catch(()=>({}));
       if(!r.ok){ window._lastArtErr = j.error || ('http_'+r.status); return null; }
@@ -7969,7 +8035,20 @@ const artCloudUrls = {};
 // background so it can be shared with opponents online.
 
 // ── Default art: published manifest becomes everyone's base skin ──
+
+// Admin secret for publishing shared art (operator-only). Kept in memory only.
+let _mwAdminSecret=null;
+function getAdminSecret(cb){
+  if(_mwAdminSecret){ cb(_mwAdminSecret); return; }
+  openM('Operator Access',
+    'Publishing shared art to all players is operator-only. Enter the admin secret:<br><br>'+
+    '<input id="admin-secret-input" type="password" placeholder="admin secret" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,.3);color:var(--text);font-size:13px">',
+    [{l:'CONFIRM',cls:'mb ok',cb:()=>{ const v=(document.getElementById('admin-secret-input')||{}).value||''; if(v){ _mwAdminSecret=v; closeM(); cb(v); } }},
+     {l:'Cancel',cls:'mb',cb:()=>closeM()}]);
+}
+
 async function publishDefaultArt(){
+  if(!_mwAdminSecret){ getAdminSecret(()=>publishDefaultArt()); return; }
   const base = (typeof ArtCloud!=='undefined'&&ArtCloud.base)?ArtCloud.base():null;
   if(!base){ openM('Set as Default','Could not reach the server. Try again in a few seconds.',[{l:'OK',cls:'mb ok',cb:()=>closeM()}]); return; }
   const keys = Object.keys(artCloudUrls||{}).filter(k=>!k.startsWith('opp_'));
@@ -7979,7 +8058,7 @@ async function publishDefaultArt(){
   }
   const manifest={}; keys.forEach(k=>{ if(artCloudUrls[k]) manifest[k]=artCloudUrls[k]; });
   try{
-    const r = await fetch(base+'/art/manifest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({manifest})});
+    const r = await fetch(base+'/art/manifest',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({manifest, secret:(typeof _mwAdminSecret!=='undefined'?_mwAdminSecret:null)})});
     const j = await r.json().catch(()=>({}));
     if(r.ok&&j.ok){
       openM('Default Art Published','<div style="text-align:center"><div style="font-size:28px;margin:8px 0">\u2728</div><b style="color:var(--gold)">'+j.keys+'</b> images are now the default art for every player.<br><br><span style="font-size:10px;color:var(--text2)">Players see your art automatically. Their own uploads still override it on their device.</span></div>',[{l:'Done',cls:'mb ok',cb:()=>closeM()}]);
@@ -8007,6 +8086,8 @@ async function loadDefaultArt(){
 }
 
 async function syncAllArtToCloud(){
+  // Shared-art sync is operator-only (prevents arbitrary users publishing art others see).
+  if(!_mwAdminSecret){ getAdminSecret(()=>syncAllArtToCloud()); return; }
   if(!ArtCloud.enabled()){
     // Try to initialize — server may have just woken up
     await ArtCloud.check();

@@ -6,10 +6,15 @@
 const http = require('http');
 const { WebSocketServer } = require('ws');
 const R2 = require('./r2');
+const BetaKeys = require('./betakeys');
 const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT || 8080;
+
+// Beta-key gating toggle. Set BETA_GATE=on in Railway to require keys for online play.
+const BETA_GATE = process.env.BETA_GATE === 'on';
+BetaKeys.init(R2);
 
 // Serve the game HTML file — loaded once at startup, cached in memory.
 // Name it "game.html" and put it alongside server.js in the repo.
@@ -130,6 +135,10 @@ const server = http.createServer((req, res) => {
       if (err || !data || typeof data.manifest !== 'object') {
         res.writeHead(400, {'Content-Type':'application/json'}); res.end('{"error":"bad_manifest"}'); return;
       }
+      // ADMIN-ONLY: publishing the shared default skin to ALL players requires the secret.
+      if (!BetaKeys.checkAdmin(data.secret)) {
+        res.writeHead(403, {'Content-Type':'application/json'}); res.end('{"error":"forbidden_admin_only"}'); return;
+      }
       try {
         await R2.putJson('default_manifest.json', data.manifest);
         res.writeHead(200, {'Content-Type':'application/json'});
@@ -141,7 +150,11 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Upload one art image: POST { dataUrl } → { url }
+  // Upload one art image: POST { dataUrl, secret } → { url }
+  // ADMIN-ONLY: shared art that other players can see must be approved by the
+  // operator. This prevents arbitrary users from publishing inappropriate
+  // content to a shared store. Per-player custom art stays LOCAL on the client
+  // and is never sent here.
   if (req.url === '/art/upload' && req.method === 'POST') {
     if (!R2.enabled()) {
       res.writeHead(503, { 'Content-Type': 'application/json' });
@@ -154,6 +167,11 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify({ error: err.message }));
         return;
       }
+      if (!BetaKeys.checkAdmin(data && data.secret)) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'forbidden_admin_only' }));
+        return;
+      }
       try {
         const url = await R2.uploadDataUrl(data.dataUrl);
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -162,6 +180,81 @@ const server = http.createServer((req, res) => {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: e.message || 'upload_failed' }));
       }
+    });
+    return;
+  }
+
+  // ── BETA KEY: redeem a key, get a session token ──
+  if (req.url === '/redeem' && req.method === 'POST') {
+    readJsonBody(req, 4096, (err, data) => {
+      if (err || !data || !data.code) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'bad_request' })); return;
+      }
+      const result = BetaKeys.redeem(data.code);
+      res.writeHead(result.ok ? 200 : 400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(result));
+    });
+    return;
+  }
+
+  // ── BETA KEY: check whether gating is even on (client asks at startup) ──
+  if (req.url === '/beta/config' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ gate: BETA_GATE }));
+    return;
+  }
+
+  // ── BETA KEY: validate an existing token ──
+  if (req.url === '/beta/validate' && req.method === 'POST') {
+    readJsonBody(req, 4096, (err, data) => {
+      const ok = !err && data && BetaKeys.validToken(data.token);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: !!ok }));
+    });
+    return;
+  }
+
+  // ── ADMIN: generate keys. Requires ADMIN_SECRET. POST { secret, count, note } ──
+  if (req.url === '/admin/keys/generate' && req.method === 'POST') {
+    readJsonBody(req, 4096, (err, data) => {
+      if (err || !data || !BetaKeys.checkAdmin(data.secret)) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'forbidden' })); return;
+      }
+      const n = Math.min(Math.max(parseInt(data.count) || 1, 1), 500);
+      const codes = BetaKeys.generate(n, data.note);
+      BetaKeys.persist();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, codes }));
+    });
+    return;
+  }
+
+  // ── ADMIN: list keys. POST { secret } ──
+  if (req.url === '/admin/keys/list' && req.method === 'POST') {
+    readJsonBody(req, 4096, (err, data) => {
+      if (err || !data || !BetaKeys.checkAdmin(data.secret)) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'forbidden' })); return;
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, keys: BetaKeys.list(), stats: BetaKeys.stats() }));
+    });
+    return;
+  }
+
+  // ── ADMIN: revoke a key. POST { secret, code } ──
+  if (req.url === '/admin/keys/revoke' && req.method === 'POST') {
+    readJsonBody(req, 4096, (err, data) => {
+      if (err || !data || !BetaKeys.checkAdmin(data.secret)) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'forbidden' })); return;
+      }
+      const r = BetaKeys.revoke(data.code);
+      BetaKeys.persist();
+      res.writeHead(r.ok ? 200 : 404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(r));
     });
     return;
   }
@@ -189,6 +282,9 @@ wss.on('connection', (ws) => {
 
       // ── CREATE ROOM ───────────────────────────────────
       case 'create': {
+        if (BETA_GATE && !BetaKeys.validToken(msg.token)) {
+          return send(ws, 'error', { msg: 'A valid beta key is required for online play.', code: 'beta_required' });
+        }
         const code = makeCode();
         // host seed: shared RNG seed so both clients deal identical mulligan if desired
         const hostSeed = Math.floor(Math.random() * 2147483647);
@@ -209,6 +305,9 @@ wss.on('connection', (ws) => {
 
       // ── JOIN ROOM ─────────────────────────────────────
       case 'join': {
+        if (BETA_GATE && !BetaKeys.validToken(msg.token)) {
+          return send(ws, 'join_failed', { msg: 'A valid beta key is required for online play.', code: 'beta_required' });
+        }
         const code = (msg.code || '').toUpperCase().trim();
         const room = rooms.get(code);
         if (!room) return send(ws, 'join_failed', { msg: 'Room not found. Check the code.' });
@@ -268,7 +367,8 @@ wss.on('connection', (ws) => {
         const room = rooms.get(ws.roomCode);
         if (!room) return;
         room.hostSeed = Math.floor(Math.random() * 2147483647);
-        broadcast(room, 'rematch', { seed: room.hostSeed }, ws);
+        // carry the sender's (possibly new) deck choice to the opponent
+        broadcast(room, 'rematch', { seed: room.hostSeed, deck: msg.deck || null, mf: msg.mf || null }, ws);
         break;
       }
 
@@ -288,6 +388,27 @@ wss.on('connection', (ws) => {
         break;
       }
 
+      // ── RECONNECT: rejoin a room+seat after a drop ──────
+      case 'reconnect': {
+        const code = (msg.code || '').toUpperCase().trim();
+        const seat = (msg.seat === 0 || msg.seat === 1) ? msg.seat : null;
+        const room = rooms.get(code);
+        if (!room || seat === null) { return send(ws, 'reconnect_failed', { msg: 'Match no longer available.' }); }
+        if (room.players[seat] && room.players[seat].readyState === room.players[seat].OPEN) {
+          return send(ws, 'reconnect_failed', { msg: 'Seat already taken.' });
+        }
+        // Restore the seat
+        room.players[seat] = ws;
+        ws.roomCode = code;
+        ws.seat = seat;
+        if (room.disconnected) delete room.disconnected[seat];
+        send(ws, 'reconnected', { code, seat, oppDeck: room.deck[1 - seat], oppMf: room.mf[1 - seat] });
+        // Ask the still-connected opponent to push a fresh authoritative state
+        broadcast(room, 'opponent_reconnected', { seat }, ws);
+        console.log(`[room ${code}] seat ${seat} reconnected`);
+        break;
+      }
+
       default:
         send(ws, 'error', { msg: 'Unknown message type: ' + msg.type });
     }
@@ -298,11 +419,24 @@ wss.on('connection', (ws) => {
     if (!code) return;
     const room = rooms.get(code);
     if (room) {
-      broadcast(room, 'opponent_left', {}, ws);
-      // free the seat
-      if (room.players[ws.seat] === ws) room.players[ws.seat] = null;
-      console.log(`[room ${code}] seat ${ws.seat} disconnected`);
-      setTimeout(() => cleanupRoom(code), 30000); // grace period for reconnect
+      const seat = ws.seat;
+      // Mark seat as disconnected but KEEP it reserved for reconnect
+      if (room.players[seat] === ws) room.players[seat] = null;
+      room.disconnected = room.disconnected || {};
+      room.disconnected[seat] = Date.now();
+      // Tell opponent it's a temporary pause, not a forfeit (yet)
+      broadcast(room, 'opponent_disconnected', { seat, graceMs: 45000 }, ws);
+      console.log(`[room ${code}] seat ${seat} disconnected — 45s grace`);
+      // After grace: if still gone, declare forfeit + cleanup
+      setTimeout(() => {
+        const r = rooms.get(code);
+        if (!r) return;
+        if (!r.players[seat] && r.disconnected && r.disconnected[seat]) {
+          broadcast(r, 'opponent_left', {}, null);
+          console.log(`[room ${code}] seat ${seat} did not return — forfeit`);
+          cleanupRoom(code);
+        }
+      }, 45000);
     }
   });
 });
