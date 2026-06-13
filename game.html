@@ -6520,9 +6520,9 @@ function showRules(){
 
 // ── Change deck before rematch ──
 function openDeckSwap(){
-  const order=['blaze','titan','royal','shadow','throne'];
+  const order=['blaze','titan','royal','shadow','throne','forge'];
   const names={blaze:'Blaze Chain',titan:'Titan Guard',royal:'Royal Court',shadow:'Shadow Blade',throne:'Iron Throne',forge:'Forge Barons'};
-  const cols={blaze:'#f06424',titan:'#8090a0',royal:'#f0b020',shadow:'#9050d0',throne:'#30b050'};
+  const cols={blaze:'#f06424',titan:'#8090a0',royal:'#f0b020',shadow:'#9050d0',throne:'#30b050',forge:'#e0a020'};
   const btns=order.map(k=>({l:(deck===k?'\u2713 ':'')+names[k], cls:'mb', style:'color:'+cols[k]+';border-color:'+cols[k]+'55', cb:()=>{
     deck=k; closeM();
     if(G_online){
@@ -7572,7 +7572,7 @@ const MWNet = (function(){
     clearSession(){ try{ localStorage.removeItem('mw_reconnect'); }catch(e){} },
     on,
     async create(deckName, mfName){ await connect(); sendRaw({type:'create',token:(typeof MWBeta!=='undefined'?MWBeta.token():null), deck:deckName, mf:mfName}); },
-    async queue(deckName, mfName, name){ await connect(); sendRaw({type:'queue',token:(typeof MWBeta!=='undefined'?MWBeta.token():null), deck:deckName, mf:mfName, name:name||null}); },
+    async queue(deckName, mfName, name){ await connect(); sendRaw({type:'queue',token:(typeof MWBeta!=='undefined'?MWBeta.token():null), anonId:_anonId(), deck:deckName, mf:mfName, name:name||null}); },
     leaveQueue(){ sendRaw({type:'queue_leave'}); },
     async join(code, deckName, mfName){ await connect(); sendRaw({type:'join',token:(typeof MWBeta!=='undefined'?MWBeta.token():null), code:code, deck:deckName, mf:mfName}); },
     move(moveObj){ sendRaw({type:'move', move:moveObj}); },
@@ -7709,10 +7709,12 @@ function _startQueue(){
   _bindRankedListeners();
   _queueSecs=0;
   const mfName=(DECKS[deck] && DECKS[deck].mf) || 'ikki';
-  MWNet.queue(deck, mfName, _playerName()).catch(()=>{
-    openM('Ranked','Could not reach the match server. Try again shortly.',[{l:'OK',cls:'mb ok',cb:()=>closeM()}]);
-  });
   _showQueueScreen();
+  MWNet.queue(deck, mfName, _playerName()).catch((err)=>{
+    _stopQueueTimer();
+    const why=(err&&err.message==='timeout')?'The server didn\'t respond in time. Free hosting sleeps when idle \u2014 wait ~15s and try again.':'Could not reach the match server.';
+    openM('Ranked',why,[{l:'Retry',cls:'mb ok',cb:()=>{ closeM(); _startQueue(); }},{l:'Back',cls:'mb',cb:()=>closeM()}]);
+  });
 }
 
 function _showQueueScreen(){
@@ -7748,6 +7750,7 @@ function _bindRankedListeners(){
   });
   MWNet.on('match_start',(m)=>{ closeM(); startOnlineMatch(m.firstSeat); });
   MWNet.on('rank_update',(m)=>{ _showRankUpdate(m); });
+  MWNet.on('error',(m)=>{ _stopQueueTimer(); openM('Ranked',(m&&m.msg)||'Connection problem. The server may be waking up \u2014 try again in a few seconds.',[{l:'OK',cls:'mb ok',cb:()=>closeM()}]); });
 }
 
 function _showRankUpdate(m){
@@ -8153,6 +8156,7 @@ function applyRemoteRematch(msg){
 const ArtCloud = (function(){
   let _enabled = null; // null = unknown, true/false once checked
   // Derive the HTTP base from the WS server URL: wss://host -> https://host
+  function _anonId(){ try{ let a=localStorage.getItem('mw_anon_id'); if(!a){ a='anon'+Math.random().toString(36).slice(2,12); localStorage.setItem('mw_anon_id',a); } return a; }catch(e){ return 'anon'+Math.random().toString(36).slice(2,12); } }
   function httpBase(){
     const u = window.MW_SERVER_URL;
     if(!u) return null;

@@ -371,8 +371,10 @@ wss.on('connection', (ws) => {
         if (BETA_GATE && !BetaKeys.validToken(msg.token)) {
           return send(ws, 'error', { msg: 'A valid beta key is required for ranked play.', code: 'beta_required' });
         }
-        if (!msg.token) return send(ws, 'error', { msg: 'Ranked requires a beta key.' });
-        const playerId = 'p_' + msg.token.slice(0, 16);
+        // Identity: prefer beta token; else a stable anonymous id the client sends; else socket id.
+        let idSrc = msg.token || msg.anonId || ('anon_' + Math.random().toString(36).slice(2, 14));
+        const playerId = 'p_' + String(idSrc).slice(0, 16);
+        ws._wantName = msg.name;
         Ranked.ensure(playerId, msg.name);
         const prof = Ranked.getProfile(playerId);
         // Already queued? ignore duplicates
