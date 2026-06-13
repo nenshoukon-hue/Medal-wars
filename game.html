@@ -747,6 +747,19 @@ body::after{
 .sbtn-primary:hover{ background:linear-gradient(135deg, rgba(255,160,80,.45), rgba(255,110,160,.45)) !important; }
 .diff-row .dlabel{ color:#b8c4dc !important; }
 
+
+.combo-badge{
+  position:absolute;top:5px;right:5px;z-index:5;
+  min-width:19px;height:19px;padding:0 4px;border-radius:10px;
+  background:linear-gradient(135deg,rgba(255,120,40,.97),rgba(220,60,30,.95));
+  display:flex;align-items:center;justify-content:center;gap:1px;
+  font-family:'Orbitron',monospace;font-size:9px;font-weight:800;color:#fff;
+  box-shadow:0 0 10px rgba(255,100,40,.7),0 2px 4px rgba(0,0,0,.4);
+  border:1px solid rgba(255,200,150,.6);
+  animation:comboPulse 1s ease-in-out infinite;
+}
+@keyframes comboPulse{0%,100%{transform:scale(1);box-shadow:0 0 10px rgba(255,100,40,.7),0 2px 4px rgba(0,0,0,.4)}50%{transform:scale(1.12);box-shadow:0 0 18px rgba(255,140,60,.95),0 2px 4px rgba(0,0,0,.4)}}
+
 </style>
 
 <style>
@@ -2471,6 +2484,9 @@ const CDEFS={
   mc_metabee:    C('mc_metabee','medachange','Metabee Change','mc_card_art','+5ATK +12HP','mc_bot_metabee','#f04880','Fuse with Metabee: +5 ATK, +12 max HP. Blaze damage cap removed. Losing = instant loss.'),
   mc_arcbeetle:  C('mc_arcbeetle','medachange','Arcbeetle Change','mc_card_art','+5ATK +12HP','mc_bot_arcbeetle','#f04880','Fuse with Arcbeetle: +5 ATK, +12 HP. Double-atk threshold 5→2. Losing = instant loss.'),
   mc_warbandit:  C('mc_warbandit','medachange','Warbandit Change','mc_card_art','+5ATK +12HP','mc_bot_warbandit','#f04880','Fuse with Warbandit: +5 ATK, +12 HP. MF draws 2 + all enemy charge −2. Losing = instant loss.'),
+  mc_grand_beetle: C('mc_grand_beetle','medachange','Grand Beetle Forge','mc_card_art','+5ATK +12HP','mc_bot_grand_beetle','#e0a020','Fuse with Grand Beetle: +5 ATK, +12 max HP. Equipment slots 3→4. Losing = instant loss.'),
+  mc_neutranurse: C('mc_neutranurse','medachange','Neutranurse Forge','mc_card_art','+4ATK +14HP','mc_bot_neutranurse','#40c0a0','Fuse with Neutranurse: +4 ATK, +14 max HP. Heals all allies +2 each turn. Losing = instant loss.'),
+  mc_blackram: C('mc_blackram','medachange','Blackram Forge','mc_card_art','+6ATK +10HP','mc_bot_blackram','#a08060','Fuse with Blackram: +6 ATK, +10 max HP. Sacrifice techniques deal +2 bonus. Losing = instant loss.'),
   // Burn-specific techniques for Blaze Chain
   flame_whip:    C('flame_whip','technique','Flame Whip','fw_art','+2 Spread Burn','deal3_burn_all','#f06424','Deal +2 dmg. ALL enemies take burn damage next turn.'),
   scorch:        C('scorch','technique','Scorch','sc_art','+2 / +6 Burn','deal2_scorch','#f06424','Deal +2 dmg. If target is already burning, deal +5 instead.'),
@@ -2746,15 +2762,17 @@ const DECKS={
     ])},
   forge:{bots:['grand_beetle','neutranurse','blackram'],mf:'kasumi',
     deck:mkDeck([
-      // Equipment engine (7 — trimmed)
-      ['fb_sentry_drone',1],['fb_autoloader',2],['fb_overclock',1],
+      // Equipment engine (6 — trimmed for medachange)
+      ['fb_sentry_drone',1],['fb_autoloader',1],['fb_overclock',1],
       ['fb_conduit',1],['fb_forge_core',1],['fb_targeting',1],
-      // Healing for Neutranurse (3)
-      ['fb_nano_mend',2],['fb_field_weld',1],
+      // Medachange — fuse with a Forge bot (3)
+      ['mc_grand_beetle',1],['mc_neutranurse',1],['mc_blackram',1],
+      // Healing for Neutranurse (2)
+      ['fb_nano_mend',1],['fb_field_weld',1],
       // Blackram sacrifice techniques (3)
       ['fb_scrap_blast',1],['fb_salvage_strike',1],['fb_overload_slam',1],
-      // Generic techniques (2)
-      ['iron_strike',2],
+      // Generic techniques (1)
+      ['iron_strike',1],
       // Actions (3)
       ['gen_salvage',1],['medal_locator',1],['gen_recharge',1],
       // Medaforce (2)
@@ -3715,12 +3733,12 @@ function applyTech(c,a,d,sk){
   const fx=c.fx;let b=0;
   // ── Forge Barons sacrifice techniques: destroy own equipment for effect ──
   if(fx==='fb_scrapblast'){
-    if(_destroyOneEquip(a)){ b=5; log('Scrap Blast: destroyed equipment for +5 DMG!','atk'); }
+    if(_destroyOneEquip(a)){ b=5+(a&&a._sacBonus?a._sacBonus:0); log('Scrap Blast: destroyed equipment for +'+b+' DMG!','atk'); }
     else { b=0; log('Scrap Blast: no equipment to destroy (no bonus).','info'); }
     return b;
   }
   if(fx==='fb_salvagestrike'){
-    if(_destroyOneEquip(a)){ b=3; drw(G[sk],1); log('Salvage Strike: +3 DMG and drew a card!','atk'); }
+    if(_destroyOneEquip(a)){ b=(3+(a&&a._sacBonus?a._sacBonus:0)); drw(G[sk],1); log('Salvage Strike: +3 DMG and drew a card!','atk'); }
     else { b=0; log('Salvage Strike: no equipment to destroy.','info'); }
     return b;
   }
@@ -3989,6 +4007,8 @@ function _destroyAllEquip(bot){
 
 // ── Forge equipment triggers ──
 function forgeStartOfTurn(sk){
+  // Neutranurse Forge medachange: heal all allies each turn
+  try{ const side=(arguments[0]==='c')?G.c:G.p; (side.bots||[]).filter(b=>!b.def&&b._healAura).forEach(nn=>{ (side.bots||[]).filter(b=>!b.def).forEach(b=>{ b.hp=Math.min(b.maxHp,b.hp+nn._healAura); }); }); }catch(e){}
   const cnt=forgeCount(sk);
   G[sk].bots.forEach(bot=>{
     if(bot.def)return;
@@ -4027,7 +4047,8 @@ function forgeCount(sk){
 function attachEquip(bot, card){
   if(bot.key==='grand_beetle'){
     if(!bot.equips) bot.equips=[];
-    if(bot.equips.length>=3){ log('Grand Beetle already holds 3 equipment.','info'); return false; }
+    const cap=bot._maxEquip||3;
+    if(bot.equips.length>=cap){ log('Grand Beetle already holds '+cap+' equipment.','info'); return false; }
     bot.equips.push({...card});
   } else {
     if(bot.equip) log('Replaced '+bot.equip.name+' on '+bot.name,'eq');
@@ -4080,6 +4101,9 @@ function playMC(card){
     (card.fx==='mc_bot_arcbeetle'?'• Lightning double-atk threshold: 5 → 2<br>':'')+
     (card.fx==='mc_bot_warbandit'?'• Medaforce draws 2 + drains all enemies −2 Charge<br>':'')+
     (card.fx==='mc_bot_rokusho'?'• Titan reduction −1 → −4 · heal 2 HP/turn<br>':'')+
+    (card.fx==='mc_bot_grand_beetle'?'• Equipment slots 3 → 4<br>':'')+
+    (card.fx==='mc_bot_neutranurse'?'• Heals all allies +2 HP each turn<br>':'')+
+    (card.fx==='mc_bot_blackram'?'• Sacrifice techniques deal +2 bonus<br>':'')+
     '<br><span style="color:var(--red)">⚠ If this bot is defeated while changed, you lose immediately.</span>',
     [{l:'CONFIRM MEDACHANGE',cls:'mb mc',cb:()=>{
       closeM();
@@ -4090,6 +4114,9 @@ function playMC(card){
         if(card.fx==='mc_bot_warbandit')bot.mcDraw2=true;
       if(card.fx==='mc_bot_wargreymon'){bot._dramonBonus=3;log('WarGreymon Medachange: Dramon bonus +6!','mc');}
       if(card.fx==='mc_bot_metalgurumemon'){bot._doubleBarrage=true;log('MetalGurumemon Medachange: Double Missile Barrage!','mc');}
+        if(card.fx==='mc_bot_grand_beetle'){bot._maxEquip=4;log('Grand Beetle Forge: 4 equipment slots!','mc');}
+        if(card.fx==='mc_bot_neutranurse'){bot._healAura=2;log('Neutranurse Forge: heals allies +2/turn!','mc');}
+        if(card.fx==='mc_bot_blackram'){bot._sacBonus=2;log('Blackram Forge: sacrifice techniques +2!','mc');}
         log('⚡ MEDACHANGE! '+bot.name+' transforms!','mc');
         banner('MEDACHANGE!','#f04880');
         renderAll();
@@ -5743,7 +5770,8 @@ function mkBotEl(bot,idx,sk){
   if(typeof showPcPreview==='function'){ div.addEventListener('mouseenter',()=>{ if(window.innerWidth>=900&&!bot.def) showPcPreview(botPreviewHtml(bot),bot.color); }); div.addEventListener('mousemove',movePcPreview); div.addEventListener('mouseleave',hidePcPreview); }
   const _eqList=(typeof botEquips==='function')?botEquips(bot):(bot.equip?[bot.equip]:[]);
   const equipBadge=(_eqList.length&&!bot.def)?`<div class="equip-badge" title="${_eqList.map(e=>e.name).join(', ')}">\u{1F527}${_eqList.length>1?'<span style="font-size:8px;font-weight:800;margin-left:1px">'+_eqList.length+'</span>':''}</div>`:'';
-  div.innerHTML=`${equipBadge}${botArtHtml}
+  const comboBadge=(bot.key==='gokudo'&&!bot.def&&(bot._comboCount||0)>0)?`<div class="combo-badge" title="Combo Cannon: +${bot._comboCount} DMG on next attack">\u{1F525}${bot._comboCount}</div>`:'';
+  div.innerHTML=`${equipBadge}${comboBadge}${botArtHtml}
 <div class="binfo" title="Click 🎨 Art to change bot artwork">
   <div class="btop">
     <span class="bname" style="color:${bot.color}${bot.changed?';text-shadow:0 0 8px '+bot.color:''}">${bot.name}${bot.changed?'⚡':''}</span><span class="bpassive-i" onclick="event.stopPropagation();showBotPassive('${sk}',${idx})" style="margin-left:4px;font-size:10px;color:var(--text3);cursor:pointer;border:1px solid var(--text3);border-radius:50%;width:13px;height:13px;display:inline-flex;align-items:center;justify-content:center;line-height:1">\u24d8</span>
@@ -6317,6 +6345,7 @@ const DECK_IDENTITY={
   royal:'Vanguard + Digimon collab — protect the front, finish with DigiStrike.',
   shadow:'Chain combo — dual techniques feed Combo Cannon and Chain Strike.',
   throne:'Solo siege fortress — one bot, Cable Network, Imperial Barrage.',
+  forge:'Equipment engine — bolt gear onto Grand Beetle, heal with Neutranurse, sacrifice with Blackram, then Overforge.',
 };
 
 // ── Constrained Deck Editor: swap up to 3 cards for generics ──
