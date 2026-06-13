@@ -259,6 +259,16 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // ── ADMIN: verify secret (so client can validate before bulk operations) ──
+  if (req.url === '/admin/check' && req.method === 'POST') {
+    readJsonBody(req, 4096, (err, data) => {
+      const ok = !err && data && BetaKeys.checkAdmin(data.secret);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: !!ok, adminConfigured: BetaKeys.adminEnabled() }));
+    });
+    return;
+  }
+
   // ── ADMIN: generate keys. Requires ADMIN_SECRET. POST { secret, count, note } ──
   if (req.url === '/admin/keys/generate' && req.method === 'POST') {
     readJsonBody(req, 4096, (err, data) => {

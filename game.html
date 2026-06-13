@@ -8205,9 +8205,24 @@ let _mwAdminSecret=null;
 function getAdminSecret(cb){
   if(_mwAdminSecret){ cb(_mwAdminSecret); return; }
   openM('Operator Access',
-    'Publishing shared art to all players is operator-only. Enter the admin secret:<br><br>'+
-    '<input id="admin-secret-input" type="password" placeholder="admin secret" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,.3);color:var(--text);font-size:13px">',
-    [{l:'CONFIRM',cls:'mb ok',cb:()=>{ const v=(document.getElementById('admin-secret-input')||{}).value||''; if(v){ _mwAdminSecret=v; closeM(); cb(v); } }},
+    'Publishing shared art is operator-only. Enter your admin secret (the ADMIN_SECRET you set in Railway):<br><br>'+
+    '<input id="admin-secret-input" type="password" placeholder="admin secret" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,.3);color:var(--text);font-size:13px">'+
+    '<div id="admin-secret-msg" style="font-size:11px;color:var(--text3);margin-top:8px;min-height:14px;text-align:center"></div>',
+    [{l:'CONFIRM',cls:'mb ok',cb:async()=>{
+        const v=(document.getElementById('admin-secret-input')||{}).value||'';
+        const msg=document.getElementById('admin-secret-msg');
+        if(!v){ if(msg)msg.textContent='Enter the secret.'; return; }
+        if(msg){ msg.style.color='var(--text3)'; msg.textContent='Verifying\u2026'; }
+        const base=(typeof ArtCloud!=='undefined'&&ArtCloud.base)?ArtCloud.base():null;
+        if(!base){ if(msg){msg.style.color='var(--red)';msg.textContent='Server unavailable.';} return; }
+        try{
+          const r=await fetch(base+'/admin/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({secret:v})});
+          const j=await r.json();
+          if(j.ok){ _mwAdminSecret=v; closeM(); cb(v); }
+          else if(!j.adminConfigured){ if(msg){msg.style.color='var(--red)';msg.textContent='No ADMIN_SECRET is set on the server. Add it in Railway \u2192 Variables, then redeploy.';} }
+          else { if(msg){msg.style.color='var(--red)';msg.textContent='That secret doesn\'t match. Check Railway \u2192 Variables.';} }
+        }catch(e){ if(msg){msg.style.color='var(--red)';msg.textContent='Could not reach the server.';} }
+      }},
      {l:'Cancel',cls:'mb',cb:()=>closeM()}]);
 }
 
