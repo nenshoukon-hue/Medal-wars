@@ -7542,7 +7542,7 @@ const MWNet = (function(){
       let settled = false;
       const done = (fn,arg)=>{ if(!settled){ settled=true; fn(arg); } };
       // 10s connection timeout so we never hang silently
-      const timer = setTimeout(()=>{ done(reject, new Error('timeout')); try{ if(ws) ws.close(); }catch(_){} }, 10000);
+      const timer = setTimeout(()=>{ done(reject, new Error('timeout')); try{ if(ws) ws.close(); }catch(_){} }, 25000);
       try{
         ws = new WebSocket(SERVER_URL);
         ws.onopen = ()=>{ _connected = true; };
@@ -7712,8 +7712,15 @@ function _startQueue(){
   _showQueueScreen();
   MWNet.queue(deck, mfName, _playerName()).catch((err)=>{
     _stopQueueTimer();
-    const why=(err&&err.message==='timeout')?'The server didn\'t respond in time. Free hosting sleeps when idle \u2014 wait ~15s and try again.':'Could not reach the match server.';
-    openM('Ranked',why,[{l:'Retry',cls:'mb ok',cb:()=>{ closeM(); _startQueue(); }},{l:'Back',cls:'mb',cb:()=>closeM()}]);
+    const url=(window.MW_SERVER_URL||'(none)');
+    let why;
+    if(err&&err.message==='timeout'){ why='The server didn\'t respond within 25s. Free hosting sleeps when idle \u2014 the first connect wakes it. Tap Retry once or twice.'; }
+    else if(err&&err.message==='no_server'){ why='No server URL is configured.'; }
+    else { why='Could not open a connection to the match server.'; }
+    openM('Ranked', why+'<br><br><span style="font-size:10px;color:var(--text3)">Server: '+url+'</span>',
+      [{l:'Retry',cls:'mb ok',cb:()=>{ closeM(); _startQueue(); }},
+       {l:'Test Connection',cls:'mb',cb:()=>_testConnection()},
+       {l:'Back',cls:'mb',cb:()=>closeM()}]);
   });
 }
 
@@ -7768,6 +7775,41 @@ function _showRankUpdate(m){
       [{l:'Queue Again',cls:'mb ok',cb:()=>{ closeM(); openRanked(); }},
        {l:'Title',cls:'mb',cb:()=>{ closeM(); location.reload(); }}]);
   }, 600);
+}
+
+
+// Diagnostic: ping the server's HTTP health endpoint and report the result.
+async function _testConnection(){
+  const base=(typeof ArtCloud!=='undefined'&&ArtCloud.base)?ArtCloud.base():null;
+  if(!base){ openM('Connection Test','No server URL configured.',[{l:'Back',cls:'mb ok',cb:()=>openRanked()}]); return; }
+  openM('Connection Test','<div style="text-align:center;color:var(--text3);font-size:11px">Pinging '+base+'/health\u2026<br>(waking the server can take ~20s)</div>',[{l:'Cancel',cls:'mb',cb:()=>openRanked()}]);
+  const started=Date.now();
+  try{
+    const ctrl=new AbortController(); const to=setTimeout(()=>ctrl.abort(),28000);
+    const r=await fetch(base+'/health',{signal:ctrl.signal});
+    clearTimeout(to);
+    const secs=((Date.now()-started)/1000).toFixed(1);
+    const txt=await r.text().catch(()=>'');
+    openM('Connection Test',
+      '<div style="font-size:12px;line-height:1.5">'+
+      'Status: <b style="color:'+(r.ok?'#40d088':'#ff6060')+'">'+r.status+(r.ok?' OK':' (problem)')+'</b><br>'+
+      'Time: '+secs+'s<br>'+
+      'Reply: '+(txt?txt.slice(0,60):'(empty)')+'<br><br>'+
+      (r.ok?'Server is reachable \u2014 ranked should work now. Tap Find Match again.':'Server responded but with an error. It may still be starting up.')+
+      '</div>',
+      [{l:'Back to Ranked',cls:'mb ok',cb:()=>openRanked()}]);
+  }catch(e){
+    const secs=((Date.now()-started)/1000).toFixed(1);
+    openM('Connection Test',
+      '<div style="font-size:12px;line-height:1.5">'+
+      '<b style="color:#ff6060">Could not reach the server</b> (after '+secs+'s).<br><br>'+
+      'Likely causes:<br>'+
+      '\u2022 The server is still waking up \u2014 wait 20s and retry.<br>'+
+      '\u2022 The latest server code isn\'t deployed on Railway yet.<br>'+
+      '\u2022 The server crashed \u2014 check Railway logs.'+
+      '</div>',
+      [{l:'Retry Test',cls:'mb ok',cb:()=>_testConnection()},{l:'Back',cls:'mb',cb:()=>openRanked()}]);
+  }
 }
 
 async function showLeaderboard(){
