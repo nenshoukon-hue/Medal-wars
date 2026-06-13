@@ -7,6 +7,7 @@ const http = require('http');
 const { WebSocketServer } = require('ws');
 const R2 = require('./r2');
 const BetaKeys = require('./betakeys');
+const Ranked = require('./ranked');
 const fs = require('fs');
 const path = require('path');
 
@@ -15,6 +16,10 @@ const PORT = process.env.PORT || 8080;
 // Beta-key gating toggle. Set BETA_GATE=on in Railway to require keys for online play.
 const BETA_GATE = process.env.BETA_GATE === 'on';
 BetaKeys.init(R2);
+Ranked.init(R2);
+
+// Matchmaking queue: array of { ws, playerId, rating, deck, mf, joinedAt }
+const rankedQueue = [];
 
 // Serve the game HTML file — loaded once at startup, cached in memory.
 // Name it "game.html" and put it alongside server.js in the repo.
@@ -62,6 +67,45 @@ function makeCode() {
     for (let i = 0; i < 4; i++) code += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
   } while (rooms.has(code));
   return code;
+}
+
+// ── Matchmaking: pair the two closest-rated waiting players ──
+function tryMatch() {
+  // Drop dead sockets
+  for (let i = rankedQueue.length - 1; i >= 0; i--) {
+    const q = rankedQueue[i];
+    if (!q.ws || q.ws.readyState !== q.ws.OPEN) rankedQueue.splice(i, 1);
+  }
+  if (rankedQueue.length < 2) return;
+  // Sort by rating, pair adjacent (closest skill). Widen tolerance with wait time.
+  rankedQueue.sort((a, b) => a.rating - b.rating);
+  for (let i = 0; i < rankedQueue.length - 1; i++) {
+    const a = rankedQueue[i], b = rankedQueue[i + 1];
+    const gap = Math.abs(a.rating - b.rating);
+    const waited = Math.min(Date.now() - a.joinedAt, Date.now() - b.joinedAt);
+    const tolerance = 100 + Math.floor(waited / 1000) * 40; // +40 rating/sec waited
+    if (gap <= tolerance) {
+      // Pair them
+      rankedQueue.splice(i, 2);
+      const code = makeCode();
+      const hostSeed = Math.floor(Math.random() * 2147483647);
+      a.ws.roomCode = code; a.ws.seat = 0;
+      b.ws.roomCode = code; b.ws.seat = 1;
+      rooms.set(code, {
+        players: [a.ws, b.ws],
+        deck: { 0: a.deck, 1: b.deck },
+        mf: { 0: a.mf, 1: b.mf },
+        createdAt: Date.now(), hostSeed, started: true,
+        ranked: true, playerIds: { 0: a.playerId, 1: b.playerId }
+      });
+      const pa = Ranked.getProfile(a.playerId), pb = Ranked.getProfile(b.playerId);
+      console.log(`[match] ranked: ${a.playerId}(${a.rating}) vs ${b.playerId}(${b.rating}) -> room ${code}`);
+      send(a.ws, 'match_found', { code, seat: 0, seed: hostSeed, oppDeck: b.deck, oppMf: b.mf, oppName: pb.name, oppRating: pb.rating, oppTier: pb.tier, ranked: true });
+      send(b.ws, 'match_found', { code, seat: 1, seed: hostSeed, oppDeck: a.deck, oppMf: a.mf, oppName: pa.name, oppRating: pa.rating, oppTier: pa.tier, ranked: true });
+      broadcast(rooms.get(code), 'match_start', { firstSeat: 0 });
+      return; // one match per tick; next tick handles more
+    }
+  }
 }
 
 function send(ws, type, payload) {
@@ -259,6 +303,25 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // ── RANKED: get a player's profile by token ──
+  if (req.url === '/ranked/profile' && req.method === 'POST') {
+    readJsonBody(req, 4096, (err, data) => {
+      if (err || !data || !data.token) { res.writeHead(400,{'Content-Type':'application/json'}); res.end('{"error":"bad_request"}'); return; }
+      const pid = 'p_' + data.token.slice(0, 16);
+      const prof = Ranked.getProfile(pid) || Ranked.getProfile(Ranked.ensure(pid, data.name) && pid);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, profile: prof }));
+    });
+    return;
+  }
+
+  // ── RANKED: leaderboard ──
+  if (req.url === '/ranked/leaderboard' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, board: Ranked.leaderboard(25) }));
+    return;
+  }
+
   res.writeHead(404);
   res.end();
 });
@@ -302,6 +365,37 @@ wss.on('connection', (ws) => {
         send(ws, 'created', { code, seat: 0, seed: hostSeed });
         break;
       }
+
+      // ── RANKED QUEUE: join matchmaking ────────────────
+      case 'queue': {
+        if (BETA_GATE && !BetaKeys.validToken(msg.token)) {
+          return send(ws, 'error', { msg: 'A valid beta key is required for ranked play.', code: 'beta_required' });
+        }
+        if (!msg.token) return send(ws, 'error', { msg: 'Ranked requires a beta key.' });
+        const playerId = 'p_' + msg.token.slice(0, 16);
+        Ranked.ensure(playerId, msg.name);
+        const prof = Ranked.getProfile(playerId);
+        // Already queued? ignore duplicates
+        if (rankedQueue.find(q => q.ws === ws)) return;
+        // Remove any stale entries for this player id
+        for (let i = rankedQueue.length - 1; i >= 0; i--) {
+          if (rankedQueue[i].playerId === playerId) rankedQueue.splice(i, 1);
+        }
+        ws.playerId = playerId;
+        rankedQueue.push({ ws, playerId, rating: prof.rating, deck: msg.deck || null, mf: msg.mf || null, joinedAt: Date.now() });
+        send(ws, 'queued', { rating: prof.rating, tier: prof.tier, position: rankedQueue.length });
+        console.log(`[queue] ${playerId} joined (rating ${prof.rating}); queue size ${rankedQueue.length}`);
+        tryMatch();
+        break;
+      }
+
+      // ── RANKED QUEUE: leave matchmaking ───────────────
+      case 'queue_leave': {
+        const idx = rankedQueue.findIndex(q => q.ws === ws);
+        if (idx >= 0) { rankedQueue.splice(idx, 1); send(ws, 'queue_left', {}); }
+        break;
+      }
+
 
       // ── JOIN ROOM ─────────────────────────────────────
       case 'join': {
@@ -359,6 +453,18 @@ wss.on('connection', (ws) => {
         const room = rooms.get(ws.roomCode);
         if (!room) return;
         broadcast(room, 'game_over', { winnerSeat: msg.winnerSeat, fromSeat: ws.seat }, ws);
+        // Ranked: apply ELO once per match (guard against both clients reporting)
+        if (room.ranked && !room.rankedApplied && (msg.winnerSeat === 0 || msg.winnerSeat === 1)) {
+          room.rankedApplied = true;
+          const wSeat = msg.winnerSeat, lSeat = wSeat === 0 ? 1 : 0;
+          const winnerId = room.playerIds[wSeat], loserId = room.playerIds[lSeat];
+          if (winnerId && loserId) {
+            const result = Ranked.applyResult(winnerId, loserId);
+            send(room.players[wSeat], 'rank_update', { you: result.winner, opponent: result.loser, won: true });
+            send(room.players[lSeat], 'rank_update', { you: result.loser, opponent: result.winner, won: false });
+            console.log(`[ranked] ${winnerId} +${result.winner.delta} (${result.winner.rating}) beat ${loserId} ${result.loser.delta} (${result.loser.rating})`);
+          }
+        }
         break;
       }
 
@@ -415,6 +521,9 @@ wss.on('connection', (ws) => {
   });
 
   ws.on('close', () => {
+    // Remove from ranked queue if waiting
+    { const qi = rankedQueue.findIndex(q => q.ws === ws); if (qi >= 0) rankedQueue.splice(qi, 1); }
+
     const code = ws.roomCode;
     if (!code) return;
     const room = rooms.get(code);

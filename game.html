@@ -760,6 +760,7 @@ body::after{
 }
 @keyframes comboPulse{0%,100%{transform:scale(1);box-shadow:0 0 10px rgba(255,100,40,.7),0 2px 4px rgba(0,0,0,.4)}50%{transform:scale(1.12);box-shadow:0 0 18px rgba(255,140,60,.95),0 2px 4px rgba(0,0,0,.4)}}
 
+@keyframes queueSpin{to{transform:rotate(360deg)}}
 </style>
 
 <style>
@@ -909,6 +910,9 @@ body::after{
     <div class="sbtn-row">
       <button class="sbtn" style="border-color:rgba(240,176,48,.4);color:var(--gold)" onclick="startInteractiveTutorial()">📖 HOW TO PLAY</button>
       <button class="sbtn" style="border-color:rgba(64,160,240,.5);color:#60b4ff" onclick="openOnlineLobby()">🌐 ONLINE</button>
+    </div>
+    <div class="sbtn-row">
+      <button class="sbtn" style="border-color:rgba(240,176,48,.6);color:var(--gold);background:linear-gradient(135deg,rgba(240,176,48,.14),rgba(255,110,160,.1))" onclick="openRanked()">🏆 RANKED</button>
     </div>
   </div>
 </div>
@@ -2959,6 +2963,7 @@ function dmg(bot,raw,sk){
   if(bot.def)return;
   let d=raw;
   bot._tookDmgThisTurn=(bot._tookDmgThisTurn||0)+raw;
+  try{ if(typeof SFX!=='undefined'&&SFX.hit) SFX.hit(raw); }catch(e){}
   // Corrosion Plating thorns: attacker takes 2
   if(typeof botEquips==='function' && botEquips(bot).some(e=>e.fx==='fb_corrosion') && G._curAtkr && G._curAtkr!==bot){
     const atkr=G._curAtkr; setTimeout(()=>{ if(atkr&&!atkr.def){ const oside=G.p.bots.includes(atkr)?'p':'c'; dmg(atkr,2,oside); flt('-2','dmg'); log('Corrosion Plating: attacker takes 2!','atk'); } },10);
@@ -6156,7 +6161,7 @@ function _recordDeckResult(deckKey, won){
   }catch(e){}
 }
 function openStatsProfile(){
-  const names={blaze:'Blaze Chain',titan:'Titan Guard',royal:'Royal Court',shadow:'Shadow Blade',throne:'Iron Throne'};
+  const names={blaze:'Blaze Chain',titan:'Titan Guard',royal:'Royal Court',shadow:'Shadow Blade',throne:'Iron Throne',forge:'Forge Barons'};
   const cols={blaze:'#f06424',titan:'#8090a0',royal:'#f0b020',shadow:'#9050d0',throne:'#30b050'};
   let stats={}; try{ stats=JSON.parse(localStorage.getItem('mw_deckstats')||'{}'); }catch(e){}
   const best=parseInt(localStorage.getItem('mw_beststreak')||'0');
@@ -6372,7 +6377,7 @@ function applyDeckSwaps(deckKey, deckArr){
 }
 
 function openDeckEditor(){
-  const names={blaze:'Blaze Chain',titan:'Titan Guard',royal:'Royal Court',shadow:'Shadow Blade',throne:'Iron Throne'};
+  const names={blaze:'Blaze Chain',titan:'Titan Guard',royal:'Royal Court',shadow:'Shadow Blade',throne:'Iron Throne',forge:'Forge Barons'};
   const dk=deck;
   const swaps=_getSwaps(dk);
   // Build the deck's current card list (counts)
@@ -6516,7 +6521,7 @@ function showRules(){
 // ── Change deck before rematch ──
 function openDeckSwap(){
   const order=['blaze','titan','royal','shadow','throne'];
-  const names={blaze:'Blaze Chain',titan:'Titan Guard',royal:'Royal Court',shadow:'Shadow Blade',throne:'Iron Throne'};
+  const names={blaze:'Blaze Chain',titan:'Titan Guard',royal:'Royal Court',shadow:'Shadow Blade',throne:'Iron Throne',forge:'Forge Barons'};
   const cols={blaze:'#f06424',titan:'#8090a0',royal:'#f0b020',shadow:'#9050d0',throne:'#30b050'};
   const btns=order.map(k=>({l:(deck===k?'\u2713 ':'')+names[k], cls:'mb', style:'color:'+cols[k]+';border-color:'+cols[k]+'55', cb:()=>{
     deck=k; closeM();
@@ -7278,6 +7283,7 @@ const ITUT=[
   {title:'Meet Your Team', body:'Your three Medabots sit at the bottom. The one in the center-front is ACTIVE — it attacks and defends. The other two are protected until it falls. Tap the ⓘ on any bot to see its abilities.', highlight:'#plr-team', action:'next'},
   {title:'The Charge Bar', body:'See the pips under each bot? That\'s CHARGE. Your bots gain charge each turn. At 5 charge, a bot can unleash its powerful MEDAFORCE attack. Charge is your path to big plays.', highlight:'.pips', action:'next'},
   {title:'Your Hand', body:'These cards at the bottom are your hand. TECHNIQUES boost an attack, ACTIONS give effects, EQUIPMENT bolts onto bots, and TRAPS set up defenses. Hover or long-press any card to read it.', highlight:'#m-hand', action:'next'},
+  {title:'Customize Your Deck', body:'Before any battle, tap EDIT DECK on the title screen to personalize your deck. You can swap up to 3 cards \u2014 trade ones that don\'t fit your style for cards you prefer. Small tweaks can shape your whole game plan. (You can\'t edit mid-battle, so plan ahead!)', highlight:null, action:'next'},
   {title:'Make Your Move', body:'Now YOUR turn. To attack: tap your active bot, then tap an enemy. To play a card: tap it. Try attacking now — tap your front bot, then an enemy bot!', highlight:null, action:'wait_attack'},
   {title:'Nice Hit!', body:'That\'s the core loop — attack to chip down enemy HP. KO a bot by reducing it to 0. When you\'re out of moves, tap END to pass to the CPU.', highlight:'#btn-end', action:'next'},
   {title:'Switching Bots', body:'Tap SWITCH to bring a support bot to the front — useful to protect a wounded bot or set up a stronger attacker. Each switch uses your turn\'s switch.', highlight:'#btn-switch', action:'next'},
@@ -7549,6 +7555,7 @@ const MWNet = (function(){
           if(m.type==='reconnected'){ _code=m.code; _seat=m.seat; if(m.oppDeck)_oppDeck=m.oppDeck; if(m.oppMf)_oppMf=m.oppMf; }
           if(m.type==='joined'){ _code=m.code; _seat=m.seat; _seed=m.seed; if(m.oppDeck)_oppDeck=m.oppDeck; if(m.oppMf)_oppMf=m.oppMf; _saveReconnect(); }
           if(m.type==='opponent_joined'){ if(m.oppDeck)_oppDeck=m.oppDeck; if(m.oppMf)_oppMf=m.oppMf; }
+          if(m.type==='match_found'){ _code=m.code; _seat=m.seat; _seed=m.seed; if(m.oppDeck)_oppDeck=m.oppDeck; if(m.oppMf)_oppMf=m.oppMf; _saveReconnect(); }
           if(m.type==='rematch'){ _seed=m.seed; if(m.oppDeck)_oppDeck=m.oppDeck; if(m.deck)_oppDeck=m.deck; }
           fire(m.type, m);
         };
@@ -7565,6 +7572,8 @@ const MWNet = (function(){
     clearSession(){ try{ localStorage.removeItem('mw_reconnect'); }catch(e){} },
     on,
     async create(deckName, mfName){ await connect(); sendRaw({type:'create',token:(typeof MWBeta!=='undefined'?MWBeta.token():null), deck:deckName, mf:mfName}); },
+    async queue(deckName, mfName, name){ await connect(); sendRaw({type:'queue',token:(typeof MWBeta!=='undefined'?MWBeta.token():null), deck:deckName, mf:mfName, name:name||null}); },
+    leaveQueue(){ sendRaw({type:'queue_leave'}); },
     async join(code, deckName, mfName){ await connect(); sendRaw({type:'join',token:(typeof MWBeta!=='undefined'?MWBeta.token():null), code:code, deck:deckName, mf:mfName}); },
     move(moveObj){ sendRaw({type:'move', move:moveObj}); },
     syncState(state){ sendRaw({type:'sync', state:state}); },
@@ -7630,6 +7639,157 @@ function promptBetaKey(onOk){
       }},
      {l:'Cancel',cls:'mb',cb:()=>closeM()}]);
 }
+
+
+// ═══════════════════════════════════════════════════════════
+//  RANKED MODE (client) — queue, rank display, leaderboard
+// ═══════════════════════════════════════════════════════════
+let _rankedListenersBound=false;
+let _queueTimer=null, _queueSecs=0;
+
+function _httpBaseSafe(){ return (typeof ArtCloud!=='undefined'&&ArtCloud.base)?ArtCloud.base():null; }
+
+// Fetch and cache the player's rank profile
+async function fetchMyRank(){
+  const base=_httpBaseSafe(); const tok=(typeof MWBeta!=='undefined')?MWBeta.token():null;
+  if(!base||!tok) return null;
+  try{
+    const r=await fetch(base+'/ranked/profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok,name:_playerName()})});
+    const j=await r.json(); return j.profile||null;
+  }catch(e){ return null; }
+}
+function _playerName(){ try{ return localStorage.getItem('mw_player_name')||'Medafighter'; }catch(e){ return 'Medafighter'; } }
+function _setPlayerName(n){ try{ localStorage.setItem('mw_player_name', n); }catch(e){} }
+
+// Entry point: RANKED button
+function openRanked(){
+  (async()=>{
+    // Ranked requires online + beta access
+    if(!MWNet.available()){
+      openM('Ranked Mode','Online play isn\'t available yet. The match server may be waking up \u2014 try again shortly.',[{l:'OK',cls:'mb ok',cb:()=>closeM()}]);
+      return;
+    }
+    if(typeof MWBeta!=='undefined'){
+      if(MWBeta.gateKnown()===null){ try{ await MWBeta.checkGate(); }catch(e){} }
+      if(MWBeta.gateKnown()===true){
+        const ok=await MWBeta.hasValidAccess();
+        if(!ok){ promptBetaKey(()=>openRanked()); return; }
+      }
+    }
+    const prof=await fetchMyRank();
+    _showRankedHome(prof);
+  })();
+}
+
+function _showRankedHome(prof){
+  const r=prof?prof.rating:1000, tier=prof?prof.tier:'Bronze', tc=prof?prof.tierColor:'#cd7f32';
+  const w=prof?prof.wins:0, l=prof?prof.losses:0;
+  openM('Ranked Mode',
+    '<div style="text-align:center">'+
+      '<div style="font-family:Orbitron,monospace;font-size:11px;letter-spacing:2px;color:'+tc+';font-weight:800;margin-bottom:2px">'+tier.toUpperCase()+'</div>'+
+      '<div style="font-family:Orbitron,monospace;font-size:34px;font-weight:900;color:var(--text);line-height:1">'+r+'</div>'+
+      '<div style="font-size:10px;color:var(--text3);margin-bottom:10px">'+w+'W \u00b7 '+l+'L \u00b7 deck: '+(deck||'blaze')+'</div>'+
+      '<div style="font-size:11px;color:var(--text2);line-height:1.4;margin-bottom:4px">Queue to face a real opponent near your skill. Win to climb, lose to drop \u2014 ELO-based.</div>'+
+    '</div>',
+    [{l:'\u2694 FIND MATCH',cls:'mb ok',cb:()=>_startQueue()},
+     {l:'\ud83c\udfc6 Leaderboard',cls:'mb',cb:()=>showLeaderboard()},
+     {l:'Set Name',cls:'mb',cb:()=>_promptName()},
+     {l:'Back',cls:'mb',cb:()=>closeM()}]);
+}
+
+function _promptName(){
+  openM('Display Name',
+    'Set the name other players see on the ladder:<br><br>'+
+    '<input id="pname-input" maxlength="16" value="'+_playerName().replace(/"/g,'')+'" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,.3);color:var(--text);font-size:13px;text-align:center">',
+    [{l:'Save',cls:'mb ok',cb:()=>{ const v=(document.getElementById('pname-input')||{}).value||''; if(v.trim()) _setPlayerName(v.trim().slice(0,16)); openRanked(); }},
+     {l:'Cancel',cls:'mb',cb:()=>openRanked()}]);
+}
+
+function _startQueue(){
+  _bindRankedListeners();
+  _queueSecs=0;
+  const mfName=(DECKS[deck] && DECKS[deck].mf) || 'ikki';
+  MWNet.queue(deck, mfName, _playerName()).catch(()=>{
+    openM('Ranked','Could not reach the match server. Try again shortly.',[{l:'OK',cls:'mb ok',cb:()=>closeM()}]);
+  });
+  _showQueueScreen();
+}
+
+function _showQueueScreen(){
+  openM('Finding Match\u2026',
+    '<div style="text-align:center;padding:6px 0">'+
+      '<div class="queue-spinner" style="margin:0 auto 14px;width:42px;height:42px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--gold);border-radius:50%;animation:queueSpin .9s linear infinite"></div>'+
+      '<div style="font-size:12px;color:var(--text2)">Searching for an opponent near your rank\u2026</div>'+
+      '<div id="queue-timer" style="font-family:Orbitron,monospace;font-size:11px;color:var(--text3);margin-top:6px">0:00</div>'+
+    '</div>',
+    [{l:'Cancel',cls:'mb',cb:()=>{ MWNet.leaveQueue(); _stopQueueTimer(); closeM(); }}]);
+  _stopQueueTimer();
+  _queueTimer=setInterval(()=>{
+    _queueSecs++;
+    const el=document.getElementById('queue-timer');
+    if(el){ const m=Math.floor(_queueSecs/60), s=_queueSecs%60; el.textContent=m+':'+(s<10?'0':'')+s; }
+  },1000);
+}
+function _stopQueueTimer(){ if(_queueTimer){ clearInterval(_queueTimer); _queueTimer=null; } }
+
+function _bindRankedListeners(){
+  if(_rankedListenersBound) return; _rankedListenersBound=true;
+  MWNet.on('queued',(m)=>{ /* in queue; UI already shown */ });
+  MWNet.on('match_found',(m)=>{
+    _stopQueueTimer();
+    G_oppDeck = m.oppDeck || null;
+    _rankedMatch = true;
+    banner&&banner('MATCH FOUND!','#40d088');
+    openM('Match Found!',
+      '<div style="text-align:center"><div style="font-size:13px;color:var(--text)">Opponent: <b style="color:'+(m.oppTier? '#ffd700':'var(--gold)')+'">'+(m.oppName||'Rival')+'</b></div>'+
+      '<div style="font-size:11px;color:var(--text3);margin-top:3px">'+(m.oppTier||'')+' \u00b7 '+(m.oppRating||'?')+'</div></div>',
+      [{l:'BATTLE!',cls:'mb ok',cb:()=>closeM()}]);
+    setTimeout(()=>{ closeM(); }, 1400);
+  });
+  MWNet.on('match_start',(m)=>{ closeM(); startOnlineMatch(m.firstSeat); });
+  MWNet.on('rank_update',(m)=>{ _showRankUpdate(m); });
+}
+
+function _showRankUpdate(m){
+  const you=m.you||{}; const delta=you.delta||0;
+  const sign=delta>=0?'+':'';
+  const col=delta>=0?'#40d088':'#ff6060';
+  setTimeout(()=>{
+    openM(m.won?'Victory! \ud83c\udfc6':'Defeat',
+      '<div style="text-align:center">'+
+        '<div style="font-family:Orbitron,monospace;font-size:11px;letter-spacing:2px;color:'+(you.tierColor||'#ccc')+';font-weight:800">'+(you.tier||'').toUpperCase()+'</div>'+
+        '<div style="font-family:Orbitron,monospace;font-size:34px;font-weight:900;color:var(--text);line-height:1.1">'+(you.rating||'?')+'</div>'+
+        '<div style="font-family:Orbitron,monospace;font-size:18px;font-weight:800;color:'+col+'">'+sign+delta+'</div>'+
+        '<div style="font-size:10px;color:var(--text3);margin-top:4px">'+(you.wins||0)+'W \u00b7 '+(you.losses||0)+'L</div>'+
+      '</div>',
+      [{l:'Queue Again',cls:'mb ok',cb:()=>{ closeM(); openRanked(); }},
+       {l:'Title',cls:'mb',cb:()=>{ closeM(); location.reload(); }}]);
+  }, 600);
+}
+
+async function showLeaderboard(){
+  const base=_httpBaseSafe();
+  if(!base){ openM('Leaderboard','Server unavailable.',[{l:'OK',cls:'mb ok',cb:()=>closeM()}]); return; }
+  openM('Leaderboard','<div style="text-align:center;color:var(--text3);font-size:11px">Loading\u2026</div>',[{l:'Back',cls:'mb',cb:()=>openRanked()}]);
+  try{
+    const r=await fetch(base+'/ranked/leaderboard'); const j=await r.json();
+    const board=j.board||[];
+    let html='<div style="max-height:320px;overflow-y:auto">';
+    if(!board.length) html+='<div style="text-align:center;color:var(--text3);font-size:11px;padding:12px">No ranked players yet. Be the first!</div>';
+    board.forEach((p,i)=>{
+      const medal=i===0?'\ud83e\udd47':i===1?'\ud83e\udd48':i===2?'\ud83e\udd49':(i+1)+'.';
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-bottom:1px solid var(--border);font-size:12px">'+
+        '<span style="width:24px;text-align:center;font-weight:700">'+medal+'</span>'+
+        '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)">'+(p.name||'Medafighter')+'</span>'+
+        '<span style="font-size:9px;color:'+(p.tierColor||'#ccc')+';font-weight:700">'+(p.tier||'')+'</span>'+
+        '<span style="font-family:Orbitron,monospace;font-weight:800;color:var(--gold);width:42px;text-align:right">'+p.rating+'</span>'+
+      '</div>';
+    });
+    html+='</div>';
+    openM('\ud83c\udfc6 Leaderboard',html,[{l:'Back',cls:'mb',cb:()=>openRanked()}]);
+  }catch(e){ openM('Leaderboard','Could not load the leaderboard.',[{l:'OK',cls:'mb ok',cb:()=>openRanked()}]); }
+}
+let _rankedMatch=false;
 
 function openOnlineLobby(){
   // Beta gate: if the server requires keys and we don't have access, prompt first.
