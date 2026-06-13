@@ -102,7 +102,10 @@ function tryMatch() {
       console.log(`[match] ranked: ${a.playerId}(${a.rating}) vs ${b.playerId}(${b.rating}) -> room ${code}`);
       send(a.ws, 'match_found', { code, seat: 0, seed: hostSeed, oppDeck: b.deck, oppMf: b.mf, oppName: pb.name, oppRating: pb.rating, oppTier: pb.tier, ranked: true });
       send(b.ws, 'match_found', { code, seat: 1, seed: hostSeed, oppDeck: a.deck, oppMf: a.mf, oppName: pa.name, oppRating: pa.rating, oppTier: pa.tier, ranked: true });
-      broadcast(rooms.get(code), 'match_start', { firstSeat: 0 });
+      // Fair coin flip — server decides who goes first (neither client can rig it)
+      const rankedFirst = Math.random() < 0.5 ? 0 : 1;
+      rooms.get(code).firstSeat = rankedFirst;
+      broadcast(rooms.get(code), 'match_start', { firstSeat: rankedFirst, coinFlip: true });
       return; // one match per tick; next tick handles more
     }
   }
@@ -421,8 +424,10 @@ wss.on('connection', (ws) => {
         // Tell host the guest arrived — now both have full info
         send(room.players[0], 'opponent_joined', { oppDeck: room.deck[1], oppMf: room.mf[1] });
         room.started = true;
-        // Kick off the match: host (seat 0) takes first turn by convention
-        broadcast(room, 'match_start', { firstSeat: 0 });
+        // Fair coin flip — server decides who goes first (no host advantage)
+        const firstSeat = Math.random() < 0.5 ? 0 : 1;
+        room.firstSeat = firstSeat;
+        broadcast(room, 'match_start', { firstSeat, coinFlip: true });
         break;
       }
 
@@ -544,6 +549,19 @@ wss.on('connection', (ws) => {
         const r = rooms.get(code);
         if (!r) return;
         if (!r.players[seat] && r.disconnected && r.disconnected[seat]) {
+          // Ranked forfeit: the player who STAYED wins; apply ELO once.
+          if (r.ranked && !r.rankedApplied) {
+            r.rankedApplied = true;
+            const stayerSeat = seat === 0 ? 1 : 0;
+            const winnerId = r.playerIds[stayerSeat], loserId = r.playerIds[seat];
+            if (winnerId && loserId) {
+              const result = Ranked.applyResult(winnerId, loserId);
+              if (r.players[stayerSeat]) {
+                send(r.players[stayerSeat], 'rank_update', { you: result.winner, opponent: result.loser, won: true, byForfeit: true });
+              }
+              console.log(`[room ${code}] ranked forfeit: ${winnerId} +${result.winner.delta} (opponent abandoned)`);
+            }
+          }
           broadcast(r, 'opponent_left', {}, null);
           console.log(`[room ${code}] seat ${seat} did not return — forfeit`);
           cleanupRoom(code);
