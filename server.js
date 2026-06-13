@@ -153,7 +153,7 @@ const server = http.createServer((req, res) => {
   // Health check (moved to /health)
   if (req.url === '/health' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', rooms: rooms.size, uptime: process.uptime(), r2: R2.enabled() }));
+    res.end(JSON.stringify({ status: 'ok', version: 'v3.0-ranked', features: { ranked: true, queue: true, betakeys: true }, rooms: rooms.size, queue: rankedQueue.length, uptime: process.uptime(), r2: R2.enabled() }));
     return;
   }
 
