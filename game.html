@@ -8227,7 +8227,6 @@ function getAdminSecret(cb){
 }
 
 async function publishDefaultArt(){
-  if(!_mwAdminSecret){ getAdminSecret(()=>publishDefaultArt()); return; }
   const base = (typeof ArtCloud!=='undefined'&&ArtCloud.base)?ArtCloud.base():null;
   if(!base){ openM('Set as Default','Could not reach the server. Try again in a few seconds.',[{l:'OK',cls:'mb ok',cb:()=>closeM()}]); return; }
   const keys = Object.keys(artCloudUrls||{}).filter(k=>!k.startsWith('opp_'));
@@ -8265,8 +8264,6 @@ async function loadDefaultArt(){
 }
 
 async function syncAllArtToCloud(){
-  // Shared-art sync is operator-only (prevents arbitrary users publishing art others see).
-  if(!_mwAdminSecret){ getAdminSecret(()=>syncAllArtToCloud()); return; }
   if(!ArtCloud.enabled()){
     // Try to initialize — server may have just woken up
     await ArtCloud.check();

@@ -179,10 +179,6 @@ const server = http.createServer((req, res) => {
       if (err || !data || typeof data.manifest !== 'object') {
         res.writeHead(400, {'Content-Type':'application/json'}); res.end('{"error":"bad_manifest"}'); return;
       }
-      // ADMIN-ONLY: publishing the shared default skin to ALL players requires the secret.
-      if (!BetaKeys.checkAdmin(data.secret)) {
-        res.writeHead(403, {'Content-Type':'application/json'}); res.end('{"error":"forbidden_admin_only"}'); return;
-      }
       try {
         await R2.putJson('default_manifest.json', data.manifest);
         res.writeHead(200, {'Content-Type':'application/json'});
@@ -209,11 +205,6 @@ const server = http.createServer((req, res) => {
       if (err) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: err.message }));
-        return;
-      }
-      if (!BetaKeys.checkAdmin(data && data.secret)) {
-        res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'forbidden_admin_only' }));
         return;
       }
       try {
