@@ -2946,7 +2946,10 @@ function getLastStand(sk){
   const bot=aliveB[0];
   const def=LAST_STAND[bot.key];
   if(!def)return null;
-  const medalCount=(bot.fusedMedal?1:0)+(bot.fusedMedal2?1:0);
+  // A deck that STARTED solo (e.g. Iron Throne) counts the bot's own medal so its Last Stand works.
+  // Multi-bot decks scale Last Stand by medals absorbed from fallen allies (the intended design).
+  const startedSolo=(side.bots&&side.bots.length===1);
+  const medalCount=(startedSolo?1:0)+(bot.fusedMedal?1:0)+(bot.fusedMedal2?1:0);
   if(medalCount<=0)return null;
   return {bot,medalCount,def};
 }
@@ -3368,6 +3371,15 @@ function showBotPassive(sk, idx){
     html+='<div style="background:rgba(0,0,0,.3);border-radius:8px;padding:9px;margin-top:6px;border-left:3px solid #78c88c">';
     html+='<div style="font-size:9px;color:#78c88c;font-weight:700;margin-bottom:3px">EQUIPPED</div>';
     html+='<div style="font-size:11px;color:var(--text);line-height:1.4">'+bot.equip.name+' \u2014 '+(bot.equip.desc||'')+'</div></div>';
+  }
+  // ── Last Stand info (if this bot has one) ──
+  if(typeof LAST_STAND==='object' && LAST_STAND[bot.key]){
+    const ls=LAST_STAND[bot.key];
+    html+='<div style="background:rgba(240,90,40,.12);border-radius:8px;padding:9px;margin-bottom:6px;border-left:3px solid '+(ls.color||'#f06424')+'">';
+    html+='<div style="font-size:9px;color:'+(ls.color||'#f06424')+';font-weight:800;margin-bottom:3px;letter-spacing:.5px">\u2620 LAST STAND \u2014 '+ls.name+'</div>';
+    html+='<div style="font-size:11px;color:var(--text);line-height:1.4">'+ls.desc+'</div>';
+    html+='<div style="font-size:9px;color:var(--text3);margin-top:4px;font-style:italic">Activates when this is your only Medabot left'+((G&&G[G.p&&G.p.bots&&G.p.bots.includes(bot)?'p':'c']&&G[G.p.bots.includes(bot)?'p':'c'].bots.length===1)?' \u2014 solo deck: always active!':' (scales with absorbed Medals).')+'</div>';
+    html+='</div>';
   }
   html+='</div>';
   openM('Bot Info', html, [{l:'Close', cls:'mb ok', cb:()=>closeM()}]);
@@ -3821,7 +3833,14 @@ function resolveAtk(a,d,sk,techId){
   total=Math.max(0,total-(_emperorSoak||0));
   dmg(d,total,sk==='p'?'c':'p');
   G._pierceDmg=false;
-  atked=true;
+  // Shadow Slash (chain-free): does NOT consume the attack — player may act again
+  const _techObj = techId ? (G[sk].hand.find(c=>c.uid===techId)||G[sk].discard&&G[sk].discard.find(c=>c.uid===techId)) : null;
+  const _isChainFree = (_lastTech==='Shadow Slash') || (_techObj && _techObj.fx==='deal3_chain_free');
+  if(_isChainFree && sk==='p'){
+    log('Shadow Slash chained — you may attack again!','chg');
+  } else {
+    atked=true;
+  }
   // Lance Charge: costs 2 charge to attacker
   if(a._lanceCostPending){a._lanceCostPending=false;a.charge=Math.max(0,a.charge-2);log('Lance Charge: '+a.name+' loses 2 Charge!','chg');}
   // Machairodus: flag that we attacked (resets stalk)
@@ -6114,7 +6133,7 @@ function mkBotEl(bot,idx,sk){
   if(typeof showPcPreview==='function'){ div.addEventListener('mouseenter',()=>{ if(window.innerWidth>=900&&!bot.def) showPcPreview(botPreviewHtml(bot),bot.color); }); div.addEventListener('mousemove',movePcPreview); div.addEventListener('mouseleave',hidePcPreview); }
   const _eqList=(typeof botEquips==='function')?botEquips(bot):(bot.equip?[bot.equip]:[]);
   const equipBadge=(_eqList.length&&!bot.def)?`<div class="equip-badge" title="${_eqList.map(e=>e.name).join(', ')}">\u{1F527}${_eqList.length>1?'<span style="font-size:8px;font-weight:800;margin-left:1px">'+_eqList.length+'</span>':''}</div>`:'';
-  const comboBadge=(bot.key==='gokudo'&&!bot.def&&(bot._comboCount||0)>0)?`<div class="combo-badge" title="Combo Cannon: +${bot._comboCount} DMG on next attack">\u{1F525}${bot._comboCount}</div>`:'';
+  const comboBadge=(bot.key==='gokudo'&&!bot.def&&(bot._comboCount||0)>0)?`<div class="combo-badge" title="Combo Cannon: +${bot._comboCount} DMG on next attack">\u{1F525}${bot._comboCount}${bot.changed?'\u26a1':''}</div>`:'';
   div.innerHTML=`${equipBadge}${comboBadge}${botArtHtml}
 <div class="binfo" title="Click 🎨 Art to change bot artwork">
   <div class="btop">
@@ -6132,6 +6151,9 @@ function mkBotEl(bot,idx,sk){
   <div class="pips">${pips}</div>
   <div class="btags">
     ${bot.burn&&!bot.def?'<span class="btag tgbn">🔥 BURN</span>':''}
+    ${bot.exhst&&!bot.def?'<span class="btag" style="background:rgba(160,120,60,.18);color:#d0a060;border:1px solid rgba(208,160,96,.4)">💤 EXHAUSTED</span>':''}
+    ${bot._webbed>0&&!bot.def?'<span class="btag" style="background:rgba(144,80,208,.18);color:#c090ff;border:1px solid rgba(144,80,208,.4)">🕸 WEBBED</span>':''}
+    ${bot.charge>=5&&!bot.def?'<span class="btag" style="background:rgba(127,208,255,.18);color:#7fd0ff;border:1px solid rgba(127,208,255,.45)">⚡ IGNITED</span>':''}
     ${bot.taunting&&!bot.def?'<span class="btag" style="background:rgba(42,128,240,.15);color:var(--storm2);border:1px solid rgba(42,128,240,.3)">🛡 TAUNT</span>':''}
     ${G.boostActive===bot.key&&!bot.def?'<span class="btag" style="background:rgba(64,216,152,.15);color:var(--green);border:1px solid rgba(64,216,152,.3)">⚔ BOOST</span>':''}
     ${bot.equip&&!bot.def?`<span class="btag tgeq" title="${bot.equip.name}: ${bot.equip.desc||''}">${bot.equip.name.split(' ')[0]}</span>`:''}
@@ -6843,6 +6865,24 @@ function toggleDeckList(dk){
   }
 }
 
+
+// Show the Medafighter's ability when tapped in the title deck preview.
+function showMfInfo(dk){
+  const D=(typeof DECKS==='object')?DECKS[dk]:null;
+  if(!D){ return; }
+  const mf=(typeof MFR==='object')?MFR[D.mf]:null;
+  if(!mf){ return; }
+  const art=(typeof renderMFArt==='function')?renderMFArt(D.mf,72,72):'';
+  let html='<div style="text-align:center">';
+  html+='<div style="width:72px;height:72px;margin:0 auto 8px;border-radius:12px;overflow:hidden;border:1px solid var(--border2)">'+art+'</div>';
+  html+='<div style="font-family:Orbitron,monospace;font-weight:800;color:var(--gold);font-size:15px;margin-bottom:2px">'+mf.name+'</div>';
+  html+='<div style="font-size:9px;color:var(--text3);margin-bottom:8px;letter-spacing:.5px">MEDAFIGHTER</div>';
+  html+='<div style="background:rgba(240,176,48,.1);border-radius:8px;padding:10px;border-left:3px solid var(--gold);text-align:left">';
+  html+='<div style="font-size:9px;color:var(--gold);font-weight:700;margin-bottom:3px">PASSIVE ABILITY</div>';
+  html+='<div style="font-size:12px;color:var(--text);line-height:1.5">'+(mf.pass||'No special ability.')+'</div></div>';
+  html+='</div>';
+  openM('Medafighter', html, [{l:'Close',cls:'mb ok',cb:()=>{ closeM(); }}]);
+}
 function renderDeckPreview(dk){
   const panel=document.getElementById('deck-preview');
   if(!panel)return;
@@ -6873,9 +6913,10 @@ function renderDeckPreview(dk){
   }
   panel.innerHTML=diffHtml+
     '<div style="display:flex;gap:10px;justify-content:center;align-items:flex-start;margin-bottom:6px">'+botArt+'</div>'+
-    '<div style="display:flex;gap:6px;justify-content:center;align-items:center;margin-bottom:6px">'+
+    '<div onclick="showMfInfo(\''+dk+'\')" style="display:flex;gap:6px;justify-content:center;align-items:center;margin-bottom:6px;cursor:pointer;padding:4px 8px;border-radius:8px;background:rgba(240,176,48,.08);border:1px solid rgba(240,176,48,.25)" title="Tap to see Medafighter ability">'+
       '<div style="width:32px;height:32px;border-radius:6px;overflow:hidden;border:1px solid var(--border2)">'+mfArt+'</div>'+
       '<span style="font-size:9px;color:var(--gold);font-family:\'Orbitron\',monospace">'+(mf?mf.name:'')+'</span>'+
+      '<span style="font-size:11px;color:var(--gold);margin-left:2px">\u24d8</span>'+
     '</div>'+
     '<div style="font-size:9px;color:var(--text2);text-align:center;line-height:1.4;padding:0 8px">'+(DECK_IDENTITY[dk]||'')+'</div>'+
     '<button id="decklist-btn" onclick="toggleDeckList(\''+dk+'\')" style="display:block;margin:8px auto 0;font-family:Orbitron,monospace;font-size:9px;font-weight:700;padding:6px 14px;border-radius:6px;border:1px solid rgba(240,176,48,.4);background:rgba(240,176,48,.08);color:var(--gold);cursor:pointer">\u25bc VIEW DECKLIST</button>'+
@@ -7761,7 +7802,7 @@ const TUT_STEPS = [
   {t:'Your Hand', b:'You draw cards each turn. Techniques boost an attack, Actions give effects, Equipment attaches buffs, Traps set face-down, and Medachange transforms a bot once per game. Tap a card to play it.'},
   {t:'Taking Your Turn', b:'You get 1 Action per turn. Play a card OR attack — then tap an enemy bot to strike. Some cards are free. When you\'re done, end your turn and the CPU takes theirs.'},
   {t:'Medal Fusion', b:'When one of your bots is defeated, its Medal fuses into a surviving ally — granting bonus HP, Charge, and its passive. Losing a bot makes your others stronger.'},
-  {t:'Last Stand', b:'When you\'re down to your final bot AND it carries a fused Medal, it enters LAST STAND — a massive power boost. Comebacks happen here.'},
+  {t:'Last Stand', b:'When you\'re down to your final bot, it can enter LAST STAND — a massive power boost that scales with the Medals it carries (absorbed from fallen allies). Solo decks like Iron Throne always have their Last Stand active. Tap the \u24d8 on any bot to see its Last Stand. Comebacks happen here!'},
   {t:'You\'re Ready!', b:'That\'s the core loop: charge, play cards, attack, adapt. Tap the ? button anytime to review the rules. Good luck in the arena, Medafighter!'},
 ];
 let _tutStep = 0;
@@ -8177,6 +8218,13 @@ async function checkDeploySync(){
 }
 
 function openRanked(){
+  // Ranked is temporarily disabled while we finish online infrastructure.
+  openM('\ud83c\udfc6 Ranked Mode',
+    '<div style="text-align:center;line-height:1.6"><b style="color:var(--gold);font-size:15px">Coming Soon!</b><br><br>Ranked play is under construction while we polish online multiplayer. Check back in a future update \u2014 your matches against the CPU still sharpen your skills in the meantime!</div>',
+    [{l:'Back',cls:'mb ok',cb:()=>closeM()}]);
+  return;
+}
+function openRanked_DISABLED(){
   (async()=>{
     // Ranked requires online + beta access
     if(!MWNet.available()){
