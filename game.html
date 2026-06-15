@@ -967,6 +967,7 @@ body::after{
     </div>
     <div class="sbtn-row">
       <button class="sbtn" style="border-color:rgba(240,176,48,.4);color:var(--gold)" onclick="startInteractiveTutorial()">📖 HOW TO PLAY</button>
+      <button class="sbtn" style="border-color:rgba(160,120,255,.5);color:#b090ff" onclick="openDeckGuide()">📚 DECK GUIDE</button>
       <button class="sbtn" style="border-color:rgba(64,160,240,.5);color:#60b4ff" onclick="openOnlineLobby()">🌐 ONLINE</button>
     </div>
     <div class="sbtn-row">
@@ -2480,7 +2481,7 @@ const MEDAL={
   titan:    {name:'Titan',    hp:22,color:'#8090a0',passive:'-1 DMG taken',mfFx:'mf_titan'},
   aqua:     {name:'Aqua',     hp:16,color:'#10c090',passive:'Heal 1 HP per turn',mfFx:'mf_aqua'},
   nature:   {name:'Nature',   hp:17,color:'#60c020',passive:'+2 Charge per turn',mfFx:'mf_nature'},
-  royal:    {name:'Royal',     hp:20,color:'#f0c040',passive:'+1 ATK per fallen ally this turn',mfFx:'mf_royal'},
+  royal:    {name:'Royal',     hp:20,color:'#f0c040',passive:'+1 ATK per fallen ally. Royal bots gain +2 ATK per evolution this game.',mfFx:'mf_royal'},
   digicore: {name:'Digi-Core', hp:17,color:'#00ff80',passive:'Gain 1 Charge when taking 4+ damage',mfFx:'mf_digistrike'},
   chain:    {name:'Chain',    hp:18,color:'#e060f0',passive:'3rd action each turn is free',mfFx:'mf_chain_strike'},
   emperor:  {name:'Emperor',  hp:60,color:'#60c030',passive:'Charge 2/turn. Medaforce fires at 4 Charge',mfFx:'mf_imperial'},
@@ -2634,10 +2635,10 @@ const CDEFS={
   missile_volley:C('missile_volley','technique','Missile Volley','eq_art','+2 ×3 Hits','deal2_volley','#9050d0','Fire 3 missiles: deal 2 DMG to 3 random enemies (can hit same target).'),
   digi_overload: C('digi_overload','action','Digi Overload','act_art','Charge Burst','act_digiload','#9050d0','MetalGurumemon deals his full ATK to one enemy as bonus damage immediately.'),
   // Shared Digimon cards
-  evolution_call:C('evolution_call','action','Evolution Call','act_art','Digi-Evolve','act_evolve','#00ff80','Draw 2. If WarGreymon or MetalGurumemon is active, they gain +2 Charge and +1 ATK permanently.'),
+  evolution_call:C('evolution_call','action','Evolution Call','act_art','Digi-Evolve','act_evolve','#00ff80','Draw 2, refund this action, and pull a Medachange from your deck to hand \u2014 evolve right now. Active Digimon also gains +2 Charge & +1 ATK.'),
   digi_shield:   C('digi_shield','trap','Digi Shield','eq_art','Negate+Counter','trap_digiblock','#00ff80','TRAP: Negate next attack. WarGreymon gains +2 Charge from the blocked strike.'),
   digi_bond:     C('digi_bond','equipment','Digi Bond','eq_art','+2 ATK shared','eq_digibond','#00ff80','Equipped bot gets +2 ATK. When this bot attacks, Omegaknight also gains +1 Charge.'),
-  digistrike_mf: C('digistrike_mf','medaforce','DigiStrike','mf_art','6 to All','mf_digistrike','#00ff80','Omegaknight, WarGreymon and MetalGurumemon each strike simultaneously for 6 unblockable dmg.'),
+  digistrike_mf: C('digistrike_mf','medaforce','DigiStrike','mf_art','Scaling','mf_digistrike','#00ff80','All three Digimon strike simultaneously for 6 unblockable dmg each, +2 per evolution performed this game.'),
   mc_wargreymon:     C('mc_wargreymon',    'medachange','WarGreymon Change',    'mc_card_art','+5ATK +12HP','mc_bot_wargreymon',    '#f04880','Fuse with WarGreymon: +5 ATK, +12 HP. Dramon Destroyer bonus +3→+6. Terra Force Last Stand activates immediately.'),
   mc_metalgurumemon: C('mc_metalgurumemon','medachange','MetalGuru Change',   'mc_card_art','+4ATK +12HP','mc_bot_metalgurumemon','#9050d0','Fuse with MetalGurumemon: +4 ATK, +12 HP. Missile Barrage fires 2 missiles per attack. Full Burst Last Stand activates immediately.'),
   // ── SHADOW BLADE — Chain/Combo deck ─────────────────────
@@ -2828,8 +2829,7 @@ const DECKS={
       // Actions (5)
       ['royal_summons',1],   // draw 2 + all +1 charge (balance: -1)
       ['medal_locator',1],   // MF consistency tutor
-      ['sacrifice_play',1],  // weaken ally, empower Omegaknight
-      ['evolution_call',1],  // Digi-Evolve: draw 2 + perm buff
+      ['evolution_call',2],  // Digi-Evolve: draw 2 + perm buff
       ['digi_overload',1],   // MetalGurumemon burst bonus damage
       // Traps (2)
       ['honor_guard',1],     // redirect damage to Omegaknight
@@ -2926,7 +2926,7 @@ function init(){
     drw(G.c);
     G.c.bots.forEach(b=>{ if(!b.def) b.charge=Math.min(5,(b.charge||0)+1); });
   }
-  turn=1;atked=false;actionsLeft=1;G._lsBannerThisTurn=false;logs=[];
+  turn=1;atked=false;actionsLeft=1;G._lsBannerThisTurn=false;logs=[];G.p._evolveCount=0;G.c._evolveCount=0;
 }
 
 // ═══ HELPERS ═══
@@ -3863,6 +3863,18 @@ function resolveAtk(a,d,sk,techId){
     total+=G._royalFallen;
     log('Royal Medal: +'+(G._royalFallen)+' ATK for fallen allies!','chg');
   }
+  // EVOLUTION ENGINE: every Royal bot gains +2 ATK per evolution performed this game.
+  {
+    const _evoSide = (sk==='p')?G.p:G.c;
+    const _isRoyalBot = ['omegaknight','wargreymon','metalgurumemon'].includes(a.key);
+    const _evo = _evoSide._evolveCount||0;
+    if(_isRoyalBot && _evo>0){
+      total += _evo*2;
+      log('Evolution Surge: +'+(_evo*2)+' ATK ('+_evo+' evolutions)!','chg');
+    }
+    // An evolved Royal bot hits even harder (its own evolution rewarded)
+    if(_isRoyalBot && a.changed){ total += 2; }
+  }
   if(a.medal==='blaze'||a.fusedMedal==='blaze')total+=2;
   if(a.equip&&a.equip.fx==='eq_blaze_arm')total+=2;
   if(a.equip&&a.equip.fx==='eq_hunter'&&d.hp<=d.maxHp/2)total+=3;
@@ -4168,8 +4180,14 @@ function playAct(card){
   }
   if(fx==='act_evolve'){
     drw(G.p,2);
+    // Engine accelerator: refund this action AND pull a Medachange to hand, so you can evolve right now.
+    actionsLeft++;
+    const mcInDeck=G.p.deck.find(c=>c.type==='medachange');
+    if(mcInDeck){ G.p.deck=G.p.deck.filter(c=>c.uid!==mcInDeck.uid); G.p.hand.push(mcInDeck); log('Evolution Call: drew 2, refunded action, and found '+mcInDeck.name+'!','chg'); }
+    else { log('Evolution Call: drew 2 and refunded your action!','chg'); }
+    banner('EVOLUTION CALL!','#00ff80');
     const digi=G.p.bots.find(b=>(b.key==='wargreymon'||b.key==='metalgurumemon')&&!b.def&&G.p.activeBot===G.p.bots.indexOf(b));
-    if(digi){addChg(digi,2);digi.atk+=1;log('Evolution Call: '+digi.name+' evolves! +2 Charge +1 ATK permanently!','chg');banner('DIGIVOLUTION!','#00ff80');}
+    if(digi){addChg(digi,2);digi.atk+=1;log('Evolution Call: '+digi.name+' surges! +2 Charge +1 ATK permanently!','chg');banner('DIGIVOLUTION!','#00ff80');}
     else{log('Evolution Call: Drew 2 cards.','chg');}
     renderAll();return;
   }
@@ -4379,10 +4397,14 @@ function playEquip(card){
 }
 
 function playMC(card){
-  if(actionsLeft<=0||G.p.mcUsed)return;
+  // EVOLUTION ENGINE (Royal): bots may evolve repeatedly; other decks keep the once-per-game cap.
+  const _royalSide = G.p.bots.some(b=>['omegaknight','wargreymon','metalgurumemon'].includes(b.key));
+  if(actionsLeft<=0) return;
+  if(G.p.mcUsed && !_royalSide) return;
   const bk=card.fx.replace('mc_bot_','');
   const bot=G.p.bots.find(b=>b.key===bk&&!b.def);
   if(!bot){log('Target bot not available.','info');dsc(G.p,card.uid);actionsLeft--;renderAll();return;}
+  if(bot.changed){log(bot.name+' has already evolved.','info');return;}
   openM('MEDACHANGE — '+card.name,
     '<b style="color:'+bot.color+'">'+bot.name+'</b> fuses with your Medafighter.<br><br>'+
     '• +5 ATK permanently (+4 for Rokusho)<br>• +12 max HP (current HP also rises)<br>'+
@@ -4396,7 +4418,10 @@ function playMC(card){
     [{l:'CONFIRM MEDACHANGE',cls:'mb mc',cb:()=>{
       closeM();
       triggerMCAnimation(bot, ()=>{
-        dsc(G.p,card.uid);actionsLeft--;G.p.mcUsed=true;
+        dsc(G.p,card.uid);
+        // Royal evolves freely; track the evolution count for scaling payoffs.
+        if(_royalSide){ G.p._evolveCount=(G.p._evolveCount||0)+1; log('EVOLUTION '+G.p._evolveCount+'! The Royal Court grows stronger.','mc'); }
+        else { actionsLeft--; G.p.mcUsed=true; }
         const mcHPBoost=12;
         bot.changed=true;bot.maxHp+=mcHPBoost;bot.hp=Math.min(bot.hp+mcHPBoost,bot.maxHp);
         if(card.fx==='mc_bot_warbandit')bot.mcDraw2=true;
@@ -4623,10 +4648,10 @@ function resolveMF(fx,bonus=0){
     ].filter(Boolean);
     const target=alive(G.c).sort((a,b)=>b.hp-a.hp)[0];
     if(!target){closeM&&closeM();renderAll();return;}
-    openM('DigiStrike','<b style="color:#00ff80">'+strikers.length+' Digimon</b> strike simultaneously for <b style="color:#f04040">6 each</b> unblockable!',
+    openM('DigiStrike','<b style="color:#00ff80">'+strikers.length+' Digimon</b> strike simultaneously for <b style="color:#f04040">'+(6+((G.p._evolveCount||0)*2))+' each</b> unblockable!',
       [{l:'⚡ UNLEASH DIGISTRIKE!',cls:'mb bad',cb:()=>{
-        strikers.forEach(b=>{dmg(alive(G.c)[0]||target,6*mfMult,'c');});
-        log('DigiStrike: '+strikers.map(b=>b.name).join(', ')+' struck for '+6*mfMult+' each!','atk');
+        const _evoBonus=(G.p._evolveCount||0)*2; const _strikeDmg=(6+_evoBonus)*mfMult; strikers.forEach(b=>{dmg(alive(G.c)[0]||target,_strikeDmg,'c');});
+        log('DigiStrike: '+strikers.map(b=>b.name).join(', ')+' struck for '+_strikeDmg+' each!','atk');
         closeM();renderAll();
       }}]);
     return;
@@ -4986,7 +5011,10 @@ function cpuShouldMedaforce(){
 }
 
 function cpuShouldMedachange(){
-  if(G.c.mcUsed)return false;
+  const _cRoyal=G.c.bots.some(b=>['omegaknight','wargreymon','metalgurumemon'].includes(b.key));
+  if(G.c.mcUsed && !_cRoyal)return false;
+  // Royal can keep evolving as long as it has an un-evolved bot
+  if(_cRoyal && !alive(G.c).some(b=>!b.changed))return false;
   const mcs=G.c.hand.filter(c=>c.type==='medachange');
   if(!mcs.length)return false;
   const score=cpuScore();const threat=cpuThreat();
@@ -5538,9 +5566,11 @@ function aiProTurn(){
       const matchingMC=mcs.find(c=>c.fx==='mc_bot_'+ (bot&&bot.key))||mcs[0];
       const targetBot=G.c.bots.find(b=>b.key===matchingMC.fx.replace('mc_bot_','')&&!b.def)||bot;
       if(targetBot){
-        dsc(G.c,matchingMC.uid);G.c.mcUsed=true;
+        dsc(G.c,matchingMC.uid);
+        const _cRoyalEvo=G.c.bots.some(b=>['omegaknight','wargreymon','metalgurumemon'].includes(b.key));
+        if(_cRoyalEvo){ G.c._evolveCount=(G.c._evolveCount||0)+1; } else { G.c.mcUsed=true; }
         targetBot.changed=true;targetBot.maxHp+=8;targetBot.hp=Math.min(targetBot.hp+8,targetBot.maxHp);
-        log('CPU MEDACHANGE: '+targetBot.name+'!','mc');banner('CPU MEDACHANGE!','#f04880');
+        log('CPU MEDACHANGE: '+targetBot.name+'!','mc');banner('CPU MEDACHANGE!','#f04880');try{ medaforceFX('#f04880'); }catch(e){}
       }
     }
   }
@@ -6614,7 +6644,7 @@ function _recordDeckResult(deckKey, won){
 function openMatchLog(){
   let log=[];
   try{ log=JSON.parse(localStorage.getItem('mw_matchlog')||'[]'); }catch(e){}
-  const names={blaze:'Blaze',titan:'Titan',royal:'Royal',shadow:'Shadow',throne:'Throne',forge:'Forge',cross:'Cross'};
+  const names={blaze:'Blaze',titan:'Titan',royal:'Evolution engine — evolve all three Digimon repeatedly; every Medachange permanently powers up the whole Court, then finish with a scaling DigiStrike.',shadow:'Shadow',throne:'Throne',forge:'Forge',cross:'Cross'};
   const cols={blaze:'#f06424',titan:'#8090a0',royal:'#f0b020',shadow:'#9050d0',throne:'#30b050',forge:'#e0a020',cross:'#d8dde8'};
   let html='<div style="text-align:left">';
   if(!log.length){
@@ -6991,6 +7021,77 @@ function toggleDeckList(dk){
   }
 }
 
+
+// ═══ DECK GUIDE — concise strategy walkthroughs ═══
+const DECK_GUIDES={
+  blaze:{name:'Blaze Chain',color:'#f06424',tier:'Beginner',
+    plan:'Aggro burn. Stack burn on the enemy front bot, then cash it in for burst damage before they stabilize.',
+    plays:['Apply burn early with techniques, then attack — Metabee deals +1 when the target is burning.','Save Scorch/Inferno Surge for when burn is stacked high.','Race: trade aggressively, you win the short game.'],
+    win:'End matches fast. If a game drags past mid-game, push for lethal rather than playing safe.'},
+  titan:{name:'Titan Guard',color:'#8090a0',tier:'Intermediate',
+    plan:'Disruption control. Drain enemy Charge, soak damage with high HP, and grind them out of resources.',
+    plays:['Use Charge drain to deny enemy Medaforces before they fire.','Lean on Titan\u2019s -1 damage reduction and big HP to outlast aggro.','Rokusho heals; let it tank while you disrupt.'],
+    win:'Win the long game. Strip their Charge, stall, and close once they\u2019re empty-handed.'},
+  royal:{name:'Royal Court',color:'#f0c040',tier:'Advanced',
+    plan:'Evolution engine. Evolve all three Digimon repeatedly \u2014 every Medachange permanently powers up the whole Court.',
+    plays:['Lead with Evolution Call: it refunds the action and pulls a Medachange so you evolve immediately.','Evolve a different bot each turn \u2014 every evolution gives all Royal bots +2 ATK.','Finish with DigiStrike: it hits for 6 +2 per evolution, on all three bots at once.'],
+    win:'Snowball evolutions, then unleash a scaling DigiStrike once your board is fully evolved.'},
+  shadow:{name:'Shadow Blade',color:'#9050d0',tier:'Expert',
+    plan:'Chain combo. Play multiple techniques per turn to build Gokudo\u2019s combo counter, then detonate it.',
+    plays:['Shadow Slash is free \u2014 it doesn\u2019t end your attack, so chain it before other techniques.','Build the combo counter with Nin-Ninja dual techniques.','Combo Cannon / Chain Strike scale with your stacked combo count.'],
+    win:'Set up a big combo turn, then unload everything for a single overwhelming burst.'},
+  throne:{name:'Iron Throne',color:'#30b050',tier:'Advanced',
+    plan:'Solo fortress. One massive bot (Robo Emperor) with 60 HP and an always-on Last Stand.',
+    plays:['Your single bot is your whole army \u2014 protect its HP and manage Charge carefully.','Cable Network and equipment keep it dominant.','Last Stand is always active (solo deck) \u2014 you\u2019re strongest when it matters.'],
+    win:'Outvalue them with one unkillable juggernaut; end with Imperial Barrage.'},
+  forge:{name:'Forge Barons',color:'#e0a020',tier:'Beginner',
+    plan:'Equipment engine. Bolt gear onto Grand Beetle to build an unstoppable juggernaut.',
+    plays:['Stack equipment on Grand Beetle \u2014 it gains +1 ATK per piece attached.','Neutranurse heals; Blackram sacrifices gear for burst.','Overforge doubles your built-up attacker for a finishing blow.'],
+    win:'Assemble the juggernaut, then Overforge for the kill. Simple and powerful.'},
+  cross:{name:'Cross Messiah',color:'#d8dde8',tier:'Intermediate',
+    plan:'Charge mastery. Hoard Charge with the Zero Medal, scale every attack off it, then unleash Cross Burst.',
+    plays:['Bank Charge \u2014 Full Charge and Overcharge ramp you fast; attacks deal +1 per 2 Charge held.','Seagaru\u2019s ranged attacks can snipe protected back-row support bots.','At max Charge you IGNITE: attacks gain +4 and Cross Burst hits for 3\u00d7 your Charge.'],
+    win:'Reach max Charge, then fire Cross Burst for a massive single-target nuke (15+ damage).'}
+};
+
+function openDeckGuide(dk){
+  // If no deck chosen yet, show the picker
+  if(!dk){
+    const order=['blaze','titan','royal','shadow','throne','forge','cross'];
+    let html='<div style="text-align:left"><div style="font-size:11px;color:var(--text2);text-align:center;margin-bottom:10px">Tap a deck for its strategy guide.</div>';
+    order.forEach(k=>{
+      const g=DECK_GUIDES[k]; if(!g)return;
+      html+='<button onclick="openDeckGuide(\''+k+'\')" style="display:flex;width:100%;align-items:center;gap:8px;padding:9px 10px;margin-bottom:5px;border-radius:9px;border:1px solid var(--border2);background:rgba(255,255,255,.03);cursor:pointer;text-align:left">'+
+        '<span style="width:9px;height:9px;border-radius:50%;background:'+g.color+';flex-shrink:0"></span>'+
+        '<span style="flex:1;color:'+g.color+';font-weight:700;font-size:13px">'+g.name+'</span>'+
+        '<span style="font-size:9px;color:var(--text3)">'+g.tier+'</span>'+
+      '</button>';
+    });
+    html+='</div>';
+    openM('\ud83d\udcda Deck Guide', html, [{l:'Close',cls:'mb ok',cb:()=>closeM()}]);
+    return;
+  }
+  const g=DECK_GUIDES[dk];
+  if(!g){ openDeckGuide(); return; }
+  let html='<div style="text-align:left">';
+  html+='<div style="font-family:Orbitron,monospace;font-weight:800;color:'+g.color+';font-size:16px">'+g.name+'</div>';
+  html+='<div style="font-size:9px;color:var(--text3);margin-bottom:8px;letter-spacing:.5px">'+g.tier.toUpperCase()+' DECK</div>';
+  // Gameplan
+  html+='<div style="background:rgba(255,255,255,.04);border-radius:8px;padding:9px;margin-bottom:7px;border-left:3px solid '+g.color+'">';
+  html+='<div style="font-size:9px;color:'+g.color+';font-weight:700;margin-bottom:3px">GAMEPLAN</div>';
+  html+='<div style="font-size:11px;color:var(--text);line-height:1.45">'+g.plan+'</div></div>';
+  // Key plays
+  html+='<div style="background:rgba(255,255,255,.04);border-radius:8px;padding:9px;margin-bottom:7px;border-left:3px solid '+g.color+'">';
+  html+='<div style="font-size:9px;color:'+g.color+';font-weight:700;margin-bottom:4px">KEY PLAYS</div>';
+  g.plays.forEach(p=>{ html+='<div style="font-size:11px;color:var(--text);line-height:1.4;margin-bottom:4px;padding-left:10px;position:relative"><span style="position:absolute;left:0;color:'+g.color+'">\u2022</span>'+p+'</div>'; });
+  html+='</div>';
+  // Win condition
+  html+='<div style="background:rgba(255,255,255,.04);border-radius:8px;padding:9px;border-left:3px solid '+g.color+'">';
+  html+='<div style="font-size:9px;color:'+g.color+';font-weight:700;margin-bottom:3px">HOW YOU WIN</div>';
+  html+='<div style="font-size:11px;color:var(--text);line-height:1.45">'+g.win+'</div></div>';
+  html+='</div>';
+  openM('\ud83d\udcda '+g.name, html, [{l:'\u2039 All Decks',cls:'mb',cb:()=>openDeckGuide()},{l:'Close',cls:'mb ok',cb:()=>closeM()}]);
+}
 
 // Show the Medafighter's ability when tapped in the title deck preview.
 function showMfInfo(dk){
