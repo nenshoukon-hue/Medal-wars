@@ -807,6 +807,11 @@ body::after{
 .elec-flash svg{width:100%;height:100%}
 .snipe-target{outline:2px dashed #7fd0ff !important;outline-offset:1px;animation:snipePulse 1.1s ease-in-out infinite}
 @keyframes snipePulse{0%,100%{outline-color:rgba(127,208,255,.4)}50%{outline-color:rgba(127,208,255,1)}}
+
+@keyframes mfFlashAnim{0%{opacity:0}15%{opacity:.55}100%{opacity:0}}
+.mf-flash{position:fixed;inset:0;z-index:190;pointer-events:none;animation:mfFlashAnim .6s ease-out forwards;mix-blend-mode:screen}
+@keyframes mfShakeAnim{0%,100%{transform:translate(0,0)}15%{transform:translate(-6px,3px)}30%{transform:translate(5px,-4px)}45%{transform:translate(-5px,-2px)}60%{transform:translate(4px,3px)}75%{transform:translate(-3px,2px)}}
+.mf-shaking{animation:mfShakeAnim .5s ease-in-out}
 </style>
 
 <style>
@@ -2472,7 +2477,7 @@ const MEDAL={
   blaze:    {name:'Blaze',    hp:20,color:'#f06424',passive:'+1 DMG on attacks',mfFx:'mf_blaze'},
   lightning:{name:'Lightning',hp:16,color:'#2a80f0',passive:'Double atk if dmg ≥4',mfFx:'mf_lightning'},
   psycho:   {name:'Psycho',   hp:16,color:'#9070f0',passive:'Draw 1 on Medaforce',mfFx:'mf_psycho'},
-  titan:    {name:'Titan',    hp:19,color:'#8090a0',passive:'-1 DMG taken',mfFx:'mf_titan'},
+  titan:    {name:'Titan',    hp:22,color:'#8090a0',passive:'-1 DMG taken',mfFx:'mf_titan'},
   aqua:     {name:'Aqua',     hp:16,color:'#10c090',passive:'Heal 1 HP per turn',mfFx:'mf_aqua'},
   nature:   {name:'Nature',   hp:17,color:'#60c020',passive:'+2 Charge per turn',mfFx:'mf_nature'},
   royal:    {name:'Royal',     hp:20,color:'#f0c040',passive:'+1 ATK per fallen ally this turn',mfFx:'mf_royal'},
@@ -2895,7 +2900,7 @@ function init(){
   const pd=JSON.parse(JSON.stringify(DECKS[deck]));
   if(typeof applyDeckSwaps==='function'){ pd.deck=shuffle(applyDeckSwaps(deck, pd.deck)); }
   // CPU picks a random deck — can mirror the player's choice
-  const allDecks=['blaze','titan','royal','shadow','throne'];
+  const allDecks=['blaze','titan','royal','shadow','throne','forge','cross'];
   const cpuDeckPick=(typeof G!=='undefined'&&G._forcedCpuDeck)?G._forcedCpuDeck:allDecks[Math.floor(Math.random()*allDecks.length)];
   const cd=JSON.parse(JSON.stringify(DECKS[cpuDeckPick]));
   G={
@@ -2916,6 +2921,11 @@ function init(){
   };
   for(let i=0;i<4;i++)drw(G.p);
   for(let i=0;i<4;i++)drw(G.c);
+  // HARD difficulty: give the CPU a skilled-player tempo edge (extra card + starting charge).
+  if(cpuDiff==='hard'){
+    drw(G.c);
+    G.c.bots.forEach(b=>{ if(!b.def) b.charge=Math.min(5,(b.charge||0)+1); });
+  }
   turn=1;atked=false;actionsLeft=1;G._lsBannerThisTurn=false;logs=[];
 }
 
@@ -3369,6 +3379,18 @@ function showBotPassive(sk, idx){
     html+='<div style="font-size:9px;color:var(--storm2);font-weight:700;margin-bottom:3px">'+medalName.toUpperCase()+' MEDAL</div>';
     html+='<div style="font-size:11px;color:var(--text);line-height:1.4">'+medalPassive+'</div></div>';
   }
+  // ── Inherited (fused) Medal passives from fallen allies ──
+  const _fused=[bot.fusedMedal, bot.fusedMedal2].filter(Boolean);
+  if(_fused.length){
+    _fused.forEach(fm=>{
+      const fi=(typeof MEDAL==='object'&&MEDAL[fm])?MEDAL[fm]:null;
+      if(fi){
+        html+='<div style="background:rgba(160,90,220,.12);border-radius:8px;padding:9px;margin-bottom:6px;border-left:3px solid '+(fi.color||'#a050dc')+'">';
+        html+='<div style="font-size:9px;color:'+(fi.color||'#c090ff')+';font-weight:800;margin-bottom:3px;letter-spacing:.5px">\ud83d\udd17 FUSED \u2014 '+fi.name+' Medal</div>';
+        html+='<div style="font-size:11px;color:var(--text);line-height:1.4">'+(fi.passive||'')+'</div></div>';
+      }
+    });
+  }
   if(bot.equip){
     html+='<div style="background:rgba(0,0,0,.3);border-radius:8px;padding:9px;margin-top:6px;border-left:3px solid #78c88c">';
     html+='<div style="font-size:9px;color:#78c88c;font-weight:700;margin-bottom:3px">EQUIPPED</div>';
@@ -3403,6 +3425,20 @@ function electricFlash(bot){
     else { f.style.left='calc(50% - 60px)'; f.style.top='40%'; }
     document.body.appendChild(f);
     setTimeout(()=>f.remove(),600);
+  }catch(e){}
+}
+
+
+// Dramatic Medaforce activation FX: colored screen flash + brief shake.
+function medaforceFX(color){
+  try{
+    const f=document.createElement('div');
+    f.className='mf-flash';
+    f.style.background='radial-gradient(circle at 50% 45%, '+(color||'#f0b820')+'cc 0%, '+(color||'#f0b820')+'33 40%, transparent 75%)';
+    document.body.appendChild(f);
+    setTimeout(()=>f.remove(),620);
+    const arena=document.getElementById('arena')||document.body;
+    if(arena){ arena.classList.remove('mf-shaking'); void arena.offsetWidth; arena.classList.add('mf-shaking'); setTimeout(()=>arena.classList.remove('mf-shaking'),520); }
   }catch(e){}
 }
 
@@ -4420,6 +4456,7 @@ function fireMF(card,caster){
   atked=true;
   log('MEDAFORCE: '+caster.name+' fires '+card.name+'!','atk');
   banner('MEDAFORCE!','#f04040');
+  try{ medaforceFX(card.color||'#f04040'); }catch(e){}
   G.mfFired++;
   G.story.push(caster.name+' fired '+card.name+' on turn '+turn);
 
@@ -6747,6 +6784,8 @@ function showEnd(){
   try{ if(G_online && MWNet.clearSession) MWNet.clearSession(); }catch(e){}
   setTimeout(()=>{
     const win=G.winner==='p';
+    // Stop battle music when the match ends so it doesn't bleed into the end screen / rematch
+    try{ if(_musicEl){ fadeAudio(_musicEl, _musicEl.volume||0.18, 0, 600, ()=>{ try{_musicEl.pause();_musicEl.currentTime=0;}catch(e){} }); } }catch(e){}
     setTimeout(()=>win ? SFX.victory() : SFX.defeat(), 400);
     if(win){winCount++;streakCount++;localStorage.setItem('mw_wins',winCount);localStorage.setItem('mw_streak',streakCount);
       // Onboarding nudge: after 3 wins, invite the player to try ranked (once).
@@ -7081,6 +7120,7 @@ function doRematch(){
 function rematch(){
   // Close end screen
   document.getElementById('end').classList.remove('open');
+  try{ startBattleMusic(); }catch(e){}
   // Reset all game state but keep win/loss counters and deck choice
   G = {};
   logs = [];
@@ -7947,6 +7987,8 @@ function fadeOutTitleMusic(ms){
 }
 function startBattleMusic(){
   if(localStorage.getItem('mw_music_on')==='false') return; // respect mute
+  // Stop title music first so the two never overlap
+  try{ if(_titleMusicEl){ _titleMusicEl.pause(); _titleMusicEl.currentTime=0; } }catch(e){}
   if(!_musicEl) _musicEl=document.getElementById('mw-bgm');
   if(!_musicEl) return;
   _musicEl.loop=true;
@@ -7966,6 +8008,8 @@ function startTitleMusic(){
   if(!_titleMusicEl) _titleMusicEl=document.getElementById('mw-title-bgm');
   if(!_titleMusicEl) return;
   if(localStorage.getItem('mw_music_on')==='false') return; // respect mute
+  // Stop battle music first so the two never overlap
+  try{ if(_musicEl){ _musicEl.pause(); _musicEl.currentTime=0; } }catch(e){}
   _titleMusicEl.volume=0.22;
   const tryPlay=()=>{
     if(localStorage.getItem('mw_music_on')==='false') return;
