@@ -801,6 +801,10 @@ body::after{
 
 @keyframes queueSpin{to{transform:rotate(360deg)}}
 @keyframes coinSpin{0%{transform:rotateY(0deg) scale(.5)}100%{transform:rotateY(720deg) scale(1)}}
+
+@keyframes elecZap{0%{opacity:0;transform:scale(.8)}20%{opacity:1}50%{opacity:.6}100%{opacity:0;transform:scale(1.3)}}
+.elec-flash{position:fixed;pointer-events:none;z-index:200;width:120px;height:120px;animation:elecZap .55s ease-out forwards;background:radial-gradient(circle,rgba(127,208,255,.5) 0%,rgba(127,208,255,0) 70%);filter:drop-shadow(0 0 14px #7fd0ff)}
+.elec-flash svg{width:100%;height:100%}
 </style>
 
 <style>
@@ -933,7 +937,7 @@ body::after{
     </div>
     <div class="dpk" data-deck="cross" onclick="pickDeck(this)" style="border-color:rgba(216,221,232,.4)">
       <div class="dn" style="color:#d8dde8">✦ Cross Messiah</div>
-      <div class="dd">Cross Messiah · Moon Dragon · Seagull<br>Charge mastery — hoard Charge, then burst</div>
+      <div class="dd">Cross Messiah · Moon Dragon · Seagaru<br>Charge mastery — hoard Charge, then burst</div>
     </div>
   </div>
 
@@ -2488,7 +2492,7 @@ const BOTS={
   grand_beetle:{name:'Grand Beetle',atk:6,medal:'forge',art:'grand_beetle',mcart:'mc_grand_beetle',color:'#e0a020',passive:'Master Frame: holds up to 3 equipment. +1 ATK per equipment attached.'},
   cross_messiah:{name:'Cross Messiah',atk:5,medal:'zero',art:'cross_messiah',mcart:'mc_cross_messiah',color:'#d8dde8',passive:'Kabuto+Kuwagata: Charge Blade & Buster scale with Charge. At max Charge, attacks deal +4. Medachange to Cross Messiah Z.'},
   charge_corne:{name:'Moon Dragon',atk:3,medal:'zero',art:'charge_corne',mcart:'mc_charge_corne',color:'#7fc0ff',passive:'Lunar Support: each turn, gives +1 Charge to your lowest-charge ally.'},
-  beetle_gun:{name:'Seagull',atk:6,medal:'zero',art:'beetle_gun',mcart:'mc_beetle_gun',color:'#b0b8c8',passive:'Sky Buster: ranged attacks deal +2 when this bot is at 4+ Charge.'},
+  beetle_gun:{name:'Seagaru',atk:6,medal:'zero',art:'beetle_gun',mcart:'mc_beetle_gun',color:'#b0b8c8',passive:'Sky Buster: ranged attacks deal +2 when this bot is at 4+ Charge.'},
   neutranurse:{name:'Neutranurse',atk:3,medal:'forge',art:'neutranurse',mcart:'mc_neutranurse',color:'#40c0a0',passive:'Hot Forge: when you play an equipment card, draw a card.'},
   blackram:{name:'Blackram',atk:4,medal:'forge',art:'blackram',mcart:'mc_blackram',color:'#a08060',passive:'Scrap & Rebuild: when an equipped bot is defeated, return one of its equipment to your hand.'},
   nin_ninja:  {name:'Nin-Ninja', atk:4,medal:'chain',art:'nin_ninja', mcart:'mc_nin',  color:'#4080f0',passive:'Dual Technique: may play 2 technique cards per turn when active.'},
@@ -2559,7 +2563,7 @@ const CDEFS={
   // ═══ GENERIC NEUTRAL POOL (swap-in, up to 3 per deck) ═══
   gen_field_medic:  C('gen_field_medic','action','Field Medic','act_art','Heal 5/8','gen_heal','#40d898','Heal a bot 5 HP (8 if below half). Generic.'),
   gen_bulwark:      C('gen_bulwark','equipment','Bulwark','eq_art','-1 DMG taken','gen_bulwark','#8090a0','Equipped bot takes -1 from attacks this turn and next. Generic.'),
-  gen_static_field: C('gen_static_field','trap','Static Field','trap_art','Trap: drain+exhaust','gen_static','#2a80f0','TRAP: next enemy attacker loses 2 Charge and is exhausted next turn. Generic.'),
+  gen_static_field: C('gen_static_field','trap','Static Field','trap_art','Trap: negate','trap_negate','#2a80f0','TRAP: negate the next enemy attack entirely. Generic.'),
   gen_recharge:     C('gen_recharge','action','Recharge','act_art','+2 Charge','gen_recharge','#f0b820','Active bot +2 Charge. Draw a card if already at max. Generic.'),
   gen_salvage:      C('gen_salvage','action','Scrap Salvage','act_art','Draw 2 disc 1','gen_salvage','#60c020','Draw 2 cards, then discard 1. Generic.'),
   gen_override:     C('gen_override','action','Override','act_art','Cancel next','gen_override','#c060f0','Cancel the next technique or action your opponent plays this turn. Generic.'),
@@ -2595,7 +2599,9 @@ const CDEFS={
   cm_salvage:       C('cm_salvage','action','Scrap Salvage','act_art','Draw 2 disc 1','gen_salvage','#60c020','Draw 2 cards, then discard 1.'),
   cm_crossburst_mf: C('cm_crossburst_mf','medaforce','Cross Burst','mf_art','Charge nuke','mf_crossburst','#d8dde8','MEDAFORCE: deal damage equal to 3x the active bot Charge, then reset its Charge to 0.'),
   mc_cross_messiah: C('mc_cross_messiah','medachange','Cross Messiah Z','mc_card_art','+5ATK +12HP Overcharge','mc_bot_cross_messiah','#d8dde8','Fuse with Cross Messiah \u2014 tank mode. Doubles its Charge-scaling damage (Overcharge).'),
-  cm_sky_volley:    C('cm_sky_volley','technique','Sky Volley','fire_art','Ranged +3/+5','cm_skyvolley','#b0b8c8','Seagull ranged barrage: deal +3, or +5 if the attacker is at 4+ Charge.'),
+
+  mc_beetle_gun:    C('mc_beetle_gun','medachange','Seagaru Custom','mc_card_art','+5ATK +12HP','mc_bot_beetle_gun','#b0b8c8','Fuse with Seagaru \u2014 heavy gunner mode. Ranged Charge Buster scaling intensifies.'),
+  mc_charge_corne:  C('mc_charge_corne','medachange','Moon Dragon Z','mc_card_art','+5ATK +12HP','mc_bot_charge_corne','#7fc0ff','Fuse with Moon Dragon \u2014 lunar ascension. Charge-support aura doubles.'),  cm_sky_volley:    C('cm_sky_volley','technique','Sky Volley','fire_art','Ranged +3/+5','cm_skyvolley','#b0b8c8','Seagaru ranged barrage: deal +3, or +5 if the attacker is at 4+ Charge.'),
   cm_lunar_repair:  C('cm_lunar_repair','action','Lunar Repair','act_art','Heal 5 +2 Chg','cm_lunarrepair','#7fc0ff','Moon Dragon support: heal one ally 5 HP and give it +2 Charge.'),
   fb_nano_mend:   C('fb_nano_mend','action','Nano-Mend','act_art','Heal 6','fb_nanomend','#40c0a0','Heal a bot 6 HP. If Neutranurse is in play, heal 9 instead.'),
   fb_field_weld:  C('fb_field_weld','action','Field Weld','act_art','Heal+Charge','fb_fieldweld','#40c0a0','Heal a bot 4 HP and give it +1 Charge.'),
@@ -2855,10 +2861,10 @@ const DECKS={
       ['cm_full_charge',1],['cm_overcharge',1],['cm_recharge',1],['cm_x_biped',1],['cm_zero_core',1],
       // Charge-scaling attacks (6)
       ['cm_charge_blade',1],['cm_charge_buster',1],['cm_stag_sword',1],['cm_sky_volley',1],['cm_kabuto_drive',1],['cm_stag_sword',1],
-      // Medachange (1)
-      ['mc_cross_messiah',1],
-      // Support / utility (4)
-      ['cm_lunar_repair',1],['cm_salvage',1],['cm_full_charge',1],['cm_overcharge',1],
+      // Medachange (3)
+      ['mc_cross_messiah',1],['mc_beetle_gun',1],['mc_charge_corne',1],
+      // Support / utility (2)
+      ['cm_lunar_repair',1],['cm_salvage',1],
       // Medaforce (4)
       ['cm_crossburst_mf',1],['cm_crossburst_mf',1],['thunder_barrage',1],['cm_crossburst_mf',1],
     ])},
@@ -3035,7 +3041,25 @@ function addChg(bot,n){
   if(bot.def)return;
   const old=bot.charge;
   bot.charge=Math.min(5,bot.charge+n);
-  if(old<5&&bot.charge>=5){log(bot.name+' IGNITED!','chg');banner('IGNITED!',bot.mColor||'#f0b820');}
+  if(old<5&&bot.charge>=5){
+    log(bot.name+' IGNITED!','chg');banner('IGNITED!',bot.mColor||'#f0b820');
+    // ── Zero medal: electric overcharge FX when fully charged ──
+    if(bot.medal==='zero'||bot.fusedMedal==='zero'){
+      try{ if(typeof SFX!=='undefined'&&SFX.zap) SFX.zap(); }catch(e){}
+      try{ if(typeof banner==='function') setTimeout(()=>banner('\u26a1 OVERCHARGE \u26a1','#7fd0ff'),120); }catch(e){}
+      try{ if(typeof electricFlash==='function') electricFlash(bot); }catch(e){}
+    }
+    // ── Arase Oosumi Medafighter: on reaching max Charge, draw + that bot gains +1 ATK ──
+    const side=G.p&&G.p.bots&&G.p.bots.includes(bot)?'p':(G.c&&G.c.bots&&G.c.bots.includes(bot)?'c':null);
+    if(side){
+      const mf=G[side].mf;
+      if(mf&&/max Charge/i.test(mf.pass||'')&&(bot._araseAtk||0)<3){
+        bot.atk+=1; bot._araseAtk=(bot._araseAtk||0)+1;
+        drw(G[side],1);
+        log((side==='p'?'':'CPU ')+'Arase Oosumi: '+bot.name+' +1 ATK and drew a card!','chg');
+      }
+    }
+  }
   else if(n>0)log(bot.name+' +'+n+' chg ('+bot.charge+'/5)','chg');
 }
 
@@ -3347,6 +3371,25 @@ function showBotPassive(sk, idx){
   }
   html+='</div>';
   openM('Bot Info', html, [{l:'Close', cls:'mb ok', cb:()=>closeM()}]);
+}
+
+
+// Brief electric arc flash over a bot when it overcharges (Zero medal).
+function electricFlash(bot){
+  try{
+    let el=null;
+    // Try to locate the bot's rendered slot for positioning
+    const allSlots=document.querySelectorAll('.botcard,.slot,[data-botkey]');
+    let rect=null;
+    allSlots.forEach(s=>{ if(s.dataset&&s.dataset.botkey===bot.key) rect=s.getBoundingClientRect(); });
+    const f=document.createElement('div');
+    f.className='elec-flash';
+    f.innerHTML='<svg viewBox="0 0 100 100"><polyline points="50,5 42,38 58,42 38,72 54,68 46,95" fill="none" stroke="#bfeaff" stroke-width="4" stroke-linejoin="round"/><polyline points="50,5 42,38 58,42 38,72 54,68 46,95" fill="none" stroke="#7fd0ff" stroke-width="8" stroke-linejoin="round" opacity="0.5"/></svg>';
+    if(rect){ f.style.left=(rect.left+rect.width/2-60)+'px'; f.style.top=(rect.top+rect.height/2-60)+'px'; }
+    else { f.style.left='calc(50% - 60px)'; f.style.top='40%'; }
+    document.body.appendChild(f);
+    setTimeout(()=>f.remove(),600);
+  }catch(e){}
 }
 
 function banner(txt,color='#f0b820'){
@@ -3678,8 +3721,8 @@ function resolveAtk(a,d,sk,techId){
   }
   // Cross Messiah Z (medachanged): Overcharge — even bigger charge scaling
   if(a&&a.key==='cross_messiah'&&a.changed){ total+=Math.floor((a.charge||0)/2); }
-  // Beetle Gun Charge Buster: +2 at 4+ Charge
-  if(a&&a.key==='beetle_gun'&&(a.charge||0)>=4){ total+=2; }
+  // Beetle Gun (Seagaru) Charge Buster: +2 at 4+ Charge (+4 if medachanged)
+  if(a&&a.key==='beetle_gun'&&(a.charge||0)>=4){ total+=(a.changed?4:2); }
   // Grand Beetle Master Frame: +1 ATK per equipment attached
   if(a&&a.key==='grand_beetle'){ total+=(a.equips||[]).length; }
   // Power Conduit threshold: 3+ equipment in play → +1 ATK to all your bots
@@ -3854,6 +3897,24 @@ function applyTech(c,a,d,sk){
   if(fx==='cm_skyvolley'){ b=((a.charge||0)>=4)?5:3; log('Sky Volley: +'+b+' ranged barrage!','atk'); return b; }
   if(fx==='cm_stagsword'){ b=((a.charge||0)>=4)?4:2; log('Stag Sword: +'+b+'!','atk'); return b; }
   if(fx==='cm_kabutodrive'){ b=5; a.charge=Math.max(0,(a.charge||0)-3); log('Kabuto Drive: +5, spent 3 Charge!','atk'); return b; }
+  // ── Shadow / Royal / Combo techniques (also playable as normal attacks) ──
+  {
+    const mySide=(sk==='p')?G.p:G.c;       // attacker's side
+    const drawSide=mySide;
+    if(fx==='deal3_chain_free'){ b=3; log('Shadow Slash: +3 to '+d.name+'!','atk'); return b; }
+    if(fx==='deal2_combo'){ b=2; const gok=alive(mySide).find(x=>x.key==='gokudo'&&!x.def); if(gok){gok._comboCount=(gok._comboCount||0)+1;log('Blade Dance: Gokudo combo+1!','chg');} return b; }
+    if(fx==='deal4_exhaust'){ b=4; if(d){d.exhst=true;} log('Phantom Cut: +4, '+(d?d.name:'')+' exhausted!','atk'); return b; }
+    if(fx==='deal3_draw_chain'){ b=3; drw(drawSide,1); log('Fox Fang: +3 + drew 1!','chg'); return b; }
+    if(fx==='deal4_combo_boost'){ b=4; const gok=alive(mySide).find(x=>x.key==='gokudo'&&!x.def); if(gok){gok._comboCount=(gok._comboCount||0)+2;log('Cannon Blast: Gokudo +2 combo!','chg');} return b; }
+    if(fx==='deal3_exhaust'){ b=3; if(d){d.exhst=true;} log('Royal Decree: +3, '+(d?d.name:'')+' exhausted!','atk'); return b; }
+    if(fx==='deal3_nova'){ b=3; alive(sk==='p'?G.c:G.p).forEach(t=>{ if(t!==d) dmg(t,1,sk==='p'?'c':'p'); }); log('Nova Force: +3 and splash 1 to others!','atk'); return b; }
+    if(fx==='deal2_volley'){ b=2; alive(sk==='p'?G.c:G.p).forEach(t=>{ if(t!==d) dmg(t,1,sk==='p'?'c':'p'); }); log('Missile Volley: +2 and 1 to others!','atk'); return b; }
+    if(fx==='deal2_web'){ b=2; if(d){d._webbed=2;} log('Web Trap: +2 and '+(d?d.name:'')+' webbed!','atk'); return b; }
+    if(fx==='deal3_counter'){ b=3; log('Counter Strike: +3!','atk'); return b; }
+    if(fx==='deal4_first'){ b=4; log('Swift Strike: +4 first hit!','atk'); return b; }
+    if(fx==='deal5_dramon'){ b=5; log('Dramon Strike: +5!','atk'); return b; }
+    if(fx==='deal5_pierce'){ b=5; G._pierceDmg=true; log('Lance Charge: +5 pierce!','atk'); return b; }
+  }
   // ── Forge Barons sacrifice techniques: destroy own equipment for effect ──
   if(fx==='fb_scrapblast'){
     if(_destroyOneEquip(a)){ b=5+(a&&a._sacBonus?a._sacBonus:0); log('Scrap Blast: destroyed equipment for +'+b+' DMG!','atk'); }
@@ -6642,7 +6703,16 @@ function setDiff(d,el){
   });
 }
 
-const DECK_IDENTITY={
+const DECK_DIFFICULTY={
+  blaze:{tier:'Beginner',stars:1,note:'Straightforward aggro — play cards, deal burn, attack.'},
+  forge:{tier:'Beginner',stars:1,note:'Build equipment onto one bot — simple, powerful.'},
+  titan:{tier:'Intermediate',stars:2,note:'Manage charge denial and timing.'},
+  cross:{tier:'Intermediate',stars:2,note:'Bank Charge, then unleash Cross Burst at the right moment.'},
+  royal:{tier:'Advanced',stars:3,note:'Protect the front and time DigiStrike.'},
+  throne:{tier:'Advanced',stars:3,note:'One bot — positioning and resource timing are everything.'},
+  shadow:{tier:'Expert',stars:4,note:'Chain techniques precisely to fuel Combo Cannon.'},
+};
+DECK_IDENTITY={
   blaze:'Fire & burn aggro — stack burn, cash in with Scorch and Inferno Surge.',
   titan:'Disruption control — drain charge, endure, close with Last Stand.',
   royal:'Vanguard + Digimon collab — protect the front, finish with DigiStrike.',
@@ -6787,7 +6857,21 @@ function renderDeckPreview(dk){
   }).join('');
   const mf=MFR[D.mf];
   const mfArt=(typeof renderMFArt==='function')?renderMFArt(D.mf,32,32):'';
-  panel.innerHTML=
+  let diffHtml='';
+  {
+    const df=(typeof DECK_DIFFICULTY!=='undefined')?DECK_DIFFICULTY[dk]:null;
+    if(df){
+      const colors={1:'#40d088',2:'#f0c040',3:'#f0883c',4:'#ff5050'};
+      const col=colors[df.stars]||'#aaa';
+      const filled='\u2605'.repeat(df.stars), empty='\u2606'.repeat(4-df.stars);
+      diffHtml='<div style="display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:6px">'+
+        '<div style="font-size:11px;letter-spacing:1px"><span style="color:'+col+'">'+filled+'</span><span style="color:#444">'+empty+'</span></div>'+
+        '<div style="font-size:9px;font-weight:700;color:'+col+';letter-spacing:.5px">'+df.tier.toUpperCase()+'</div>'+
+        '<div style="font-size:8px;color:var(--text3);max-width:300px;text-align:center;line-height:1.3">'+df.note+'</div>'+
+      '</div>';
+    }
+  }
+  panel.innerHTML=diffHtml+
     '<div style="display:flex;gap:10px;justify-content:center;align-items:flex-start;margin-bottom:6px">'+botArt+'</div>'+
     '<div style="display:flex;gap:6px;justify-content:center;align-items:center;margin-bottom:6px">'+
       '<div style="width:32px;height:32px;border-radius:6px;overflow:hidden;border:1px solid var(--border2)">'+mfArt+'</div>'+
@@ -7492,6 +7576,32 @@ const SFX = (function(){
     },
 
     // ── MEDAFORCE — charge buildup + explosion ─────────
+    zap(){
+      if(_muted) return;
+      const c = ctx(); if(!c) return;
+      const t = c.currentTime;
+      // Electric crackle: fast noisy high-frequency bursts + a zap sweep
+      for(let i=0;i<5;i++){
+        const o=c.createOscillator(); const g=c.createGain();
+        o.type='square';
+        const f=1800+Math.random()*2600;
+        o.frequency.setValueAtTime(f, t+i*0.03);
+        o.frequency.exponentialRampToValueAtTime(f*0.5, t+i*0.03+0.025);
+        g.gain.setValueAtTime(0.0001, t+i*0.03);
+        g.gain.linearRampToValueAtTime(0.12, t+i*0.03+0.004);
+        g.gain.exponentialRampToValueAtTime(0.0001, t+i*0.03+0.03);
+        o.connect(g); g.connect(c.destination); o.start(t+i*0.03); o.stop(t+i*0.03+0.035);
+      }
+      // Descending zap tail
+      const z=c.createOscillator(); const zg=c.createGain();
+      z.type='sawtooth';
+      z.frequency.setValueAtTime(2400, t+0.05);
+      z.frequency.exponentialRampToValueAtTime(220, t+0.3);
+      zg.gain.setValueAtTime(0.0001, t+0.05);
+      zg.gain.linearRampToValueAtTime(0.18, t+0.08);
+      zg.gain.exponentialRampToValueAtTime(0.0001, t+0.32);
+      z.connect(zg); zg.connect(c.destination); z.start(t+0.05); z.stop(t+0.34);
+    },
     medaforce(){
       if(_muted) return;
       const c = ctx(); if(!c) return;
@@ -8204,9 +8314,10 @@ async function _testConnection(){
       'Status: <b style="color:'+(r.ok?'#40d088':'#ff6060')+'">'+r.status+(r.ok?' OK':' (problem)')+'</b><br>'+
       'Time: '+secs+'s<br>'+
       'Reply: '+(txt?txt.slice(0,60):'(empty)')+'<br><br>'+
-      (r.ok?'Server is reachable \u2014 ranked should work now. Tap Find Match again.':'Server responded but with an error. It may still be starting up.')+
+      (r.ok?'HTTP works. Now testing WebSocket\u2026':'Server responded but with an error. It may still be starting up.')+
       '</div>',
-      [{l:'Back to Ranked',cls:'mb ok',cb:()=>openRanked()}]);
+      [{l:'Back to Ranked',cls:'mb',cb:()=>openRanked()}]);
+    if(r.ok){ _testWebSocket(); }
   }catch(e){
     const secs=((Date.now()-started)/1000).toFixed(1);
     openM('Connection Test',
@@ -8221,6 +8332,27 @@ async function _testConnection(){
   }
 }
 
+
+// Directly test the WebSocket upgrade — this is what ranked/online actually needs.
+function _testWebSocket(){
+  const url=(window.MW_SERVER_URL||null);
+  if(!url){ return; }
+  let settled=false;
+  const started=Date.now();
+  let testWs=null;
+  const finish=(html)=>{ if(settled)return; settled=true; try{if(testWs)testWs.close();}catch(_){}
+    openM('WebSocket Test', html, [{l:'Retry',cls:'mb ok',cb:()=>{ closeM(); _testWebSocket(); }},{l:'Back to Ranked',cls:'mb',cb:()=>openRanked()}]); };
+  try{
+    testWs=new WebSocket(url);
+    const timer=setTimeout(()=>{ finish('<div style="font-size:12px;line-height:1.6"><b style="color:#ff6060">WebSocket timed out</b> after 20s.<br><br>HTTP works but the WebSocket upgrade never completed. This is almost always one of:<br>\u2022 <b>Your network/carrier blocks WebSockets</b> (common on some mobile data / public WiFi). Try a different network \u2014 e.g. switch between WiFi and cellular.<br>\u2022 Railway edge isn\'t passing the upgrade (rare).</div>'); }, 20000);
+    testWs.onopen=()=>{ clearTimeout(timer); const secs=((Date.now()-started)/1000).toFixed(1);
+      finish('<div style="font-size:12px;line-height:1.6"><b style="color:#40d088">WebSocket connected!</b> ('+secs+'s)<br><br>Online play should work. If Find Match still fails, tap it again \u2014 the server may have been waking up.</div>'); };
+    testWs.onerror=()=>{ clearTimeout(timer);
+      finish('<div style="font-size:12px;line-height:1.6"><b style="color:#ff6060">WebSocket failed to open.</b><br><br>HTTP works but the WebSocket connection errored immediately. Most likely your current network is blocking WebSocket traffic.<br><br><b>Try this:</b> switch networks \u2014 if you\'re on cellular, try WiFi (or vice-versa). Many carriers and captive WiFi portals block WebSockets while allowing normal web traffic.</div>'); };
+    testWs.onclose=(ev)=>{ if(settled)return; clearTimeout(timer);
+      finish('<div style="font-size:12px;line-height:1.6"><b style="color:#ff6060">WebSocket closed</b> (code '+((ev&&ev.code)||'?')+').<br><br>The connection opened then closed. Code 1006 usually means the network dropped it (carrier/proxy). Try a different network.</div>'); };
+  }catch(e){ finish('<div style="font-size:12px;color:#ff6060">Could not create WebSocket: '+(e&&e.message||e)+'</div>'); }
+}
 
 // Practice ranked match vs CPU (for solo testing / warm-up). Not rated.
 function _startPracticeMatch(){
