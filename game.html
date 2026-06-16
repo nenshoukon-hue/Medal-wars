@@ -7213,6 +7213,7 @@ function maybeShowRankedNudge(){
 }
 
 function showEnd(){
+  try{ _rotatingBgSlot=0; _rotatingBgUrl=''; }catch(e){}  // clear stage so next match re-selects
   try{ if(G_online && MWNet.clearSession) MWNet.clearSession(); }catch(e){}
   setTimeout(()=>{
     const win=G.winner==='p';
@@ -9934,8 +9935,9 @@ function _startGameNow(){
   fadeOutTitleMusic(700);
   try{
     if(_explicitStage){
-      _rotatingBgUrl=artOverrides['bg_arena_'+_explicitStage]||''; _rotatingBgSlot=_explicitStage;
+      _rotatingBgSlot=_explicitStage; _rotatingBgUrl=artOverrides['bg_arena_'+_explicitStage]||'';
     } else {
+      _rotatingBgSlot=0; _rotatingBgUrl=''; // clear so pickRotatingBg chooses fresh
       pickRotatingBg();
     }
     applyBattlefieldArt();
@@ -10644,9 +10646,10 @@ function applyBattlefieldArt(){
   // (picked per match in pickRotatingBg()). Only fall back to a single 'bg_arena' if
   // no rotation slots exist at all.
   const hasRotation=['bg_arena_1','bg_arena_2','bg_arena_3','bg_arena_4'].some(k=>artOverrides[k]);
-  // If rotation slots exist but none was picked yet (e.g. art loaded late), pick now.
-  if(hasRotation && !_rotatingBgUrl){ try{ pickRotatingBg(); }catch(e){} }
-  let url = hasRotation ? _rotatingBgUrl : artOverrides['bg_arena'];
+  // Only auto-pick if NO slot has been chosen yet (don't override an explicit/random pick).
+  if(hasRotation && !_rotatingBgSlot){ try{ pickRotatingBg(); }catch(e){} }
+  // If the chosen slot has a background, use it; else use its URL or the single bg_arena fallback.
+  let url = (_rotatingBgSlot && artOverrides['bg_arena_'+_rotatingBgSlot]) ? artOverrides['bg_arena_'+_rotatingBgSlot] : (hasRotation ? _rotatingBgUrl : artOverrides['bg_arena']);
   if(!url) url=_rotatingBgUrl||artOverrides['bg_arena'];
   if(url){
     // Dim layer keeps cards readable over any bright image
