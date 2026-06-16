@@ -3515,7 +3515,8 @@ function doCharge(sk){
   G[sk].bots.forEach(bot=>{
     if(sk==='p'){bot.taunting=false;} // taunt resets each player turn start
     if(bot.def)return;
-    if(bot.burn){const bAmt=bot.burnAmt||1;dmg(bot,bAmt,sk);bot.burn=false;bot.burnAmt=0;if(bot.def)return;}
+    bot._burnLinger=false; // clear last turn's lingering burn marker
+    if(bot.burn){const bAmt=bot.burnAmt||1;dmg(bot,bAmt,sk);bot.burn=false;bot.burnAmt=0;bot._burnLinger=true;if(bot.def)return;}
     // Rokusho Medachange passive: heal 2 per turn
     if(bot.changed&&bot.key==='rokusho'){bot.hp=Math.min(bot.maxHp,bot.hp+2);flt('+2','heal');}
     if(bot._masterHeal&&!bot.def){bot.hp=Math.min(bot.maxHp,bot.hp+bot._masterHeal);flt('+'+bot._masterHeal,'heal');}
@@ -4513,7 +4514,7 @@ function playFusionX(card, sk){
         mach.atk=combinedAtk;
         mach.maxHp=mach.maxHp+Math.ceil(arc.maxHp*0.6)+10;
         mach.hp=Math.min(pooledHp,mach.maxHp);
-        mach._fusionStalk=true;     // Machairodus Stalk always available
+        mach._fusionStalk=true; mach._stalwaysOn=true;     // Machairodus Stalk always available
         mach._fusionCharge=true;    // Arcbeetle charge-on-attack
         mach._fusionPierce=true;    // ignores reduction
         mach.color='#f0c040';
@@ -5692,7 +5693,7 @@ function aiDoMedachange(){
       _cMach.atk=_cMach.atk+_cArc.atk+3;
       _cMach.maxHp=_cMach.maxHp+Math.ceil(_cArc.maxHp*0.6)+10;
       _cMach.hp=Math.min(_cMach.hp+Math.ceil(_cArc.hp*0.6)+10,_cMach.maxHp);
-      _cMach._fusionStalk=true; _cMach._fusionCharge=true; _cMach._fusionPierce=true; _cMach.color='#f0c040';
+      _cMach._fusionStalk=true; _cMach._stalwaysOn=true; _cMach._fusionCharge=true; _cMach._fusionPierce=true; _cMach.color='#f0c040';
       _cArc.def=true; _cArc._absorbed=true; G.c.activeBot=G.c.bots.indexOf(_cMach);
       log('CPU X FUSION CHANGE: Masterbeetle forms!','mc');banner('CPU MASTERBEETLE!','#f0c040');try{medaforceFX('#f0c040');}catch(e){}
       renderAll(); return;
@@ -6536,7 +6537,8 @@ function mkBotEl(bot,idx,sk){
   </div>
   <div class="pips">${pips}</div>
   <div class="btags">
-    ${bot.burn&&!bot.def?'<span class="btag tgbn">🔥 BURN</span>':''}
+    ${(bot.burn||bot._burnLinger)&&!bot.def?'<span class="btag tgbn">🔥 BURN'+(bot.burn&&bot.burnAmt>1?' '+bot.burnAmt:'')+'</span>':''}
+    ${bot.key==='machairodus'&&(bot._stalkReady||bot._stalwaysOn)&&!bot.def?'<span class="btag" style="background:rgba(176,96,240,.2);color:#c89cff;border:1px solid rgba(176,96,240,.5)">\ud83d\udc41\ufe0f STALK +3</span>':''}
     ${bot._predatorMark&&!bot.def?'<span class="btag" style="background:rgba(144,80,208,.22);color:#c090ff;border:1px solid rgba(144,80,208,.5)">\ud83c\udfaf MARKED</span>':''}
     ${bot.exhst&&!bot.def?'<span class="btag" style="background:rgba(160,120,60,.18);color:#d0a060;border:1px solid rgba(208,160,96,.4)">💤 EXHAUSTED</span>':''}
     ${bot._webbed>0&&!bot.def?'<span class="btag" style="background:rgba(144,80,208,.18);color:#c090ff;border:1px solid rgba(144,80,208,.4)">🕸 WEBBED</span>':''}
@@ -7113,7 +7115,7 @@ function showEnd(){
   setTimeout(()=>{
     const win=G.winner==='p';
     // Stop battle music when the match ends so it doesn't bleed into the end screen / rematch
-    try{ if(_musicEl){ fadeAudio(_musicEl, _musicEl.volume||0.18, 0, 600, ()=>{ try{_musicEl.pause();_musicEl.currentTime=0;}catch(e){} }); } }catch(e){}
+    try{ if(_musicEl){ fadeAudio(_musicEl, _musicEl.volume||0.18, 0, 600, ()=>{ try{ stopBattleMusic(); }catch(e){} }); } }catch(e){}
     setTimeout(()=>win ? SFX.victory() : SFX.defeat(), 400);
     if(win){winCount++;streakCount++;localStorage.setItem('mw_wins',winCount);localStorage.setItem('mw_streak',streakCount);
       // Onboarding nudge: after 3 wins, invite the player to try ranked (once).
@@ -8458,6 +8460,7 @@ function fadeOutTitleMusic(ms){
 }
 function startBattleMusic(){
   if(localStorage.getItem('mw_music_on')==='false') return; // respect mute
+  _battleMusicLocked=false; // a match is starting — release the lock
   // Stop title music first so the two never overlap
   try{ if(_titleMusicEl){ _titleMusicEl.pause(); _titleMusicEl.currentTime=0; } }catch(e){}
   if(!_musicEl) _musicEl=document.getElementById('mw-bgm');
@@ -8481,7 +8484,7 @@ function startBattleMusic(){
   const fadeIn=()=>fadeAudio(_musicEl, 0.001, 0.18, 900);
   if(p&&p.then){ p.then(fadeIn).catch(()=>{
     // autoplay blocked — start on next gesture
-    const resume=()=>{ _musicEl.play().then(fadeIn).catch(()=>{}); document.removeEventListener('pointerdown',resume); };
+    const resume=()=>{ if(!_battleMusicLocked){ _musicEl.play().then(fadeIn).catch(()=>{}); } document.removeEventListener('pointerdown',resume); };
     document.addEventListener('pointerdown',resume,{once:true});
   }); }
   else { fadeIn(); }
@@ -8529,7 +8532,17 @@ function startFromIntro(){
   }
 }
 
+// Hard stop for battle music — fully kills playback so it can never bleed onto the title.
+let _battleMusicLocked=false;
+function stopBattleMusic(){
+  try{
+    _battleMusicLocked=true;
+    if(!_musicEl) _musicEl=document.getElementById('mw-bgm');
+    if(_musicEl){ _musicEl.pause(); try{_musicEl.currentTime=0;}catch(e){} }
+  }catch(e){}
+}
 function startTitleMusic(){
+  stopBattleMusic(); // hard lock: ensure battle music is dead before title music starts
   if(!_titleMusicEl) _titleMusicEl=document.getElementById('mw-title-bgm');
   if(!_titleMusicEl) return;
   if(localStorage.getItem('mw_music_on')==='false') return; // respect mute
@@ -9862,6 +9875,8 @@ function loadArtFromStorage() {
       for(const k in all){ artOverrides[k] = all[k]; count++; }
       if(count>0) console.log('Loaded '+count+' art images from IndexedDB.');
       if(typeof renderAll==='function' && typeof G==='object' && G.p) { try{ renderAll(); }catch(_){} }
+      // Art may have loaded after a match started — re-evaluate the rotating battlefield now.
+      try{ if(typeof G==='object' && G.p && !G.winner){ pickRotatingBg(); applyBattlefieldArt(); } }catch(_){}
     }catch(e){ console.warn('IDB art load failed, trying localStorage:', e);
       try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith(ART_STORAGE_PREFIX)) artOverrides[k.slice(ART_STORAGE_PREFIX.length)]=localStorage.getItem(k); } }catch(_){}
     }finally{ if(li)li.style.display='none';
@@ -10394,10 +10409,14 @@ function attachTip(div,card){
 function applyBattlefieldArt(){
   const arena=document.getElementById('arena');
   if(!arena)return;
-  // Priority: a manual 'bg_arena' override always wins. Otherwise rotate among the
-  // available bg_arena_1..4 slots, picking one per match (set in pickRotatingBg()).
-  let url=artOverrides['bg_arena'];
-  if(!url) url=_rotatingBgUrl;
+  // Priority: if any rotation slots (bg_arena_1..4) are uploaded, ROTATE among them
+  // (picked per match in pickRotatingBg()). Only fall back to a single 'bg_arena' if
+  // no rotation slots exist at all.
+  const hasRotation=['bg_arena_1','bg_arena_2','bg_arena_3','bg_arena_4'].some(k=>artOverrides[k]);
+  // If rotation slots exist but none was picked yet (e.g. art loaded late), pick now.
+  if(hasRotation && !_rotatingBgUrl){ try{ pickRotatingBg(); }catch(e){} }
+  let url = hasRotation ? _rotatingBgUrl : artOverrides['bg_arena'];
+  if(!url) url=_rotatingBgUrl||artOverrides['bg_arena'];
   if(url){
     // Dim layer keeps cards readable over any bright image
     arena.style.backgroundImage='linear-gradient(rgba(4,6,12,.62),rgba(4,6,12,.72)), url("'+url+'")';
