@@ -7521,8 +7521,8 @@ function doRematch(){
 function rematch(){
   // Close end screen
   document.getElementById('end').classList.remove('open');
+  try{ pickRotatingBg(); applyBattlefieldArt(); }catch(e){}  // choose battlefield FIRST so music can match it
   try{ startBattleMusic(); }catch(e){}
-  try{ pickRotatingBg(); applyBattlefieldArt(); }catch(e){}
   // Reset all game state but keep win/loss counters and deck choice
   G = {};
   logs = [];
@@ -9708,8 +9708,8 @@ async function applyOpponentArt(manifest){
 
 function startGame(){
   fadeOutTitleMusic(700);
-  startBattleMusic();           // battle music starts immediately, fading in
-  try{ pickRotatingBg(); applyBattlefieldArt(); }catch(e){}
+  try{ pickRotatingBg(); applyBattlefieldArt(); }catch(e){}  // choose battlefield FIRST so music can match it
+  startBattleMusic();           // battle music starts immediately, fading in (uses chosen battlefield's track)
   document.getElementById('title').classList.add('gone');
   init();log('Robattle begins! CPU: '+cpuDiff.toUpperCase()+'. Good luck.','info');
   setTimeout(initTooltipDelegation,100);
