@@ -8202,11 +8202,24 @@ function startBattleMusic(){
 let _introDone=false;
 function startFromIntro(){
   if(_introDone) return; _introDone=true;
+  // CRITICAL: play the BGM audio element DIRECTLY inside this tap gesture.
+  // Mobile browsers only allow audio to start from a direct user gesture, so we
+  // call .play() synchronously here rather than relying on a deferred path.
+  try{
+    if(localStorage.getItem('mw_music_on')!=='false'){
+      const bgm=document.getElementById('mw-title-bgm');
+      if(bgm){
+        bgm.volume=0.22; bgm.loop=true;
+        try{ bgm.load(); }catch(e){}
+        const p=bgm.play();
+        if(p&&p.catch){ p.catch(()=>{ /* retry via startTitleMusic's gesture arming */ try{ if(typeof startTitleMusic==='function') startTitleMusic(); }catch(_){ } }); }
+      }
+    }
+  }catch(e){}
+  // Also resume the Web Audio context (for SFX) within the gesture
+  try{ if(typeof initUiSounds==='function') initUiSounds(); }catch(e){}
   // Sound effect on press
   try{ if(typeof SFX==='object' && SFX.medaforce) SFX.medaforce(); }catch(e){}
-  try{ if(typeof initUiSounds==='function') initUiSounds(); }catch(e){}
-  // Start the title music now — this user gesture unblocks autoplay
-  try{ if(typeof startTitleMusic==='function') startTitleMusic(); }catch(e){}
   // Reveal the title screen underneath, then fade the intro away
   const title=document.getElementById('title');
   if(title) title.style.display='';
