@@ -956,11 +956,11 @@ body::after{
   <div class="dpks">
     <div class="dpk sel" data-deck="blaze" onclick="pickDeck(this)">
       <div class="dn">⚡ Blaze Chain</div>
-      <div class="dd">Metabee · Arcbeetle · Warbandit<br>Fire &amp; burn aggro</div>
+      <div class="dd">Metabee · Sumilidon · Warbandit<br>Fire &amp; burn aggro</div>
     </div>
     <div class="dpk" data-deck="titan" onclick="pickDeck(this)">
       <div class="dn">🛡 Titan Guard</div>
-      <div class="dd">Rokusho · Sumilidon · Machairodus<br>Earth &amp; control</div>
+      <div class="dd">Roks · Arcbeetle- · Machairodus<br>Earth &amp; control</div>
     </div>
     <div class="dpk" data-deck="royal" onclick="pickDeck(this)" style="border-color:rgba(240,192,64,.25)">
       <div class="dn" style="color:#f0c040">👑 Royal Court</div>
@@ -2526,9 +2526,9 @@ const MEDAL={
 };
 const BOTS={
   metabee:  {name:'Metabee',  atk:5,medal:'blaze',   art:'metabee',  mcart:'mc_meta',color:'#f06424',passive:'On attack: if target has burn, deal +1 extra dmg.'},
-  arcbeetle:{name:'Arcbeetle',atk:4,medal:'lightning',art:'arcbeetle',mcart:'mc_arc', color:'#2a80f0',passive:'After attacking: gain +1 Charge on Lightning Medal.'},
+  arcbeetle:{name:'Arcbeetle-',atk:4,medal:'lightning',hpBonus:2,art:'arcbeetle',mcart:'mc_arc', color:'#2a80f0',passive:'After attacking: gain +1 Charge on Lightning Medal.'},
   warbandit:{name:'Warbandit',atk:4,medal:'psycho',   art:'warbandit',mcart:'mc_war', color:'#9070f0',passive:'When you play a Technique: draw 1 if hand ≤2 cards.'},
-  rokusho:  {name:'Rokusho',  atk:3,medal:'titan',    art:'rokusho',  mcart:'mc_rok', color:'#8090a0',passive:'Takes 1 less damage (stacks with Titan Medal).'},
+  rokusho:  {name:'Roks',  atk:3,medal:'titan',    art:'rokusho',  mcart:'mc_rok', color:'#8090a0',passive:'Takes 1 less damage (stacks with Titan Medal).'},
   sumilidon:{name:'Sumilidon',atk:5,medal:'blaze',    art:'sumilidon',mcart:'mc_sumi',color:'#f06424',passive:'Ravager: +1 DMG for every 5 HP missing (the more wounded, the deadlier).'},
   machairodus:{name:'Machairodus',atk:5,medal:'titan',art:'machairodus',mcart:'mc_mach',color:'#9050d0',passive:'Stalk: if did NOT attack last turn, next attack +2 DMG.'},
   omegaknight:{name:'Omegaknight',atk:6,medal:'royal',art:'omegaknight',mcart:'mc_omega',color:'#f0c040',passive:'Vanguard: attacks on support bots redirect to Omegaknight.'},
@@ -2598,8 +2598,8 @@ const CDEFS={
   scorch:        C('scorch','technique','Scorch','sc_art','+2 / +6 Burn','deal2_scorch','#f06424','Deal +2 dmg. If target is already burning, deal +5 instead.'),
   ember_bolt:    C('ember_bolt','technique','Ember Bolt','eb_art','+1 Burn+Chg','deal1_ember','#ff9060','Deal +1 dmg. Apply burn AND gain +2 Charge on attacker.'),
   ignite_card:   C('ignite_card','action','Ignite','fire_art','Burn 1 enemy','act_ignite','#f06424','Apply burn to one enemy Medabot. No damage. Free setup.'),
-    mc_rokusho:    C('mc_rokusho','medachange','Master Medachange','mc_card_art','ULTIMATE','mc_bot_rokusho','#f0c040','Rokusho rides atop Masterbeetle for the ultimate form: +6 ATK, +14 HP, takes 3 less damage, heals 3/turn, and attacks hit ALL enemies. Requires Masterbeetle.'),
-  mc_machairodus:C('mc_machairodus','medachange','X Fusion Change','mc_card_art','FUSION','mc_bot_machairodus','#e04030','Arcbeetle Dash + Machairodus combine into MASTERBEETLE: combined ATK +3, pooled HP +10, gains Charge-on-attack, Stalk, and ignores enemy damage reduction.'),
+    mc_rokusho:    C('mc_rokusho','medachange','Master Medachange','mc_card_art','ULTIMATE','mc_bot_rokusho','#f0c040','Roks rides atop Masterbeetle for the ultimate form: +3 ATK, +14 HP, takes 3 less damage, heals 3/turn, and attacks hit ALL enemies (full to target, half splash). If no Masterbeetle is available, Medachanges Roks as normal.'),
+  mc_machairodus:C('mc_machairodus','medachange','X Fusion Change','mc_card_art','FUSION','mc_bot_machairodus','#e04030','Arcbeetle- + Machairodus combine into MASTERBEETLE: combined ATK +3, pooled HP +10, gains Charge-on-attack, Stalk, and ignores enemy damage reduction. If only one of the two is in play, Medachanges that bot as normal instead.'),
   // ── TRAP / COUNTER CARDS — set face-down, auto-trigger on CPU turn ──
   guard_break:   C('guard_break','trap','Guard Break','eq_art','Negate Attack','trap_negate','#40d898','TRAP: Set face-down. Negates the next enemy attack against you.'),
   null_field:    C('null_field','trap','Null Field','psi_art','Negate Medaforce','trap_nullmf','#9070f0','TRAP: Set face-down. Cancels the next enemy Medaforce.'),
@@ -2925,9 +2925,10 @@ let actionsLeft=1; // actions remaining this turn (Last Stand can raise this abo
 
 function mkBot(k){
   const b=BOTS[k],m=MEDAL[b.medal];
+  const _hp=m.hp+(b.hpBonus||0);
   return{key:k,name:b.name,atk:b.atk,art:b.art,mcart:b.mcart,color:b.color,passive:b.passive||'',
     medal:b.medal,mName:m.name,mColor:m.color,mPass:m.passive,mfFx:m.mfFx,
-    hp:m.hp,maxHp:m.hp,charge:0,
+    hp:_hp,maxHp:_hp,charge:0,
     def:false,burn:false,exhst:false,
     equip:null,changed:false,fusedMedal:null,fusedPass:null,
     _dbl:false,_fury:false,
@@ -3955,10 +3956,15 @@ function resolveAtk(a,d,sk,techId){
     log('Ranged snipe \u2014 reduced damage past the front line ('+total+').','atk');
   }
   if(a&&a._masterAoE){
-    // Master form: Prominence railgun hits ALL enemies
+    // Master form: Prominence railgun hits the active target for full damage,
+    // and SPLASHES other enemies for half (rounded down). Prevents one-shotting whole teams.
     const foes=alive(sk==='p'?G.c:G.p).slice();
-    foes.forEach(f=>dmg(f,total,sk==='p'?'c':'p'));
-    log('Prominence Railgun: Masterbeetle \u039e hits all enemies for '+total+'!','atk');
+    const splash=Math.floor(total/2);
+    foes.forEach(f=>{
+      const dealt = (f===d) ? total : splash;
+      dmg(f,dealt,sk==='p'?'c':'p');
+    });
+    log('Prominence Railgun: '+total+' to '+d.name+', '+splash+' splash to the rest!','atk');
   } else {
     dmg(d,total,sk==='p'?'c':'p');
   }
@@ -4547,7 +4553,7 @@ function playFusionMaster(card, sk){
         else log('Fusion Engineer: fusion costs no action!','chg');
         mb._masterMode=true;
         mb.name='Masterbeetle \u039e';
-        mb.atk+=6;
+        mb.atk+=3;
         mb.maxHp+=14; mb.hp=Math.min(mb.hp+14,mb.maxHp);
         mb._masterReduce=3;   // -3 damage taken
         mb._masterAoE=true;   // attacks hit all enemies
@@ -4567,10 +4573,17 @@ function playMC(card){
   // ═══ MASTERBEETLE COMBINING ARCHETYPE (Titan) ═══
   // Two-stage fusion: X Fusion Change (Arcbeetle + Machairodus -> Masterbeetle),
   // then Master Medachange (Rokusho rides on top for the ultimate form).
-  if(card.fx==='mc_bot_machairodus' && G.p.bots.some(b=>b.key==='arcbeetle') ){
-    return playFusionX(card,'p');
+  // X Fusion Change: fuse only when BOTH beetles are alive. Otherwise medachange whichever is alive.
+  if(card.fx==='mc_bot_machairodus'){
+    const arcAlive=G.p.bots.some(b=>b.key==='arcbeetle'&&!b.def);
+    const machAlive=G.p.bots.some(b=>b.key==='machairodus'&&!b.def);
+    if(arcAlive && machAlive){ return playFusionX(card,'p'); }
+    // Only one beetle alive → normal medachange on whichever survives (retarget the card if needed).
+    if(!machAlive && arcAlive){ card={...card, fx:'mc_bot_arcbeetle'}; }
+    // fall through to normal medachange below
   }
-  if(card.fx==='mc_bot_rokusho' && G.p.bots.some(b=>b._masterbeetle)){
+  // Master Medachange: ride on top only if Masterbeetle exists; otherwise medachange Roks normally.
+  if(card.fx==='mc_bot_rokusho' && G.p.bots.some(b=>b._masterbeetle&&!b.def)){
     return playFusionMaster(card,'p');
   }
   // EVOLUTION ENGINE (Royal): bots may evolve repeatedly; other decks keep the once-per-game cap.
@@ -5455,14 +5468,26 @@ function aiBrainBlaze(){
 
 // TITAN: deny charge, endure, grind. Drain proactively, not just in emergency.
 function aiBrainTitan(){
-  // Drain the player's highest-charge bot whenever they're at 3+
-  const drain=G.c.hand.find(c=>c.fx==='act_drain'||c.fx==='medal_dampener');
+  // ── MASTERBEETLE COMBINING (CPU) ──
+  // Priority 1: complete the fusion chain whenever possible.
+  const arc=G.c.bots.find(b=>b.key==='arcbeetle'&&!b.def);
+  const mach=G.c.bots.find(b=>b.key==='machairodus'&&!b.def);
+  const mb=G.c.bots.find(b=>b._masterbeetle&&!b.def);
+  const rok=G.c.bots.find(b=>b.key==='rokusho'&&!b.def);
+  const hasMC=(fx)=>G.c.hand.some(c=>c.fx===fx);
+  // Stage 2: Master Medachange if Masterbeetle + Rokusho + card available
+  if(mb && !mb._masterMode && rok && hasMC('mc_bot_rokusho')){ aiDoMedachange(); return false; }
+  // Stage 1: X Fusion Change if both beetles + card available
+  if(arc && mach && !mach._masterbeetle && hasMC('mc_bot_machairodus')){ aiDoMedachange(); return false; }
+  // Otherwise: disrupt + develop while assembling the fusion.
+  const drain=G.c.hand.find(c=>c.fx==='medal_dampener');
   const pHigh=alive(G.p).sort((a,b)=>b.charge-a.charge)[0];
   if(drain&&pHigh&&pHigh.charge>=3){
     dsc(G.c,drain.uid); pHigh.charge=Math.max(0,pHigh.charge-2);
     log('CPU drains '+pHigh.name+' (-2 Charge).','cpu');
   }
-  aiPlayActionsByValue(['act_titan_call','act_charge']);
+  // Mark a target so Machairodus hits harder, then play value actions.
+  aiPlayActionsByValue(['act_pred_mark','act_titan_call','act_charge']);
   return false;
 }
 
@@ -5651,7 +5676,7 @@ function aiDoMedachange(){
     const mc=mcs.find(c=>c.fx==='mc_bot_rokusho');
     if(mc){
       dsc(G.c,mc.uid);
-      _cMB._masterMode=true; _cMB.name='Masterbeetle \u039e'; _cMB.atk+=6; _cMB.maxHp+=14; _cMB.hp=Math.min(_cMB.hp+14,_cMB.maxHp);
+      _cMB._masterMode=true; _cMB.name='Masterbeetle \u039e'; _cMB.atk+=3; _cMB.maxHp+=14; _cMB.hp=Math.min(_cMB.hp+14,_cMB.maxHp);
       _cMB._masterReduce=3; _cMB._masterAoE=true; _cMB._masterHeal=3; _cMB.changed=true;
       _cRok.def=true; _cRok._absorbed=true; G.c.activeBot=G.c.bots.indexOf(_cMB);
       log('CPU MASTER MEDACHANGE: Masterbeetle \u039e!','mc');banner('CPU MASTER MEDACHANGE!','#f0c040');try{medaforceFX('#ffd040');}catch(e){}
@@ -5825,7 +5850,9 @@ function aiProTurn(){
   }
 
   // 2) MEDACHANGE if it materially helps (use existing heuristic, improved threshold).
-  if(cpuShouldMedachange()){
+  // Titan is a fusion deck — its medachange/fusion is handled by aiDeckBrain (aiBrainTitan -> aiDoMedachange).
+  const _isTitanFusion = G.c.bots.some(b=>b.key==='rokusho') && G.c.bots.some(b=>b.medal==='titan');
+  if(!_isTitanFusion && cpuShouldMedachange()){
     const mcs=G.c.hand.filter(c=>c.type==='medachange');
     if(mcs.length){
       const bot=alive(G.c).sort((a,b)=>(b.atk+b.charge)-(a.atk+a.charge))[0];
@@ -7538,7 +7565,7 @@ function openBulkArtUpload(){
     '<div style="font-size:12px;line-height:1.55;color:var(--text2)">'+
     'Upload many images at once. Each file is matched to a card or bot <b>by its filename</b>.<br><br>'+
     '<b style="color:var(--gold)">Name your files like:</b><br>'+
-    '<span style="font-family:monospace;font-size:11px;color:var(--text3)">bot_metabee.png<br>mc_grand_beetle.png<br>fb_autoloader.png<br>mf_kasumi.png</span><br><br>'+
+    '<span style="font-family:monospace;font-size:11px;color:var(--text3)">bot_metabee.png<br>mc_grand_beetle.png<br>bot_masterbeetle.png<br>bgm_arena_1.mp3 (battlefield music)</span><br><br>'+
     'Tap below and select all your renamed images. Anything that doesn\'t match a known slot is skipped.'+
     '</div>',
     [{l:'\ud83d\udcc1 Choose Images',cls:'mb ok',cb:()=>{ const fi=document.getElementById('bulk-art-input'); if(fi){ fi.value=''; fi.click(); } }},
@@ -7557,6 +7584,8 @@ function _knownArtKeys(){
     keys.add('bg_arena'); keys.add('bg_arena_1'); keys.add('bg_arena_2'); keys.add('bg_arena_3'); keys.add('bg_arena_4');
     // Masterbeetle fusion forms (Titan combining archetype)
     keys.add('bot_masterbeetle'); keys.add('bot_masterbeetle_master');
+    // Per-battlefield soundtrack slots (optional uploaded music per arena bg)
+    keys.add('bgm_arena_1'); keys.add('bgm_arena_2'); keys.add('bgm_arena_3'); keys.add('bgm_arena_4');
   }catch(e){}
   return keys;
 }
@@ -7584,12 +7613,22 @@ function _handleBulkArt(files){
     const reader=new FileReader();
     reader.onload=ev=>{
       const dataUrl=ev.target.result;
-      const ok=dataUrl && (dataUrl.startsWith('data:image')||dataUrl.startsWith('data:application'));
-      if(ok && known.has(base)){
-        const safeUrl=dataUrl.startsWith('data:image')?dataUrl:dataUrl.replace(/^data:[^;]+/,'data:image/jpeg');
-        try{ compressAndSave(base, safeUrl); matched++; }catch(e){ skipped.push(base); }
+      const isAudioSlot=/^bgm_arena_[1-4]$/.test(base);
+      if(isAudioSlot && known.has(base)){
+        // Battlefield soundtrack: store the audio data URL directly (no image compression)
+        const audioOk=dataUrl && (dataUrl.startsWith('data:audio')||dataUrl.startsWith('data:application')||dataUrl.startsWith('data:'));
+        if(audioOk){
+          const safeUrl=dataUrl.startsWith('data:audio')?dataUrl:dataUrl.replace(/^data:[^;]*/,'data:audio/mpeg');
+          try{ artOverrides[base]=safeUrl; saveArtToStorage(base, safeUrl); matched++; }catch(e){ skipped.push(base); }
+        } else { skipped.push(base); }
       } else {
-        skipped.push(base||'(unnamed)');
+        const ok=dataUrl && (dataUrl.startsWith('data:image')||dataUrl.startsWith('data:application'));
+        if(ok && known.has(base)){
+          const safeUrl=dataUrl.startsWith('data:image')?dataUrl:dataUrl.replace(/^data:[^;]+/,'data:image/jpeg');
+          try{ compressAndSave(base, safeUrl); matched++; }catch(e){ skipped.push(base); }
+        } else {
+          skipped.push(base||'(unnamed)');
+        }
       }
       done++;
       if(done>=total) finish();
@@ -7664,6 +7703,18 @@ function renderPmGrid(tab){
     lblF.textContent = 'FUSION FORMS'; grid.appendChild(lblF);
     grid.appendChild(makePmSlot('bot_masterbeetle', 'Masterbeetle', '#f0c040', gA('machairodus',80,80)));
     grid.appendChild(makePmSlot('bot_masterbeetle_master', 'Masterbeetle \u039e (Master)', '#ffd040', gA('machairodus',80,80)));
+    // Battlefield soundtrack section (optional per-arena music)
+    const lblBM = document.createElement('div');
+    lblBM.style.cssText = 'grid-column:1/-1;font-family:"Orbitron",monospace;font-size:8px;font-weight:700;color:#5ad0e0;letter-spacing:.8px;padding:4px 0 2px;border-bottom:1px solid var(--border);margin-top:8px';
+    lblBM.textContent = '\ud83c\udfb5 BATTLEFIELD MUSIC (bgm_arena_1\u20134.mp3)'; grid.appendChild(lblBM);
+    const noteBM = document.createElement('div');
+    noteBM.style.cssText = 'grid-column:1/-1;font-size:9px;color:var(--text3);padding:2px 0 4px;line-height:1.4';
+    noteBM.textContent = 'Upload an audio file named bgm_arena_1.mp3 (\u20134) via Bulk Upload. Each plays when its matching battlefield (bg_arena_1\u20134) is chosen.';
+    grid.appendChild(noteBM);
+    for(let i=1;i<=4;i++){
+      const has=!!artOverrides['bgm_arena_'+i];
+      grid.appendChild(makePmSlot('bgm_arena_'+i, 'Arena '+i+' Music'+(has?' \u2713':''), '#5ad0e0', ''));
+    }
     // Medafighters section
     const lbl3 = document.createElement('div');
     lbl3.style.cssText = 'grid-column:1/-1;font-family:"Orbitron",monospace;font-size:8px;font-weight:700;color:var(--text3);letter-spacing:.8px;padding:4px 0 2px;border-bottom:1px solid var(--border);margin-top:8px';
@@ -8108,6 +8159,39 @@ const SFX = (function(){
       if(heavy) noise(0.08, 0.3, 1200, c);
       else noise(0.06, 0.15, 800, c);
     },
+    // Generic attack swing — quick whoosh + light impact
+    attack(){
+      if(_muted) return;
+      const c = ctx(); if(!c) return;
+      const t = c.currentTime;
+      const o = c.createOscillator(); const g = c.createGain();
+      o.type='sawtooth';
+      o.frequency.setValueAtTime(420, t);
+      o.frequency.exponentialRampToValueAtTime(120, t+0.12);
+      g.gain.setValueAtTime(0.3, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t+0.14);
+      o.connect(g); g.connect(c.destination);
+      o.start(t); o.stop(t+0.14);
+      noise(0.05, 0.18, 900, c);
+    },
+    // Combo flourish — rising triple blip for chained hits
+    combo(){
+      if(_muted) return;
+      const c = ctx(); if(!c) return;
+      const t = c.currentTime;
+      const steps=[523,659,880];
+      steps.forEach((f,i)=>{
+        const o=c.createOscillator(); const g=c.createGain();
+        o.type='triangle';
+        o.frequency.setValueAtTime(f, t+i*0.07);
+        g.gain.setValueAtTime(0.0001, t+i*0.07);
+        g.gain.linearRampToValueAtTime(0.28, t+i*0.07+0.01);
+        g.gain.exponentialRampToValueAtTime(0.001, t+i*0.07+0.12);
+        o.connect(g); g.connect(c.destination);
+        o.start(t+i*0.07); o.stop(t+i*0.07+0.13);
+      });
+    },
+
 
     // ── CARD PLAY — soft whoosh ────────────────────────
     cardPlay(){
@@ -8378,6 +8462,18 @@ function startBattleMusic(){
   try{ if(_titleMusicEl){ _titleMusicEl.pause(); _titleMusicEl.currentTime=0; } }catch(e){}
   if(!_musicEl) _musicEl=document.getElementById('mw-bgm');
   if(!_musicEl) return;
+  if(!_defaultBattleSrc){ try{ _defaultBattleSrc=_musicEl.getAttribute('src')||''; }catch(e){} }
+  // Per-battlefield soundtrack: if the chosen arena slot has an uploaded track, use it.
+  try{
+    const bgmKey = _rotatingBgSlot ? ('bgm_arena_'+_rotatingBgSlot) : '';
+    const customBgm = bgmKey && artOverrides[bgmKey];
+    if(customBgm){
+      if(_musicEl.getAttribute('data-bf')!==bgmKey){ _musicEl.src=customBgm; _musicEl.setAttribute('data-bf',bgmKey); }
+    } else {
+      // No custom track for this battlefield — restore the default embedded battle music
+      if(_musicEl.getAttribute('data-bf')){ _musicEl.src=_defaultBattleSrc||_musicEl.src; _musicEl.removeAttribute('data-bf'); }
+    }
+  }catch(e){}
   _musicEl.loop=true;
   _musicEl.volume=0.001;
   try{ _musicEl.load(); }catch(e){}
@@ -10315,17 +10411,22 @@ function applyBattlefieldArt(){
 }
 // Currently-selected rotating background URL (chosen each match)
 let _rotatingBgUrl='';
+let _rotatingBgSlot=0;
+let _defaultBattleSrc='';
 // Pick a random battlefield background from the available rotation slots.
 function pickRotatingBg(){
   try{
     const slots=['bg_arena_1','bg_arena_2','bg_arena_3','bg_arena_4'];
-    const available=slots.map(k=>artOverrides[k]).filter(Boolean);
-    if(available.length){
-      _rotatingBgUrl=available[Math.floor(Math.random()*available.length)];
+    // Pick among slots that have art uploaded
+    const availIdx=slots.map((k,i)=>artOverrides[k]?i:-1).filter(i=>i>=0);
+    if(availIdx.length){
+      const chosen=availIdx[Math.floor(Math.random()*availIdx.length)];
+      _rotatingBgUrl=artOverrides[slots[chosen]];
+      _rotatingBgSlot=chosen+1; // 1-based slot number (for matching bgm_arena_N)
     } else {
-      _rotatingBgUrl='';
+      _rotatingBgUrl=''; _rotatingBgSlot=0;
     }
-  }catch(e){ _rotatingBgUrl=''; }
+  }catch(e){ _rotatingBgUrl=''; _rotatingBgSlot=0; }
 }
 
 function uploadBattlefieldArt(input){
