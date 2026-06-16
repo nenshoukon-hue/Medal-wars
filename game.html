@@ -884,10 +884,10 @@ body::after{
 #intro-img{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;animation:introZoom 12s ease-out forwards}
 @keyframes introZoom{0%{transform:scale(1.08)}100%{transform:scale(1)}}
 #intro-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(4,6,12,.05) 40%,rgba(4,6,12,.45) 72%,rgba(4,6,12,.92) 100%);pointer-events:none}
-#intro-start{position:relative;z-index:2;margin-bottom:9vh;padding:16px 64px;font-family:'Orbitron',monospace;font-size:24px;font-weight:900;letter-spacing:4px;color:#fff;cursor:pointer;border:none;border-radius:14px;background:linear-gradient(135deg,#f0a818,#e05a1e);box-shadow:0 0 24px rgba(240,150,30,.7),0 6px 0 rgba(150,60,10,.8),inset 0 1px 0 rgba(255,255,255,.4);animation:introPulse 1.4s ease-in-out infinite;text-shadow:0 2px 4px rgba(0,0,0,.5)}
-#intro-start:active{transform:translateY(4px);box-shadow:0 0 24px rgba(240,150,30,.7),0 2px 0 rgba(150,60,10,.8)}
+#intro-start{position:relative;z-index:2;margin-bottom:3.5vh;padding:15px 60px;font-family:'Orbitron',monospace;font-size:23px;font-weight:900;letter-spacing:4px;color:#fff;cursor:pointer;border:none;border-radius:14px;background:linear-gradient(135deg,#f0a818,#e05a1e);box-shadow:0 0 24px rgba(240,150,30,.7),0 6px 0 rgba(150,60,10,.8),inset 0 1px 0 rgba(255,255,255,.4);animation:introPulse 1.4s ease-in-out infinite;text-shadow:0 2px 4px rgba(0,0,0,.5);transition:transform .08s ease,box-shadow .08s ease}
+#intro-start:active,#intro-start.pressed{transform:translateY(6px) scale(.96);box-shadow:0 0 36px rgba(240,180,60,.95),0 0 0 rgba(150,60,10,.8),inset 0 2px 6px rgba(120,40,0,.5);background:linear-gradient(135deg,#ffc040,#f06820);animation:none}
 @keyframes introPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
-#intro-tap{position:relative;z-index:2;margin-bottom:5vh;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.6);text-transform:uppercase;animation:introFade 2s ease-in-out infinite}
+#intro-tap{position:relative;z-index:2;margin-bottom:2vh;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.6);text-transform:uppercase;animation:introFade 2s ease-in-out infinite}
 @keyframes introFade{0%,100%{opacity:.4}50%{opacity:.9}}
 </style>
 </head>
@@ -2597,8 +2597,8 @@ const CDEFS={
   scorch:        C('scorch','technique','Scorch','sc_art','+2 / +6 Burn','deal2_scorch','#f06424','Deal +2 dmg. If target is already burning, deal +5 instead.'),
   ember_bolt:    C('ember_bolt','technique','Ember Bolt','eb_art','+1 Burn+Chg','deal1_ember','#ff9060','Deal +1 dmg. Apply burn AND gain +2 Charge on attacker.'),
   ignite_card:   C('ignite_card','action','Ignite','fire_art','Burn 1 enemy','act_ignite','#f06424','Apply burn to one enemy Medabot. No damage. Free setup.'),
-    mc_rokusho:    C('mc_rokusho','medachange','Rokusho Change','mc_card_art','+4ATK +12HP','mc_bot_rokusho','#f04880','Fuse with Rokusho: +4 ATK, +12 HP. Titan reduction −1 → −4. Heal 2 each turn. Losing = instant loss.'),
-  mc_machairodus:C('mc_machairodus','medachange','Machairodus Change','mc_card_art','+4ATK +12HP','mc_bot_machairodus','#f04880','Fuse with Machairodus: +4 ATK, +12 HP. Stalk bonus always active. Every 3rd charge +1 extra. Losing = instant loss.'),
+    mc_rokusho:    C('mc_rokusho','medachange','Master Medachange','mc_card_art','ULTIMATE','mc_bot_rokusho','#f0c040','Rokusho rides atop Masterbeetle for the ultimate form: +6 ATK, +14 HP, takes 3 less damage, heals 3/turn, and attacks hit ALL enemies. Requires Masterbeetle.'),
+  mc_machairodus:C('mc_machairodus','medachange','X Fusion Change','mc_card_art','FUSION','mc_bot_machairodus','#e04030','Arcbeetle Dash + Machairodus combine into MASTERBEETLE: combined ATK +3, pooled HP +10, gains Charge-on-attack, Stalk, and ignores enemy damage reduction.'),
   // ── TRAP / COUNTER CARDS — set face-down, auto-trigger on CPU turn ──
   guard_break:   C('guard_break','trap','Guard Break','eq_art','Negate Attack','trap_negate','#40d898','TRAP: Set face-down. Negates the next enemy attack against you.'),
   null_field:    C('null_field','trap','Null Field','psi_art','Negate Medaforce','trap_nullmf','#9070f0','TRAP: Set face-down. Cancels the next enemy Medaforce.'),
@@ -2753,7 +2753,7 @@ const DECKS={
   //  A) Flame Whip spreads burn to all → Metabee passive fires on every bot
   //  B) Scorch on pre-burned target = 8 free damage → follow with Inferno 11
   //  C) Ember Bolt × 2 = ignite turn 3 → Medachange Arcbeetle → double attacks
-  blaze:{bots:['metabee','arcbeetle','warbandit'],mf:'ikki',
+  blaze:{bots:['metabee','sumilidon','warbandit'],mf:'ikki',
     deck:mkDeck([
       // Burn engine — the identity (8)
       ['hyper_missile',2],  // 6 dmg + 2 burn (heavy burn setter)
@@ -2778,7 +2778,7 @@ const DECKS={
     ])},
   // TITAN GUARD — 20 cards. True control. Disrupt, suppress, grind to victory.
   // Win condition: drain opponent charge, heal through damage, lock with Earth Prison.
-  titan:{bots:['rokusho','sumilidon','machairodus'],mf:'henry',
+  titan:{bots:['rokusho','arcbeetle','machairodus'],mf:'henry',
     deck:mkDeck([
       // Disruption — the control engine (7 cards)
       ['medal_dampener',2], // drain enemy charge repeatedly
@@ -3154,6 +3154,8 @@ function dmg(bot,raw,sk){
   const _unblock=(G._curAtkr&&G._curAtkr._forgeUnblock);
   if(!G._pierceDmg && !_pierceAll && !_unblock){
     if(bot.medal==='titan'){let r=bot.changed?2:1; r=Math.max(0,r-_forgePierce); d=Math.max(0,d-r);}
+    // Masterbeetle Master form: heavy damage reduction
+    if(bot._masterReduce){ d=Math.max(0, d-Math.max(0, bot._masterReduce-_forgePierce)); }
 
     // (Rokusho extra -1 removed in balance pass — Titan medal already grants -1)
     // Robo Emperor: Throne Armor (permanent) + Emperor Shield (equip)
@@ -3513,6 +3515,7 @@ function doCharge(sk){
     if(bot.burn){const bAmt=bot.burnAmt||1;dmg(bot,bAmt,sk);bot.burn=false;bot.burnAmt=0;if(bot.def)return;}
     // Rokusho Medachange passive: heal 2 per turn
     if(bot.changed&&bot.key==='rokusho'){bot.hp=Math.min(bot.maxHp,bot.hp+2);flt('+2','heal');}
+    if(bot._masterHeal&&!bot.def){bot.hp=Math.min(bot.maxHp,bot.hp+bot._masterHeal);flt('+'+bot._masterHeal,'heal');}
     if(bot.medal==='aqua'||bot.fusedMedal==='aqua'){
       bot.hp=Math.min(bot.maxHp,bot.hp+1);flt('+1','heal');
       if(bot.key==='sumilidon'){addChg(bot,1);log('Sumilidon passive: +1 Charge from heal!','chg');}
@@ -3934,13 +3937,22 @@ function resolveAtk(a,d,sk,techId){
   // Machairodus support pierce (when in support zone)
   const activeP=getActiveBot(sk);
   if(activeP&&activeP._machPierce){G._pierceDmg=true;activeP._machPierce=false;}
+  // Masterbeetle: ignores enemy damage reduction
+  if(a&&a._fusionPierce){ G._pierceDmg=true; }
   total=Math.max(0,total-(_emperorSoak||0));
   // Ranged snipe at a back-row support bot: reduced damage (active bot takes full).
   if(G._snipeTarget){
     total=Math.max(1,Math.ceil(total*0.5));
     log('Ranged snipe \u2014 reduced damage past the front line ('+total+').','atk');
   }
-  dmg(d,total,sk==='p'?'c':'p');
+  if(a&&a._masterAoE){
+    // Master form: Prominence railgun hits ALL enemies
+    const foes=alive(sk==='p'?G.c:G.p).slice();
+    foes.forEach(f=>dmg(f,total,sk==='p'?'c':'p'));
+    log('Prominence Railgun: Masterbeetle \u039e hits all enemies for '+total+'!','atk');
+  } else {
+    dmg(d,total,sk==='p'?'c':'p');
+  }
   G._pierceDmg=false;
   // Shadow Slash (chain-free): does NOT consume the attack — player may act again
   const _techObj = techId ? (G[sk].hand.find(c=>c.uid===techId)||G[sk].discard&&G[sk].discard.find(c=>c.uid===techId)) : null;
@@ -3956,6 +3968,7 @@ function resolveAtk(a,d,sk,techId){
   if(a.key==='machairodus')a._stalkedThisTurn=true;
 
   // Arcbeetle passive: +1 charge after attacking
+  if(a._fusionCharge){addChg(a,1);log('Masterbeetle: +1 Charge after attack!','chg');}
   if(a.key==='arcbeetle'){addChg(a,1);log('Arcbeetle passive: +1 Charge after attack!','chg');}
   // Warbandit support draw
   if(a._warbDraw){drw(G.p,1);a._warbDraw=false;log('Warbandit support: drew 1 card!','chg');}
@@ -4455,7 +4468,98 @@ function playEquip(card){
     }}]));
 }
 
+// ═══ MASTERBEETLE FUSION (Titan combining archetype) ═══
+// Stage 1: X Fusion Change — Arcbeetle + Machairodus combine into Masterbeetle.
+function playFusionX(card, sk){
+  const side=G[sk];
+  if(actionsLeft<=0){ return; }
+  const arc=side.bots.find(b=>b.key==='arcbeetle'&&!b.def);
+  const mach=side.bots.find(b=>b.key==='machairodus'&&!b.def);
+  if(!arc||!mach){ log('X Fusion Change needs both Arcbeetle and Machairodus in play.','info'); return; }
+  if(mach._masterbeetle){ log('Already fused into Masterbeetle.','info'); return; }
+  openM('\u26a1 X FUSION CHANGE',
+    '<b style="color:#e04030">Arcbeetle Dash</b> locks onto <b style="color:#3060d0">Machairodus</b> to form <b style="color:#f0c040">MASTERBEETLE</b>!<br><br>'+
+    '\u2022 Combined ATK of both bots, +3<br>'+
+    '\u2022 HP pooled together +10<br>'+
+    '\u2022 Gains Arcbeetle\u2019s Charge passive + Machairodus\u2019 Stalk<br>'+
+    '\u2022 Ranged: ignores enemy damage reduction',
+    [{l:'\u26a1 COMBINE!',cls:'mb mc',cb:()=>{
+      closeM();
+      triggerMCAnimation(mach, ()=>{
+        dsc(side,card.uid); actionsLeft--;
+        // Absorb Arcbeetle into Machairodus -> Masterbeetle
+        const combinedAtk=mach.atk+arc.atk+3;
+        const pooledHp=mach.hp+Math.ceil(arc.hp*0.6)+10;
+        mach._masterbeetle=true;
+        mach.name='Masterbeetle';
+        mach.key='machairodus'; // keep key for art validity; render swaps art via _masterbeetle
+        mach.atk=combinedAtk;
+        mach.maxHp=mach.maxHp+Math.ceil(arc.maxHp*0.6)+10;
+        mach.hp=Math.min(pooledHp,mach.maxHp);
+        mach._fusionStalk=true;     // Machairodus Stalk always available
+        mach._fusionCharge=true;    // Arcbeetle charge-on-attack
+        mach._fusionPierce=true;    // ignores reduction
+        mach.color='#f0c040';
+        // Absorb Arcbeetle (removed from play, not counted as a loss)
+        arc.def=true; arc._absorbed=true;
+        // Keep activeBot pointing at Masterbeetle
+        side.activeBot=side.bots.indexOf(mach);
+        log('\u26a1 X FUSION CHANGE! Masterbeetle forms \u2014 ATK '+mach.atk+', HP '+mach.hp+'/'+mach.maxHp+'!','mc');
+        banner('MASTERBEETLE!','#f0c040');
+        try{ medaforceFX('#f0c040'); }catch(e){}
+        renderAll(); checkWin();
+      });
+    }},
+    {l:'Cancel',cls:'mb',cb:()=>{ closeM(); G.p.selCard=null; renderAll(); }}]);
+}
+
+// Stage 2: Master Medachange — Rokusho rides on top of Masterbeetle for the ultimate form.
+function playFusionMaster(card, sk){
+  const side=G[sk];
+  if(actionsLeft<=0){ return; }
+  const mb=side.bots.find(b=>b._masterbeetle&&!b.def);
+  const rok=side.bots.find(b=>b.key==='rokusho'&&!b.def);
+  if(!mb){ log('Master Medachange needs Masterbeetle in play (use X Fusion Change first).','info'); return; }
+  if(!rok){ log('Master Medachange needs Rokusho in play.','info'); return; }
+  if(mb._masterMode){ log('Already at Master form.','info'); return; }
+  openM('\ud83d\udc51 MASTER MEDACHANGE',
+    '<b style="color:#8090a0">Rokusho</b> rides atop <b style="color:#f0c040">Masterbeetle</b> \u2014 the ultimate fusion!<br><br>'+
+    '\u2022 +6 ATK and +14 max HP<br>'+
+    '\u2022 Takes 3 less damage from all sources<br>'+
+    '\u2022 Attacks hit ALL enemies (Prominence railgun)<br>'+
+    '\u2022 Heals 3 HP each turn',
+    [{l:'\ud83d\udc51 ASCEND!',cls:'mb mc',cb:()=>{
+      closeM();
+      triggerMCAnimation(mb, ()=>{
+        dsc(side,card.uid); actionsLeft--;
+        mb._masterMode=true;
+        mb.name='Masterbeetle \u039e';
+        mb.atk+=6;
+        mb.maxHp+=14; mb.hp=Math.min(mb.hp+14,mb.maxHp);
+        mb._masterReduce=3;   // -3 damage taken
+        mb._masterAoE=true;   // attacks hit all enemies
+        mb._masterHeal=3;     // heal 3/turn
+        mb.changed=true;      // mark as fully changed (for last-stand/visuals)
+        rok.def=true; rok._absorbed=true;
+        side.activeBot=side.bots.indexOf(mb);
+        log('\ud83d\udc51 MASTER MEDACHANGE! Masterbeetle \u039e ascends \u2014 ATK '+mb.atk+', HP '+mb.hp+'/'+mb.maxHp+'!','mc');
+        banner('MASTER MEDACHANGE!','#f0c040');
+        try{ medaforceFX('#ffd040'); }catch(e){}
+        renderAll(); checkWin();
+      });
+    }},
+    {l:'Cancel',cls:'mb',cb:()=>{ closeM(); G.p.selCard=null; renderAll(); }}]);
+}
 function playMC(card){
+  // ═══ MASTERBEETLE COMBINING ARCHETYPE (Titan) ═══
+  // Two-stage fusion: X Fusion Change (Arcbeetle + Machairodus -> Masterbeetle),
+  // then Master Medachange (Rokusho rides on top for the ultimate form).
+  if(card.fx==='mc_bot_machairodus' && G.p.bots.some(b=>b.key==='arcbeetle') ){
+    return playFusionX(card,'p');
+  }
+  if(card.fx==='mc_bot_rokusho' && G.p.bots.some(b=>b._masterbeetle)){
+    return playFusionMaster(card,'p');
+  }
   // EVOLUTION ENGINE (Royal): bots may evolve repeatedly; other decks keep the once-per-game cap.
   const _royalSide = G.p.bots.some(b=>['omegaknight','wargreymon','metalgurumemon'].includes(b.key));
   if(actionsLeft<=0) return;
@@ -5489,6 +5593,38 @@ function aiProThrone(){
 function aiDoMedachange(){
   const mcs=G.c.hand.filter(c=>c.type==='medachange');
   if(!mcs.length)return;
+  // ── Masterbeetle fusion (CPU Titan) ──
+  const _cArc=G.c.bots.find(b=>b.key==='arcbeetle'&&!b.def);
+  const _cMach=G.c.bots.find(b=>b.key==='machairodus'&&!b.def);
+  const _cMB=G.c.bots.find(b=>b._masterbeetle&&!b.def);
+  const _cRok=G.c.bots.find(b=>b.key==='rokusho'&&!b.def);
+  // Stage 2: if Masterbeetle exists and Rokusho alive, do Master Medachange
+  if(_cMB && !_cMB._masterMode && _cRok){
+    const mc=mcs.find(c=>c.fx==='mc_bot_rokusho');
+    if(mc){
+      dsc(G.c,mc.uid);
+      _cMB._masterMode=true; _cMB.name='Masterbeetle \u039e'; _cMB.atk+=6; _cMB.maxHp+=14; _cMB.hp=Math.min(_cMB.hp+14,_cMB.maxHp);
+      _cMB._masterReduce=3; _cMB._masterAoE=true; _cMB._masterHeal=3; _cMB.changed=true;
+      _cRok.def=true; _cRok._absorbed=true; G.c.activeBot=G.c.bots.indexOf(_cMB);
+      log('CPU MASTER MEDACHANGE: Masterbeetle \u039e!','mc');banner('CPU MASTER MEDACHANGE!','#f0c040');try{medaforceFX('#ffd040');}catch(e){}
+      renderAll(); return;
+    }
+  }
+  // Stage 1: if both beetles alive, do X Fusion Change
+  if(_cArc && _cMach && !_cMach._masterbeetle){
+    const mc=mcs.find(c=>c.fx==='mc_bot_machairodus');
+    if(mc){
+      dsc(G.c,mc.uid);
+      _cMach._masterbeetle=true; _cMach.name='Masterbeetle';
+      _cMach.atk=_cMach.atk+_cArc.atk+3;
+      _cMach.maxHp=_cMach.maxHp+Math.ceil(_cArc.maxHp*0.6)+10;
+      _cMach.hp=Math.min(_cMach.hp+Math.ceil(_cArc.hp*0.6)+10,_cMach.maxHp);
+      _cMach._fusionStalk=true; _cMach._fusionCharge=true; _cMach._fusionPierce=true; _cMach.color='#f0c040';
+      _cArc.def=true; _cArc._absorbed=true; G.c.activeBot=G.c.bots.indexOf(_cMach);
+      log('CPU X FUSION CHANGE: Masterbeetle forms!','mc');banner('CPU MASTERBEETLE!','#f0c040');try{medaforceFX('#f0c040');}catch(e){}
+      renderAll(); return;
+    }
+  }
   const bot=alive(G.c).sort((a,b)=>(b.atk+b.charge)-(a.atk+a.charge))[0];
   const matchingMC=mcs.find(c=>c.fx==='mc_bot_'+(bot&&bot.key))||mcs[0];
   const targetBot=G.c.bots.find(b=>b.key===matchingMC.fx.replace('mc_bot_','')&&!b.def)||bot;
@@ -6726,7 +6862,7 @@ function _recordDeckResult(deckKey, won){
 function openMatchLog(){
   let log=[];
   try{ log=JSON.parse(localStorage.getItem('mw_matchlog')||'[]'); }catch(e){}
-  const names={blaze:'Blaze',titan:'Titan',royal:'Evolution engine — evolve all three Digimon repeatedly; every Medachange permanently powers up the whole Court, then finish with a scaling DigiStrike.',shadow:'Shadow',throne:'Throne',forge:'Forge',cross:'Cross'};
+  const names={blaze:'Blaze',titan:'Combining archetype \u2014 survive early, then fuse into the legendary Masterbeetle (X Fusion Change), crowned by Rokusho (Master Medachange) for an AoE juggernaut.',royal:'Evolution engine — evolve all three Digimon repeatedly; every Medachange permanently powers up the whole Court, then finish with a scaling DigiStrike.',shadow:'Shadow',throne:'Throne',forge:'Forge',cross:'Cross'};
   const cols={blaze:'#f06424',titan:'#8090a0',royal:'#f0b020',shadow:'#9050d0',throne:'#30b050',forge:'#e0a020',cross:'#d8dde8'};
   let html='<div style="text-align:left">';
   if(!log.length){
@@ -7110,10 +7246,10 @@ const DECK_GUIDES={
     plan:'Aggro burn. Stack burn on the enemy front bot, then cash it in for burst damage before they stabilize.',
     plays:['Apply burn early with techniques, then attack — Metabee deals +1 when the target is burning.','Save Scorch/Inferno Surge for when burn is stacked high.','Race: trade aggressively, you win the short game.'],
     win:'End matches fast. If a game drags past mid-game, push for lethal rather than playing safe.'},
-  titan:{name:'Titan Guard',color:'#8090a0',tier:'Intermediate',
-    plan:'Disruption control. Drain enemy Charge, soak damage with high HP, and grind them out of resources.',
-    plays:['Use Charge drain to deny enemy Medaforces before they fire.','Lean on Titan\u2019s -1 damage reduction and big HP to outlast aggro.','Rokusho heals; let it tank while you disrupt.'],
-    win:'Win the long game. Strip their Charge, stall, and close once they\u2019re empty-handed.'},
+  titan:{name:'Titan Guard',color:'#8090a0',tier:'Advanced',
+    plan:'Combining archetype. Survive the early game, then fuse your bots into the legendary Masterbeetle for an unstoppable finisher.',
+    plays:['Stall and disrupt early \u2014 drain Charge, heal, and protect your bots while you set up.','X Fusion Change: combine Arcbeetle Dash + Machairodus into MASTERBEETLE (combined stats, pierces reduction).','Master Medachange: Rokusho rides on top for the ultimate form \u2014 hits ALL enemies, takes 3 less dmg, heals each turn.'],
+    win:'Reach the two-stage fusion. Once Masterbeetle \u039e is online, its AoE railgun and bulk overwhelm everything.'},
   royal:{name:'Royal Court',color:'#f0c040',tier:'Advanced',
     plan:'Evolution engine. Evolve all three Digimon repeatedly \u2014 every Medachange permanently powers up the whole Court.',
     plays:['Lead with Evolution Call: it refunds the action and pulls a Medachange so you evolve immediately.','Evolve a different bot each turn \u2014 every evolution gives all Royal bots +2 ATK.','Finish with DigiStrike: it hits for 6 +2 per evolution, on all three bots at once.'],
@@ -7366,6 +7502,8 @@ function _knownArtKeys(){
     if(typeof CDEFS==='object') Object.keys(CDEFS).forEach(k=>keys.add(k));
     // Rotating battlefield background slots
     keys.add('bg_arena'); keys.add('bg_arena_1'); keys.add('bg_arena_2'); keys.add('bg_arena_3'); keys.add('bg_arena_4');
+    // Masterbeetle fusion forms (Titan combining archetype)
+    keys.add('bot_masterbeetle'); keys.add('bot_masterbeetle_master');
   }catch(e){}
   return keys;
 }
@@ -8202,6 +8340,8 @@ function startBattleMusic(){
 let _introDone=false;
 function startFromIntro(){
   if(_introDone) return; _introDone=true;
+  // Visual press feedback on the START button
+  try{ const sb=document.getElementById('intro-start'); if(sb){ sb.classList.add('pressed'); } }catch(e){}
   // CRITICAL: play the BGM audio element DIRECTLY inside this tap gesture.
   // Mobile browsers only allow audio to start from a direct user gesture, so we
   // call .play() synchronously here rather than relying on a deferred path.
@@ -8209,10 +8349,14 @@ function startFromIntro(){
     if(localStorage.getItem('mw_music_on')!=='false'){
       const bgm=document.getElementById('mw-title-bgm');
       if(bgm){
+        _titleMusicEl=bgm;
         bgm.volume=0.22; bgm.loop=true;
-        try{ bgm.load(); }catch(e){}
-        const p=bgm.play();
-        if(p&&p.catch){ p.catch(()=>{ /* retry via startTitleMusic's gesture arming */ try{ if(typeof startTitleMusic==='function') startTitleMusic(); }catch(_){ } }); }
+        // Only start if not already playing (prevents overlap/double playback)
+        if(bgm.paused){
+          try{ bgm.load(); }catch(e){}
+          const p=bgm.play();
+          if(p&&p.catch){ p.catch(()=>{}); }
+        }
       }
     }
   }catch(e){}
@@ -8237,8 +8381,11 @@ function startTitleMusic(){
   // Stop battle music first so the two never overlap
   try{ if(_musicEl){ _musicEl.pause(); _musicEl.currentTime=0; } }catch(e){}
   _titleMusicEl.volume=0.22;
+  // Already playing? Don't start a second overlapping playback.
+  if(!_titleMusicEl.paused){ return; }
   const tryPlay=()=>{
     if(localStorage.getItem('mw_music_on')==='false') return;
+    if(!_titleMusicEl.paused) return;
     try{ _titleMusicEl.load(); }catch(e){}
     const p=_titleMusicEl.play();
     if(p&&p.then){ p.then(()=>{ _titleMusicArmed=false; }).catch(()=>{ armGesture(); }); }
@@ -8246,7 +8393,7 @@ function startTitleMusic(){
   const armGesture=()=>{
     if(_titleMusicArmed) return; _titleMusicArmed=true;
     const resume=()=>{
-      _titleMusicEl.play().catch(()=>{});
+      if(_titleMusicEl.paused){ _titleMusicEl.play().catch(()=>{}); }
       document.removeEventListener('pointerdown',resume);
       document.removeEventListener('touchstart',resume);
       document.removeEventListener('keydown',resume);
@@ -9784,6 +9931,9 @@ function renderCardArt(card, w, h) {
 
 function renderBotArt(bot, w, h) {
   let key = 'bot_' + bot.key + (bot.changed ? '_mc' : '');
+  // Masterbeetle fusion art (Titan combining archetype)
+  if(bot._masterMode) key='bot_masterbeetle_master';
+  else if(bot._masterbeetle) key='bot_masterbeetle';
   if (bot._opp && artOverrides['opp_' + key]) key = 'opp_' + key;
   if (artOverrides[key]) {
     return '<img src="' + artOverrides[key] + '" width="' + w + '" height="' + h + '" onerror="this.style.display=\'none\'" style="width:' + w + 'px;height:' + h + 'px;object-fit:cover;object-position:center top;display:block;border-bottom:1px solid var(--border)">';
