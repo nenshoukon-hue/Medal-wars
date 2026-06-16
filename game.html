@@ -2548,7 +2548,7 @@ const MEDAL={
 const BOTS={
   metabee:  {name:'Metabee',  atk:5,medal:'blaze',   art:'metabee',  mcart:'mc_meta',color:'#f06424',passive:'On attack: if target has burn, deal +1 extra dmg.'},
   arcbeetle:{name:'Arcbeetle-',atk:4,medal:'lightning',hpBonus:2,art:'arcbeetle',mcart:'mc_arc', color:'#2a80f0',passive:'After attacking: gain +1 Charge on Lightning Medal.'},
-  warbandit:{name:'Warbandit',atk:4,medal:'psycho',   art:'warbandit',mcart:'mc_war', color:'#9070f0',passive:'When you play a Technique: draw 1 if hand ≤2 cards.'},
+  warbandit:{name:'Warbandit',atk:4,medal:'psycho',   art:'warbandit',mcart:'mc_war', color:'#9070f0',passive:'Wildfire: when your Technique burns an enemy, spread 1 burn to another enemy.'},
   rokusho:  {name:'Roks',  atk:3,medal:'titan',    art:'rokusho',  mcart:'mc_rok', color:'#8090a0',passive:'Takes 1 less damage (stacks with Titan Medal).'},
   sumilidon:{name:'Sumilidon',atk:5,medal:'blaze',    art:'sumilidon',mcart:'mc_sumi',color:'#f06424',passive:'Ravager: +1 DMG for every 5 HP missing (the more wounded, the deadlier).'},
   machairodus:{name:'Machairodus',atk:5,medal:'titan',art:'machairodus',mcart:'mc_mach',color:'#9050d0',passive:'Stalk: if did NOT attack last turn, next attack +2 DMG.'},
@@ -2796,7 +2796,7 @@ const DECKS={
       ['fury_core',1],      // double attacks on Medachanged bot
       // Medachange closers (2)
       ['mc_metabee',1],     // +5ATK + burn passive = huge burst
-      ['mc_arcbeetle',1],   // double-atk threshold 2 — endless strikes
+      ['mc_arcbeetle',1],['mc_warbandit',1],   // double-atk threshold 2 — endless strikes
     ])},
   // TITAN GUARD — 20 cards. True control. Disrupt, suppress, grind to victory.
   // Win condition: drain opponent charge, heal through damage, lock with Earth Prison.
@@ -4199,10 +4199,21 @@ function applyTech(c,a,d,sk){
   }else if(fx==='deal2_draw'){
     b=2;drw(G.p,1);
   }
-  // Warbandit passive: draw 1 when playing any technique if hand is very small
-  if(a.key==='warbandit'&&G.p.hand.filter(c=>c.uid!==undefined).length<=2){
-    drw(G.p,1);log('Warbandit passive: low hand draw!','chg');
-  }
+  // Warbandit WILDFIRE: if a Warbandit is in play on the acting side and this technique
+  // set a target ablaze, spread 1 burn to another (non-burning) enemy.
+  try{
+    const myBots = (sk==='c') ? G.c.bots : G.p.bots;
+    const foes   = alive((sk==='c') ? G.p : G.c);
+    const hasWarbandit = myBots.some(x=>x.key==='warbandit'&&!x.def);
+    if(hasWarbandit && d && d.burn){
+      const spreadTo = foes.find(t=>t!==d && !t.def && !t.burn);
+      if(spreadTo){
+        spreadTo.burn=true; spreadTo.burnAmt=Math.max(1, d.burnAmt||1);
+        log('Warbandit WILDFIRE: burn spreads to '+spreadTo.name+'!','chg');
+        try{ if(typeof flt==='function') flt('\ud83d\udd25','atk'); }catch(e){}
+      }
+    }
+  }catch(e){}
   return b;
 }
 
@@ -8566,7 +8577,8 @@ function startBattleMusic(){
   _battleMusicLocked=false; // a match is starting — release the lock
   // Stop title music first so the two never overlap
   try{ if(_titleMusicEl){ _titleMusicEl.pause(); _titleMusicEl.currentTime=0; } }catch(e){}
-  if(!_musicEl) _musicEl=document.getElementById('mw-bgm');
+  // Always use the real <audio id="mw-bgm"> element (a stale _musicEl from the legacy system would desync).
+  _musicEl=document.getElementById('mw-bgm');
   if(!_musicEl) return;
   if(!_defaultBattleSrc){ try{ _defaultBattleSrc=_musicEl.getAttribute('src')||''; }catch(e){} }
   // Per-battlefield soundtrack: if the chosen arena slot has an uploaded track, use it.
@@ -8643,7 +8655,7 @@ let _battleMusicLocked=false;
 function stopBattleMusic(){
   try{
     _battleMusicLocked=true;
-    if(!_musicEl) _musicEl=document.getElementById('mw-bgm');
+    _musicEl=document.getElementById('mw-bgm');
     if(_musicEl){ _musicEl.pause(); try{_musicEl.currentTime=0;}catch(e){} }
   }catch(e){}
 }
