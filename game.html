@@ -8,6 +8,27 @@ const MW_BUILD='v3.0-ranked';
 // When dev mode is ON, you (the operator) can sync/publish shared art.
 // When OFF, shared-art uploads are blocked so other players can't push art.
 // Personal/local art customization always works for everyone.
+
+// ═══ ART ACCESS LOCK (separate from dev mode) ═══
+// The Art button is locked for everyone. Entering the passcode once unlocks it
+// permanently on THIS device (so the operator isn't re-prompted).
+const MW_ART_PASS='MW-ART-0VG6IdHDZtch';
+function artUnlocked(){ try{ return localStorage.getItem('mw_art_unlocked')==='1'; }catch(e){ return false; } }
+function promptArtAccess(onOK){
+  if(artUnlocked()){ onOK(); return; }
+  openM('\ud83c\udfa8 Art Studio Locked',
+    'Art customization is protected. Enter the passcode to unlock it on this device:<br><br>'+
+    '<input id="art-pass-input" type="password" placeholder="passcode" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,.3);color:var(--text);font-size:13px">'+
+    '<div id="art-pass-msg" style="font-size:11px;color:var(--red);margin-top:8px;min-height:14px;text-align:center"></div>',
+    [{l:'Unlock',cls:'mb ok',cb:()=>{
+       const v=(document.getElementById('art-pass-input')||{}).value||'';
+       const msg=document.getElementById('art-pass-msg');
+       if(v===MW_ART_PASS){ try{ localStorage.setItem('mw_art_unlocked','1'); }catch(e){} closeM(); onOK(); }
+       else if(msg){ msg.textContent='Incorrect passcode.'; }
+     }},
+     {l:'Cancel',cls:'mb',cb:()=>closeM()}]);
+}
+
 const MW_DEV_PASS='MW-DEV-eaI6z0ZmbHmBAAn2';  // operator passcode
 function isDevMode(){ try{ return localStorage.getItem('mw_dev_mode')==='1'; }catch(e){ return false; } }
 function setDevMode(on){ try{ localStorage.setItem('mw_dev_mode', on?'1':'0'); }catch(e){} }
@@ -456,7 +477,7 @@ body::after{
 .flt{position:fixed;pointer-events:none;font-family:'Share Tech Mono',monospace;font-size:22px;color:var(--red);z-index:200;animation:fltup 1s ease-out forwards;text-shadow:0 0 10px currentColor}
 @keyframes fltup{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-56px) scale(1.3)}}
 .flt.heal{color:var(--green)}.flt.chg{color:var(--gold)}
-.bnr{position:fixed;top:46%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',monospace;font-size:24px;font-weight:900;pointer-events:none;z-index:200;white-space:nowrap;letter-spacing:3px;animation:bnr 1.5s ease-out forwards;text-shadow:0 0 24px currentColor,0 0 48px currentColor,0 2px 0 rgba(0,0,0,.8)}
+.bnr{position:fixed;top:46%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',monospace;font-size:clamp(16px,6vw,24px);font-weight:900;pointer-events:none;z-index:200;white-space:nowrap;letter-spacing:1.5px;max-width:92vw;overflow:hidden;text-overflow:ellipsis;text-align:center;animation:bnr 1.5s ease-out forwards;text-shadow:0 0 24px currentColor,0 0 48px currentColor,0 2px 0 rgba(0,0,0,.8)}
 @keyframes bnr{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}70%{opacity:1}100%{opacity:0}}
 
 /* ── LOG DRAWER ── */
@@ -3443,9 +3464,11 @@ function medaforceFX(color){
 }
 
 function banner(txt,color='#f0b820'){
+  // Remove any existing banners so they never stack/overlap
+  try{ document.querySelectorAll('.bnr').forEach(b=>b.remove()); }catch(e){}
   const el=document.createElement('div');
   el.className='bnr';el.textContent=txt;el.style.color=color;
-  document.body.appendChild(el);setTimeout(()=>el.remove(),1500);
+  document.body.appendChild(el);setTimeout(()=>{ try{el.remove();}catch(e){} },1500);
 }
 
 // ═══ TURN ENGINE ═══
@@ -7222,6 +7245,7 @@ function rematch(){
   // Close end screen
   document.getElementById('end').classList.remove('open');
   try{ startBattleMusic(); }catch(e){}
+  try{ pickRotatingBg(); applyBattlefieldArt(); }catch(e){}
   // Reset all game state but keep win/loss counters and deck choice
   G = {};
   logs = [];
@@ -7281,6 +7305,8 @@ function _knownArtKeys(){
     botKeys.forEach(k=>{ keys.add('bot_'+k); keys.add('bot_'+k+'_mc'); });
     if(typeof MFR==='object') Object.keys(MFR).forEach(k=>keys.add('mf_'+k));
     if(typeof CDEFS==='object') Object.keys(CDEFS).forEach(k=>keys.add(k));
+    // Rotating battlefield background slots
+    keys.add('bg_arena'); keys.add('bg_arena_1'); keys.add('bg_arena_2'); keys.add('bg_arena_3'); keys.add('bg_arena_4');
   }catch(e){}
   return keys;
 }
@@ -7324,6 +7350,10 @@ function _handleBulkArt(files){
 }
 
 function openPreMatchArt(){
+  if(typeof promptArtAccess==='function' && !artUnlocked()){
+    promptArtAccess(()=>openPreMatchArt());
+    return;
+  }
   const panel = document.getElementById('prematch-art');
   if(!panel) return;
   panel.style.display = 'flex';
@@ -9269,6 +9299,7 @@ async function applyOpponentArt(manifest){
 function startGame(){
   fadeOutTitleMusic(700);
   startBattleMusic();           // battle music starts immediately, fading in
+  try{ pickRotatingBg(); applyBattlefieldArt(); }catch(e){}
   document.getElementById('title').classList.add('gone');
   init();log('Robattle begins! CPU: '+cpuDiff.toUpperCase()+'. Good luck.','info');
   setTimeout(initTooltipDelegation,100);
@@ -9963,7 +9994,10 @@ function attachTip(div,card){
 function applyBattlefieldArt(){
   const arena=document.getElementById('arena');
   if(!arena)return;
-  const url=artOverrides['bg_arena'];
+  // Priority: a manual 'bg_arena' override always wins. Otherwise rotate among the
+  // available bg_arena_1..4 slots, picking one per match (set in pickRotatingBg()).
+  let url=artOverrides['bg_arena'];
+  if(!url) url=_rotatingBgUrl;
   if(url){
     // Dim layer keeps cards readable over any bright image
     arena.style.backgroundImage='linear-gradient(rgba(4,6,12,.62),rgba(4,6,12,.72)), url("'+url+'")';
@@ -9974,6 +10008,20 @@ function applyBattlefieldArt(){
     arena.style.backgroundImage='';
     arena.classList.remove('has-custom-bg');
   }
+}
+// Currently-selected rotating background URL (chosen each match)
+let _rotatingBgUrl='';
+// Pick a random battlefield background from the available rotation slots.
+function pickRotatingBg(){
+  try{
+    const slots=['bg_arena_1','bg_arena_2','bg_arena_3','bg_arena_4'];
+    const available=slots.map(k=>artOverrides[k]).filter(Boolean);
+    if(available.length){
+      _rotatingBgUrl=available[Math.floor(Math.random()*available.length)];
+    } else {
+      _rotatingBgUrl='';
+    }
+  }catch(e){ _rotatingBgUrl=''; }
 }
 
 function uploadBattlefieldArt(input){
