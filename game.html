@@ -2530,7 +2530,7 @@ const BOTS={
   arcbeetle:{name:'Arcbeetle',atk:4,medal:'lightning',art:'arcbeetle',mcart:'mc_arc', color:'#2a80f0',passive:'After attacking: gain +1 Charge on Lightning Medal.'},
   warbandit:{name:'Warbandit',atk:4,medal:'psycho',   art:'warbandit',mcart:'mc_war', color:'#9070f0',passive:'When you play a Technique: draw 1 if hand ≤2 cards.'},
   rokusho:  {name:'Rokusho',  atk:3,medal:'titan',    art:'rokusho',  mcart:'mc_rok', color:'#8090a0',passive:'Takes 1 less damage (stacks with Titan Medal).'},
-  sumilidon:{name:'Sumilidon',atk:3,medal:'aqua',     art:'sumilidon',mcart:'mc_meta',color:'#10c090',passive:'After healing: gain +1 Charge on Aqua Medal.'},
+  sumilidon:{name:'Sumilidon',atk:5,medal:'blaze',    art:'sumilidon',mcart:'mc_sumi',color:'#f06424',passive:'Ravager: +1 DMG for every 5 HP missing (the more wounded, the deadlier).'},
   machairodus:{name:'Machairodus',atk:5,medal:'titan',art:'machairodus',mcart:'mc_mach',color:'#9050d0',passive:'Stalk: if did NOT attack last turn, next attack +2 DMG.'},
   omegaknight:{name:'Omegaknight',atk:6,medal:'royal',art:'omegaknight',mcart:'mc_omega',color:'#f0c040',passive:'Vanguard: attacks on support bots redirect to Omegaknight.'},
   robo_emperor:{name:'Robo Emperor',atk:8,medal:'emperor',art:'robo_emperor',mcart:'mc_robo',color:'#60c030',passive:'Cable Network: start of turn, deal 2 DMG to highest-charge enemy and drain 1 Charge.'},
@@ -2548,7 +2548,7 @@ const BOTS={
 };
 const MFR={
   ikki:{name:'Ikki Tenryou',pass:'Bot ≤5 HP → +1 Charge.'},
-  henry:{name:'Henry',pass:'First Action each turn is free.'},
+  henry:{name:'Henry',pass:'Fusion Engineer: your Medachange & Fusion plays cost no action.'},
   roks:{name:'Rokusho (Partner)',pass:'When Omegaknight defeats a bot, gain 2 Charge instantly.'},
   tai:{name:'Tai Kamiya',pass:'When any bot defeats an enemy, all your bots gain +1 ATK this turn.'},
   karin:{name:'Karin Junko',pass:'When you play 3+ cards in one turn, draw 1 and Gokudo gains +1 Charge.'},
@@ -2570,6 +2570,8 @@ const CDEFS={
   psycho_pulse:  C('psycho_pulse','technique','Psycho Pulse','psi_art','+2 Draw1','deal2_draw','#9070f0','Deal +2 dmg. Draw 1 card.'),
   inferno_surge: C('inferno_surge','medaforce','Inferno Surge','mf_art','8 Direct','mf_blaze','#f06424','Deal 8 unblockable dmg to one bot.'),
   thunder_barrage:C('thunder_barrage','medaforce','Thunder Barrage','mf_art','4 to All','mf_lightning','#2a80f0','Hit ALL enemy bots for 4 dmg.'),
+  x_burst:       C('x_burst','medaforce','X Burst','mf_x_art','Fusion','mf_xburst','#e04030','Deal 7 to the active enemy. If Masterbeetle is in play, deal 12 and ignore all reduction.'),
+  master_cannon: C('master_cannon','medaforce','Master Cannon','mf_master_art','Railgun','mf_mastercannon','#f0c040','Deal 6 to ALL enemies. If Masterbeetle \u039e (Master form) is in play, deal 11 to all \u2014 the full Prominence Railgun.'),
   mind_seize:    C('mind_seize','medaforce','Mind Seize','mf_art','Steal Bot','mf_psycho','#9070f0','Enemy bot attacks its own team.'),
   earth_prison:  C('earth_prison','medaforce','Earth Prison','mf_art','Exhaust All','mf_titan','#8090a0','All enemies skip their next attack.'),
   press_forward: C('press_forward','action','Press Forward','act_art','+2 Charge','act_charge','#60c020','+2 Charge to one of your bots.'),
@@ -2587,7 +2589,7 @@ const CDEFS={
   medal_lens:    C('medal_lens','equipment','Medal Lens','eq_art','MF +3 DMG','eq_lens','#a060f0','Next Medaforce deals +3 extra DMG. Then destroyed.'),
   burn_coat:     C('burn_coat','equipment','Burn Coat','eq_art','Burn Attacker','eq_burn','#a060f0','Attackers take 1 burn next turn after hitting this bot.'),
   mc_metabee:    C('mc_metabee','medachange','Metabee Change','mc_card_art','+5ATK +12HP','mc_bot_metabee','#f04880','Fuse with Metabee: +5 ATK, +12 max HP. Blaze damage cap removed. Losing = instant loss.'),
-  mc_arcbeetle:  C('mc_arcbeetle','medachange','Arcbeetle Change','mc_card_art','+5ATK +12HP','mc_bot_arcbeetle','#f04880','Fuse with Arcbeetle: +5 ATK, +12 HP. Double-atk threshold 5→2. Losing = instant loss.'),
+  mc_arcbeetle:  C('mc_arcbeetle','medachange','Sumilidon Change','mc_card_art','+5ATK +14HP','mc_bot_sumilidon','#f06424','Fuse with Sumilidon: +5 ATK, +14 HP, and its Ravager bonus doubles (+2 DMG per 5 HP missing). A burning berserker. Losing = instant loss.'),
   mc_warbandit:  C('mc_warbandit','medachange','Warbandit Change','mc_card_art','+5ATK +12HP','mc_bot_warbandit','#f04880','Fuse with Warbandit: +5 ATK, +12 HP. MF draws 2 + all enemy charge −2. Losing = instant loss.'),
   mc_grand_beetle: C('mc_grand_beetle','medachange','Grand Beetle Forge','mc_card_art','+5ATK +12HP','mc_bot_grand_beetle','#e0a020','Fuse with Grand Beetle: +5 ATK, +12 max HP. Equipment slots 3→4. Losing = instant loss.'),
   mc_neutranurse: C('mc_neutranurse','medachange','Neutranurse Forge','mc_card_art','+4ATK +14HP','mc_bot_neutranurse','#40c0a0','Fuse with Neutranurse: +4 ATK, +14 max HP. Heals all allies +2 each turn. Losing = instant loss.'),
@@ -2789,7 +2791,8 @@ const DECKS={
       ['ghost_shell',1],    // revive equipment
       ['resonator',1],      // charge engine
       // Medaforce — control payoffs (2 cards)
-      ['thunder_barrage',2],// board damage
+      ['x_burst',1],        // fusion Medaforce: empowered by Masterbeetle
+      ['master_cannon',1],  // fusion Medaforce: Prominence Railgun (Master form)
       // Medachange (2 cards)
       ['mc_rokusho',1],
       ['mc_machairodus',1],
@@ -3925,6 +3928,13 @@ function resolveAtk(a,d,sk,techId){
   let tech=null;
   if(techId){const _side=G[sk]||G.p;tech=_side.hand.find(c=>c.uid===techId);if(tech){dsc(_side,techId);_lastTech=tech.name;total+=applyTech(tech,a,d,sk);}}else{_lastTech=null;}
   // Metabee passive: burn target = +2 bonus
+  // Sumilidon RAVAGER: +1 DMG per 5 HP missing (more wounded = deadlier)
+  if(a.key==='sumilidon'){
+    const missing=Math.max(0,(a.maxHp||0)-(a.hp||0));
+    const mult=a._ravagerDouble?2:1;
+    const rav=Math.floor(missing/5)*mult;
+    if(rav>0){ total+=rav; log('Sumilidon RAVAGER: +'+rav+' DMG (wounded fury)!','chg'); }
+  }
   if(a.key==='metabee'&&d.burn){total+=1;log('Metabee passive: 🔥 burn bonus +1!','chg');
     if(lsA&&lsA.bot===a){total+=1*lsA.medalCount;log('BERSERKER: +'+(1*lsA.medalCount)+' burn dmg!','chg');}
   }
@@ -4486,7 +4496,9 @@ function playFusionX(card, sk){
     [{l:'\u26a1 COMBINE!',cls:'mb mc',cb:()=>{
       closeM();
       triggerMCAnimation(mach, ()=>{
-        dsc(side,card.uid); actionsLeft--;
+        dsc(side,card.uid);
+        if(!(G.p.mf&&G.p.mf.pass&&G.p.mf.pass.includes('Fusion Engineer'))) actionsLeft--;
+        else log('Fusion Engineer: fusion costs no action!','chg');
         // Absorb Arcbeetle into Machairodus -> Masterbeetle
         const combinedAtk=mach.atk+arc.atk+3;
         const pooledHp=mach.hp+Math.ceil(arc.hp*0.6)+10;
@@ -4531,7 +4543,9 @@ function playFusionMaster(card, sk){
     [{l:'\ud83d\udc51 ASCEND!',cls:'mb mc',cb:()=>{
       closeM();
       triggerMCAnimation(mb, ()=>{
-        dsc(side,card.uid); actionsLeft--;
+        dsc(side,card.uid);
+        if(!(G.p.mf&&G.p.mf.pass&&G.p.mf.pass.includes('Fusion Engineer'))) actionsLeft--;
+        else log('Fusion Engineer: fusion costs no action!','chg');
         mb._masterMode=true;
         mb.name='Masterbeetle \u039e';
         mb.atk+=6;
@@ -4584,10 +4598,11 @@ function playMC(card){
         dsc(G.p,card.uid);
         // Royal evolves freely; track the evolution count for scaling payoffs.
         if(_royalSide){ G.p._evolveCount=(G.p._evolveCount||0)+1; log('EVOLUTION '+G.p._evolveCount+'! The Royal Court grows stronger.','mc'); }
-        else { actionsLeft--; G.p.mcUsed=true; }
+        else { if(!(G.p.mf&&G.p.mf.pass&&G.p.mf.pass.includes('Fusion Engineer'))) actionsLeft--; G.p.mcUsed=true; }
         const mcHPBoost=12;
         bot.changed=true;bot.maxHp+=mcHPBoost;bot.hp=Math.min(bot.hp+mcHPBoost,bot.maxHp);
         if(card.fx==='mc_bot_warbandit')bot.mcDraw2=true;
+        if(card.fx==='mc_bot_sumilidon'){bot._ravagerDouble=true;bot.maxHp+=2;bot.hp=Math.min(bot.hp+2,bot.maxHp);bot.atk+=1;log('Sumilidon Medachange: Ravager fury doubled!','mc');}
       if(card.fx==='mc_bot_wargreymon'){bot._dramonBonus=3;log('WarGreymon Medachange: Dramon bonus +6!','mc');}
       if(card.fx==='mc_bot_metalgurumemon'){bot._doubleBarrage=true;log('MetalGurumemon Medachange: Double Missile Barrage!','mc');}
         if(card.fx==='mc_bot_grand_beetle'){bot._maxEquip=4;log('Grand Beetle Forge: 4 equipment slots!','mc');}
@@ -4748,6 +4763,40 @@ function resolveMF(fx,bonus=0){
   }
 
   // ── Cards that hit ALL enemies (no target needed) ────────
+  if(fx==='mf_xburst'){
+    // X Burst: 7 single-target, 12 + pierce if Masterbeetle is out
+    const hasMB=G.p.bots.some(b=>b._masterbeetle&&!b.def);
+    const dmgAmt=(hasMB?12:7)+bonus;
+    const tgt=enemies[0];
+    if(!tgt){ closeM&&closeM(); renderAll(); return; }
+    openM('X Burst',
+      'Deal <b style="color:#e04030">'+(dmgAmt*mfMult)+' damage</b> to '+tgt.name+(hasMB?' \u2014 Masterbeetle empowered, ignores reduction!':'.'),
+      [{l:'\u26a1 FIRE X BURST',cls:'mb bad',cb:()=>{
+        if(hasMB) G._pierceDmg=true;
+        dmg(tgt,dmgAmt*mfMult,'c');
+        G._pierceDmg=false;
+        log('X Burst: '+tgt.name+' hit for '+(dmgAmt*mfMult)+'!','atk');
+        closeM();renderAll();
+      }},{l:'Cancel',cls:'mb',cb:()=>{_cancelMedaforce();}}]
+    );
+    return;
+  }
+  if(fx==='mf_mastercannon'){
+    // Master Cannon: 6 to all, 11 to all if Master form is out
+    const hasMaster=G.p.bots.some(b=>b._masterMode&&!b.def);
+    const dmgAmt=(hasMaster?11:6)+bonus;
+    const targets=enemies.slice();
+    if(!targets.length){ closeM&&closeM(); renderAll(); return; }
+    openM('Master Cannon',
+      'Deal <b style="color:#f0c040">'+(dmgAmt*mfMult)+' damage</b> to ALL enemies'+(hasMaster?' \u2014 full Prominence Railgun!':'.')+' ('+targets.length+' targets)',
+      [{l:'\ud83d\udd2b FIRE RAILGUN',cls:'mb bad',cb:()=>{
+        targets.forEach(t=>dmg(t,dmgAmt*mfMult,'c'));
+        log('Master Cannon: all enemies hit for '+(dmgAmt*mfMult)+'!','atk');
+        closeM();renderAll();
+      }},{l:'Cancel',cls:'mb',cb:()=>{_cancelMedaforce();}}]
+    );
+    return;
+  }
   if(fx==='mf_lightning'){
     // Thunder Barrage: hit all for 4
     const targets=enemies.slice();
@@ -5994,6 +6043,8 @@ function cpuTurn(){
           if(t)dmg(t,8+bonus,'p');
         }
         else if(fx==='mf_lightning') alive(G.p).forEach(b=>dmg(b,4+bonus,'p'));
+        else if(fx==='mf_xburst'){ const hasMB=G.c.bots.some(b=>b._masterbeetle&&!b.def); const t=getActiveBot('p'); if(t){ if(hasMB)G._pierceDmg=true; dmg(t,(hasMB?12:7)+bonus,'p'); G._pierceDmg=false; } }
+        else if(fx==='mf_mastercannon'){ const hasMaster=G.c.bots.some(b=>b._masterMode&&!b.def); alive(G.p).forEach(b=>dmg(b,(hasMaster?11:6)+bonus,'p')); }
         else if(fx==='mf_psycho'){const t=alive(G.p)[0];if(t)alive(G.p).filter(x=>x!==t).forEach(x=>dmg(x,t.atk,'p'));}
         else if(fx==='mf_titan') alive(G.p).forEach(b=>b.exhst=true);
         else if(fx==='mf_aqua') alive(G.c).forEach(b=>{b.hp=Math.min(b.maxHp,b.hp+4+bonus);});
@@ -6125,6 +6176,8 @@ function cpuTurnLegacy(){
           if(t)dmg(t,8+bonus,'p');
         }
         else if(fx==='mf_lightning') alive(G.p).forEach(b=>dmg(b,4+bonus,'p'));
+        else if(fx==='mf_xburst'){ const hasMB=G.c.bots.some(b=>b._masterbeetle&&!b.def); const t=getActiveBot('p'); if(t){ if(hasMB)G._pierceDmg=true; dmg(t,(hasMB?12:7)+bonus,'p'); G._pierceDmg=false; } }
+        else if(fx==='mf_mastercannon'){ const hasMaster=G.c.bots.some(b=>b._masterMode&&!b.def); alive(G.p).forEach(b=>dmg(b,(hasMaster?11:6)+bonus,'p')); }
         else if(fx==='mf_psycho'){const t=alive(G.p)[0];if(t)alive(G.p).filter(x=>x!==t).forEach(x=>dmg(x,t.atk,'p'));}
         else if(fx==='mf_titan') alive(G.p).forEach(b=>b.exhst=true);
         else if(fx==='mf_aqua') alive(G.c).forEach(b=>{b.hp=Math.min(b.maxHp,b.hp+4+bonus);});
@@ -7249,7 +7302,7 @@ const DECK_GUIDES={
   titan:{name:'Titan Guard',color:'#8090a0',tier:'Advanced',
     plan:'Combining archetype. Survive the early game, then fuse your bots into the legendary Masterbeetle for an unstoppable finisher.',
     plays:['Stall and disrupt early \u2014 drain Charge, heal, and protect your bots while you set up.','X Fusion Change: combine Arcbeetle Dash + Machairodus into MASTERBEETLE (combined stats, pierces reduction).','Master Medachange: Rokusho rides on top for the ultimate form \u2014 hits ALL enemies, takes 3 less dmg, heals each turn.'],
-    win:'Reach the two-stage fusion. Once Masterbeetle \u039e is online, its AoE railgun and bulk overwhelm everything.'},
+    win:'Reach the two-stage fusion. Once Masterbeetle \u039e is online, fire Master Cannon (Prominence Railgun) or X Burst \u2014 they hit far harder while fused.'},
   royal:{name:'Royal Court',color:'#f0c040',tier:'Advanced',
     plan:'Evolution engine. Evolve all three Digimon repeatedly \u2014 every Medachange permanently powers up the whole Court.',
     plays:['Lead with Evolution Call: it refunds the action and pulls a Medachange so you evolve immediately.','Evolve a different bot each turn \u2014 every evolution gives all Royal bots +2 ATK.','Finish with DigiStrike: it hits for 6 +2 per evolution, on all three bots at once.'],
@@ -7605,6 +7658,12 @@ function renderPmGrid(tab){
       if(!bot) return;
       grid.appendChild(makePmSlot('bot_'+key+'_mc', bot.name+' (Changed)', '#f04880', gA(bot.mcart||bot.art,80,80)));
     });
+    // Fusion forms section (Masterbeetle combining archetype)
+    const lblF = document.createElement('div');
+    lblF.style.cssText = 'grid-column:1/-1;font-family:"Orbitron",monospace;font-size:8px;font-weight:700;color:#f0c040;letter-spacing:.8px;padding:4px 0 2px;border-bottom:1px solid var(--border);margin-top:8px';
+    lblF.textContent = 'FUSION FORMS'; grid.appendChild(lblF);
+    grid.appendChild(makePmSlot('bot_masterbeetle', 'Masterbeetle', '#f0c040', gA('machairodus',80,80)));
+    grid.appendChild(makePmSlot('bot_masterbeetle_master', 'Masterbeetle \u039e (Master)', '#ffd040', gA('machairodus',80,80)));
     // Medafighters section
     const lbl3 = document.createElement('div');
     lbl3.style.cssText = 'grid-column:1/-1;font-family:"Orbitron",monospace;font-size:8px;font-weight:700;color:var(--text3);letter-spacing:.8px;padding:4px 0 2px;border-bottom:1px solid var(--border);margin-top:8px';
