@@ -8573,11 +8573,14 @@ function startBattleMusic(){
   try{
     const bgmKey = _rotatingBgSlot ? ('bgm_arena_'+_rotatingBgSlot) : '';
     const customBgm = bgmKey && (artOverrides[bgmKey] || (typeof _embeddedBgm==='object' && _embeddedBgm[bgmKey]));
+    const curBf = _musicEl.getAttribute('data-bf')||'';
     if(customBgm){
-      if(_musicEl.getAttribute('data-bf')!==bgmKey){ _musicEl.src=customBgm; _musicEl.setAttribute('data-bf',bgmKey); }
+      // Always (re)assign when the target differs from what's loaded — forces the correct track.
+      if(curBf!==bgmKey){ _musicEl.pause(); _musicEl.src=customBgm; _musicEl.setAttribute('data-bf',bgmKey); _musicEl.load(); }
+      try{ console.log('[MW] battlefield music ->', bgmKey, '(slot '+_rotatingBgSlot+')'); }catch(e){}
     } else {
-      // No custom track for this battlefield — restore the default embedded battle music
-      if(_musicEl.getAttribute('data-bf')){ _musicEl.src=_defaultBattleSrc||_musicEl.src; _musicEl.removeAttribute('data-bf'); }
+      if(curBf){ _musicEl.pause(); _musicEl.src=_defaultBattleSrc||_musicEl.src; _musicEl.removeAttribute('data-bf'); _musicEl.load(); }
+      try{ console.log('[MW] battlefield music -> default (slot '+_rotatingBgSlot+')'); }catch(e){}
     }
   }catch(e){}
   _musicEl.loop=true;
@@ -9835,13 +9838,17 @@ function showStageSelect(onChosen){
   // No custom stages → skip straight through.
   if(!stages.length){ _stageChosen='random'; onChosen(); return; }
   _previewSel = stages[0]; // default highlighted = first stage
+  const stageColors={1:'#e0703a',2:'#c8a020',3:'#6a78d0',4:'#40b0a0'};
   let html='<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-height:48vh;overflow-y:auto;padding:4px">';
   stages.forEach(i=>{
     const img=artOverrides['bg_arena_'+i];
     const song=STAGE_SONGS[i]||('Arena '+i);
     const hasMusic = !!(artOverrides['bgm_arena_'+i] || (typeof _embeddedBgm==='object' && _embeddedBgm['bgm_arena_'+i]));
+    // Use the art if present, otherwise a colored gradient placeholder so the picker always renders.
+    const bgStyle = img ? ('background:url(\''+img+'\') center/cover') : ('background:linear-gradient(135deg,'+(stageColors[i]||'#444')+',#0a0c14)');
     html+='<div class="stage-card" id="stagecard-'+i+'" onclick="_selectStage('+i+')" style="cursor:pointer;width:130px;border:2px solid '+(i===_previewSel?'#f0c040':'rgba(240,176,48,.35)')+';border-radius:12px;overflow:hidden;background:#0a0c14;transition:transform .12s,border-color .12s">'
-       +'<div style="height:78px;background:url(\''+img+'\') center/cover;position:relative">'
+       +'<div id="stagebg-'+i+'" style="height:78px;'+bgStyle+';position:relative;display:flex;align-items:center;justify-content:center">'
+       +(img?'':'<span style="font-family:\'Orbitron\',monospace;font-size:9px;color:rgba(255,255,255,.5)">STAGE '+i+'</span>')
        +'<div id="stageplay-'+i+'" style="position:absolute;bottom:4px;right:4px;font-size:13px;opacity:'+(hasMusic?'.85':'0')+'">\u25b6\ufe0f</div></div>'
        +'<div style="padding:6px 4px;text-align:center;font-family:\'Orbitron\',monospace">'
        +'<div style="font-size:11px;font-weight:800;color:#f0c040;letter-spacing:.5px">'+song+'</div>'
@@ -9852,7 +9859,23 @@ function showStageSelect(onChosen){
   openM('SELECT BATTLEFIELD', html,
     [{l:'\u2694\ufe0f BATTLE',cls:'mb',cb:()=>{ _stopStagePreview(); _pickStage(_previewSel); }},
      {l:'\ud83c\udfb2 Random',cls:'mb',cb:()=>{ _stopStagePreview(); _pickStage('random'); }}]);
+  // Live-load any missing stage art from IndexedDB and fill the card backgrounds when ready.
+  try{
+    if(typeof ArtDB==='object' && ArtDB.get){
+      stages.forEach(i=>{
+        if(!artOverrides['bg_arena_'+i]){
+          ArtDB.get('bg_arena_'+i).then(v=>{
+            if(v){ const url=(typeof v==='string'?v:(v.value||v)); artOverrides['bg_arena_'+i]=url;
+              const el=document.getElementById('stagebg-'+i);
+              if(el){ el.style.background='url(\''+url+'\') center/cover'; el.innerHTML='<div id="stageplay-'+i+'" style="position:absolute;bottom:4px;right:4px;font-size:13px">\u25b6\ufe0f</div>'; }
+            }
+          }).catch(()=>{});
+        }
+      });
+    }
+  }catch(e){}
 }
+
 let _previewSel=null;
 let _stagePreviewEl=null;
 function _stopStagePreview(){
