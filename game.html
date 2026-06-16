@@ -889,6 +889,26 @@ body::after{
 @keyframes introPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 #intro-tap{position:relative;z-index:2;margin-bottom:6vh;font-family:'Orbitron',monospace;font-size:18px;font-weight:800;letter-spacing:3px;color:#fff;text-transform:uppercase;cursor:pointer;padding:10px 28px;border-radius:12px;background:linear-gradient(135deg,rgba(240,168,24,.22),rgba(224,90,30,.22));border:1px solid rgba(255,200,90,.5);text-shadow:0 0 12px rgba(255,180,60,.8),0 2px 4px rgba(0,0,0,.6);animation:introFade 1.6s ease-in-out infinite;box-shadow:0 0 20px rgba(240,150,30,.4)}
 @keyframes introFade{0%,100%{opacity:.65;transform:scale(1)}50%{opacity:1;transform:scale(1.04)}}
+/* ── Medaforce dedicated FX ── */
+.fx-layer{position:fixed;inset:0;z-index:195;pointer-events:none;overflow:hidden}
+.fx-flame{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:120px;filter:drop-shadow(0 0 24px #ff6a1e);animation:fxFlame .9s ease-out forwards}
+@keyframes fxFlame{0%{opacity:0;transform:translate(-50%,30%) scale(.4)}25%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}60%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-60%) scale(1.5)}}
+.fx-flame-burst{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:60vw;height:60vw;border-radius:50%;background:radial-gradient(circle,rgba(255,140,30,.9) 0%,rgba(255,80,10,.5) 35%,transparent 70%);animation:fxFlameBurst .8s ease-out forwards;mix-blend-mode:screen}
+@keyframes fxFlameBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}40%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.4)}}
+.fx-xbolt{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(0deg);font-size:140px;font-weight:900;font-family:'Orbitron',sans-serif;color:#e8f4ff;text-shadow:0 0 30px #40b0ff,0 0 60px #2080ff;animation:fxXbolt .8s cubic-bezier(.2,.8,.3,1) forwards}
+@keyframes fxXbolt{0%{opacity:0;transform:translate(-50%,-50%) rotate(-40deg) scale(.3)}40%{opacity:1;transform:translate(-50%,-50%) rotate(0deg) scale(1.25)}70%{opacity:1;transform:translate(-50%,-50%) rotate(0deg) scale(1.05)}100%{opacity:0;transform:translate(-50%,-50%) rotate(0deg) scale(1.4)}}
+.fx-spark{position:absolute;width:6px;height:6px;border-radius:50%;background:#9ce0ff;box-shadow:0 0 10px #40b0ff;animation:fxSpark .7s ease-out forwards}
+@keyframes fxSpark{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0)}}
+.fx-beam{position:absolute;top:0;bottom:0;left:50%;width:0;background:linear-gradient(90deg,transparent,#fff 20%,#ffe070 50%,#fff 80%,transparent);box-shadow:0 0 60px 20px #ffd040,0 0 120px 40px rgba(255,180,40,.6);transform:translateX(-50%);animation:fxBeam 1s ease-out forwards;mix-blend-mode:screen}
+@keyframes fxBeam{0%{width:0;opacity:0}20%{width:46vw;opacity:1}75%{width:46vw;opacity:1}100%{width:60vw;opacity:0}}
+.fx-beam-core{position:absolute;top:48%;left:50%;height:8vh;width:0;background:#fff;transform:translate(-50%,-50%);box-shadow:0 0 40px 12px #fff;animation:fxBeamCore 1s ease-out forwards}
+@keyframes fxBeamCore{0%{width:0;opacity:0}25%{width:50vw;opacity:1}75%{width:50vw;opacity:1}100%{width:60vw;opacity:0}}
+.fx-heal{position:absolute;left:50%;top:55%;transform:translate(-50%,-50%);width:50vw;height:50vw;border-radius:50%;background:radial-gradient(circle,rgba(80,240,160,.55) 0%,rgba(60,220,255,.25) 45%,transparent 72%);animation:fxHeal 1.1s ease-out forwards;mix-blend-mode:screen}
+@keyframes fxHeal{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}40%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.2)}}
+.fx-heal-plus{position:absolute;color:#7cffb0;font-size:40px;font-weight:900;text-shadow:0 0 16px #30ff90;animation:fxHealPlus 1.2s ease-out forwards}
+@keyframes fxHealPlus{0%{opacity:0;transform:translateY(20px) scale(.5)}30%{opacity:1}100%{opacity:0;transform:translateY(-90px) scale(1.1)}}
+.stage-card:active{transform:scale(.95)!important;border-color:#f0c040!important}
+.stage-card:hover{border-color:#f0c040!important}
 </style>
 </head>
 <body>
@@ -3484,6 +3504,72 @@ function medaforceFX(color){
   }catch(e){}
 }
 
+// ── Dedicated Medaforce visual FX ──
+function _fxLayer(life){
+  const l=document.createElement('div'); l.className='fx-layer';
+  document.body.appendChild(l);
+  setTimeout(()=>{ try{ l.remove(); }catch(e){} }, life||1200);
+  return l;
+}
+function _fxShake(){
+  const arena=document.getElementById('arena')||document.body;
+  if(arena){ arena.classList.remove('mf-shaking'); void arena.offsetWidth; arena.classList.add('mf-shaking'); setTimeout(()=>arena.classList.remove('mf-shaking'),520); }
+}
+// Inferno Surge — a flame slams down on the target
+function fxFlame(){
+  try{
+    const l=_fxLayer(1000);
+    const burst=document.createElement('div'); burst.className='fx-flame-burst'; l.appendChild(burst);
+    const fl=document.createElement('div'); fl.className='fx-flame'; fl.textContent='\uD83D\uDD25'; l.appendChild(fl);
+    try{ if(typeof SFX==='object'&&SFX.medaforce) SFX.medaforce(); }catch(e){}
+    _fxShake();
+  }catch(e){}
+}
+// X Burst (Titan first MF) — an energy X strikes with sparks
+function fxEnergyX(){
+  try{
+    const l=_fxLayer(1000);
+    const x=document.createElement('div'); x.className='fx-xbolt'; x.textContent='\u2715'; l.appendChild(x);
+    // radial sparks
+    for(let i=0;i<14;i++){
+      const sp=document.createElement('div'); sp.className='fx-spark';
+      const ang=(Math.PI*2/14)*i, dist=120+Math.random()*120;
+      sp.style.left='50%'; sp.style.top='50%';
+      sp.style.setProperty('--dx',(Math.cos(ang)*dist)+'px');
+      sp.style.setProperty('--dy',(Math.sin(ang)*dist)+'px');
+      l.appendChild(sp);
+    }
+    try{ if(typeof SFX==='object'&&SFX.zap) SFX.zap(); }catch(e){}
+    _fxShake();
+  }catch(e){}
+}
+// Master Cannon — full-power Prominence beam sweeps the field
+function fxBeam(){
+  try{
+    const l=_fxLayer(1200);
+    const beam=document.createElement('div'); beam.className='fx-beam'; l.appendChild(beam);
+    const core=document.createElement('div'); core.className='fx-beam-core'; l.appendChild(core);
+    try{ if(typeof SFX==='object'&&SFX.medaforce) SFX.medaforce(); }catch(e){}
+    setTimeout(()=>{ try{ if(typeof SFX==='object'&&SFX.zap) SFX.zap(); }catch(e){} },180);
+    _fxShake();
+  }catch(e){}
+}
+// Healing — green/teal restorative glow with rising plus signs
+function fxHeal(){
+  try{
+    const l=_fxLayer(1300);
+    const g=document.createElement('div'); g.className='fx-heal'; l.appendChild(g);
+    for(let i=0;i<6;i++){
+      const p=document.createElement('div'); p.className='fx-heal-plus'; p.textContent='+';
+      p.style.left=(30+Math.random()*40)+'%'; p.style.top=(45+Math.random()*20)+'%';
+      p.style.animationDelay=(i*0.08)+'s';
+      l.appendChild(p);
+    }
+    try{ if(typeof SFX==='object'&&SFX.select) SFX.select(); }catch(e){}
+  }catch(e){}
+}
+
+
 function banner(txt,color='#f0b820'){
   // Remove any existing banners so they never stack/overlap
   try{ document.querySelectorAll('.bnr').forEach(b=>b.remove()); }catch(e){}
@@ -4187,7 +4273,7 @@ function playAct(card){
   }
   if(fx==='gen_heal'){
     const wounded=alive(G.p).filter(b=>!b.def);
-    openM('Field Medic','Heal which bot?', wounded.map(b=>({l:b.name+' ('+b.hp+'/'+b.maxHp+')',cls:'mb',cb:()=>{const amt=(b.hp<b.maxHp/2)?8:5;b.hp=Math.min(b.maxHp,b.hp+amt);log('Field Medic: +'+amt+' HP to '+b.name+'.','eq');closeM();renderAll();if(G_online&&G_myTurn)_syncNow();}})).concat([{l:'Cancel',cls:'mb ok',cb:()=>{_cancelAction();}}]));
+    openM('Field Medic','Heal which bot?', wounded.map(b=>({l:b.name+' ('+b.hp+'/'+b.maxHp+')',cls:'mb',cb:()=>{try{fxHeal();}catch(e){}const amt=(b.hp<b.maxHp/2)?8:5;b.hp=Math.min(b.maxHp,b.hp+amt);log('Field Medic: +'+amt+' HP to '+b.name+'.','eq');closeM();renderAll();if(G_online&&G_myTurn)_syncNow();}})).concat([{l:'Cancel',cls:'mb ok',cb:()=>{_cancelAction();}}]));
     return;
   }
   if(fx==='gen_recharge'){
@@ -4316,6 +4402,7 @@ function playAct(card){
     renderAll();return;
   }
   if(fx==='act_fox_heal'){
+    try{fxHeal();}catch(e){}
     const fox=G.p.bots.find(b=>b.key==='foxuno'&&!b.def);
     alive(G.p).forEach(b=>{b.hp=Math.min(b.maxHp,b.hp+3);});
     if(fox)addChg(fox,1);
@@ -4740,6 +4827,7 @@ function resolveMF(fx,bonus=0){
         l:'⚔ '+t.name+'  —  '+t.hp+' HP',
         cls:'mb bad',
         cb:()=>{
+          try{ fxFlame(); }catch(e){}
           dmg(t,(8+bonus)*mfMult,'c');
           log('Inferno Surge: '+t.name+' hit for '+((8+bonus)*mfMult)+'!','atk');
           closeM();renderAll();
@@ -4785,6 +4873,7 @@ function resolveMF(fx,bonus=0){
     openM('X Burst',
       'Deal <b style="color:#e04030">'+(dmgAmt*mfMult)+' damage</b> to '+tgt.name+(hasMB?' \u2014 Masterbeetle empowered, ignores reduction!':'.'),
       [{l:'\u26a1 FIRE X BURST',cls:'mb bad',cb:()=>{
+        try{ fxEnergyX(); }catch(e){}
         if(hasMB) G._pierceDmg=true;
         dmg(tgt,dmgAmt*mfMult,'c');
         G._pierceDmg=false;
@@ -4803,6 +4892,7 @@ function resolveMF(fx,bonus=0){
     openM('Master Cannon',
       'Deal <b style="color:#f0c040">'+(dmgAmt*mfMult)+' damage</b> to ALL enemies'+(hasMaster?' \u2014 full Prominence Railgun!':'.')+' ('+targets.length+' targets)',
       [{l:'\ud83d\udd2b FIRE RAILGUN',cls:'mb bad',cb:()=>{
+        try{ fxBeam(); }catch(e){}
         targets.forEach(t=>dmg(t,dmgAmt*mfMult,'c'));
         log('Master Cannon: all enemies hit for '+(dmgAmt*mfMult)+'!','atk');
         closeM();renderAll();
@@ -4917,6 +5007,7 @@ function resolveMF(fx,bonus=0){
     return;
   }
   if(fx==='mf_aqua'){
+    fxHeal();
     alive(G.p).forEach(b=>{b.hp=Math.min(b.maxHp,b.hp+4+bonus);});
     flt('+'+(4+bonus),'heal');
     log('Tidal Wave: team healed '+(4+bonus)+' HP!','chg');
@@ -9706,9 +9797,82 @@ async function applyOpponentArt(manifest){
   if(typeof renderAll==='function'){ try{ renderAll(); }catch(_){} }
 }
 
+
+// ═══ STAGE SELECT ═══
+// Song titles for each battlefield slot (shown under the stage image).
+const STAGE_SONGS = {
+  1: 'Arena I',
+  3: 'Arena III',
+  4: 'Arena IV'
+};
+let _stageChosen = null;       // slot number the player picked (or 'random')
+let _pendingStartGame = false; // guard so startGame proceeds after stage pick
+function _availableStages(){
+  // A stage is selectable if it has a background image uploaded.
+  const out=[];
+  for(let i=1;i<=4;i++){
+    if(artOverrides['bg_arena_'+i]) out.push(i);
+  }
+  return out;
+}
+function showStageSelect(onChosen){
+  const stages=_availableStages();
+  // No custom stages → skip straight through.
+  if(!stages.length){ _stageChosen='random'; onChosen(); return; }
+  let html='<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-height:52vh;overflow-y:auto;padding:4px">';
+  stages.forEach(i=>{
+    const img=artOverrides['bg_arena_'+i];
+    const song=STAGE_SONGS[i]||('Arena '+i);
+    const hasMusic = !!(artOverrides['bgm_arena_'+i] || (typeof _embeddedBgm==='object' && _embeddedBgm['bgm_arena_'+i]));
+    html+='<div class="stage-card" onclick="_pickStage('+i+')" style="cursor:pointer;width:130px;border:2px solid rgba(240,176,48,.35);border-radius:12px;overflow:hidden;background:#0a0c14;transition:transform .12s,border-color .12s">'
+       +'<div style="height:78px;background:url(\''+img+'\') center/cover;"></div>'
+       +'<div style="padding:6px 4px;text-align:center;font-family:\'Orbitron\',monospace">'
+       +'<div style="font-size:11px;font-weight:800;color:#f0c040;letter-spacing:.5px">'+song+'</div>'
+       +'<div style="font-size:8px;color:'+(hasMusic?'#5ad0e0':'#888')+';margin-top:2px">'+(hasMusic?'\u266a Music':'No music')+'</div>'
+       +'</div></div>';
+  });
+  html+='</div>';
+  openM('SELECT BATTLEFIELD', html,
+    [{l:'\ud83c\udfb2 Random Stage',cls:'mb',cb:()=>{ _pickStage('random'); }}]);
+}
+function _pickStage(sel){
+  if(sel==='random'){
+    _stageChosen='random';
+    try{ pickRotatingBg(); }catch(e){}
+  } else {
+    _stageChosen=sel;
+    // Force this specific stage
+    _rotatingBgUrl=artOverrides['bg_arena_'+sel]||'';
+    _rotatingBgSlot=sel;
+  }
+  closeM();
+  if(typeof _afterStageSelect==='function'){ const cb=_afterStageSelect; _afterStageSelect=null; cb(); }
+}
+let _afterStageSelect=null;
+
+// Intercept: show stage select before the match begins (once per match start).
 function startGame(){
+  // If a stage hasn't been chosen for this match yet and stages exist, show the picker first.
+  if(!_stageChosen && _availableStages().length){
+    _afterStageSelect=()=>{ _startGameNow(); };
+    showStageSelect(()=>{});
+    return;
+  }
+  _startGameNow();
+}
+function _startGameNow(){
+  // Honor an explicit stage pick; only randomize if the player chose Random (or no pick).
+  const _explicitStage = (_stageChosen && _stageChosen!=='random') ? _stageChosen : null;
+  _stageChosen=null; // reset for next match
   fadeOutTitleMusic(700);
-  try{ pickRotatingBg(); applyBattlefieldArt(); }catch(e){}  // choose battlefield FIRST so music can match it
+  try{
+    if(_explicitStage){
+      _rotatingBgUrl=artOverrides['bg_arena_'+_explicitStage]||''; _rotatingBgSlot=_explicitStage;
+    } else {
+      pickRotatingBg();
+    }
+    applyBattlefieldArt();
+  }catch(e){}
   startBattleMusic();           // battle music starts immediately, fading in (uses chosen battlefield's track)
   document.getElementById('title').classList.add('gone');
   init();log('Robattle begins! CPU: '+cpuDiff.toUpperCase()+'. Good luck.','info');
