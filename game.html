@@ -396,19 +396,20 @@ body::after{
 .m-hhint{font-size:8px;color:var(--text2);font-style:italic}
 #m-hscroll{
   display:flex;flex-direction:row;
-  justify-content:center;
+  justify-content:safe center;
   padding:0 14px 6px;
   overflow-x:auto;overflow-y:visible;
   flex:1;align-items:flex-end;
   -webkit-overflow-scrolling:touch;touch-action:pan-x;
   scrollbar-width:none;
 }
+#m-hscroll>.hc{flex:0 0 auto}
 #m-hscroll::-webkit-scrollbar{display:none}
 
 /* ── HAND CARDS — 2:3 portrait ── */
 .hc{
-  width:76px;height:114px; /* 2:3 */
-  flex-shrink:0;border-radius:7px;
+  width:76px;height:114px;min-width:76px;max-width:76px;min-height:114px;max-height:114px; /* 2:3 locked */
+  box-sizing:border-box;flex:0 0 76px;flex-shrink:0;flex-grow:0;border-radius:7px;
   border:1.5px solid rgba(255,255,255,.1);
   background:linear-gradient(160deg,rgba(20,28,46,.95),rgba(10,14,24,.98));
   overflow:hidden;display:flex;flex-direction:column;
@@ -441,7 +442,7 @@ body::after{
 }
 .hc{animation:deal .22s cubic-bezier(.22,1,.36,1) backwards}
 .hc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--hc-color,rgba(255,255,255,.1));opacity:.5}
-.hart{width:100%;height:60px;display:block;flex-shrink:0;object-fit:cover}
+.hart{width:100%;height:60px;min-height:60px;max-height:60px;display:block;flex-shrink:0;flex-grow:0;object-fit:cover}
 .hbody{padding:4px 6px 3px;flex:1;display:flex;flex-direction:column;justify-content:space-between;min-width:0;overflow:hidden}
 .htype{font-size:7px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:1px}
 .hname{font-size:9px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
@@ -7150,7 +7151,17 @@ function _getMusicUrl(){ try{ return localStorage.getItem(MUSIC_URL_KEY)||window
 function toggleMusic(){
   _musicOn=!_musicOn;
   try{ localStorage.setItem('mw_music_on', _musicOn?'1':'0'); }catch(e){}
-  if(_musicOn) startMusic(); else stopMusic();
+  if(_musicOn){
+    // Turn on the RIGHT track for the current screen (never both).
+    const inMatch = (typeof G==='object' && G && G.p && !G.winner && document.getElementById('title') && document.getElementById('title').style.display==='none');
+    if(inMatch){ try{ startBattleMusic(); }catch(e){} }
+    else { try{ startTitleMusic(); }catch(e){} }
+  } else {
+    // Stop everything.
+    try{ stopBattleMusic(); }catch(e){}
+    try{ if(_titleMusicEl){ _titleMusicEl.pause(); _titleMusicEl.currentTime=0; } }catch(e){}
+    try{ stopMusic(); }catch(e){}
+  }
 }
 function startMusic(){
   if(!_musicEl){
@@ -7172,7 +7183,7 @@ function startMusic(){
 }
 function stopMusic(){ if(_musicEl){ try{_musicEl.pause();}catch(e){} } }
 // restore preference
-try{ if(localStorage.getItem('mw_music_on')==='1'){ _musicOn=true; setTimeout(()=>{ if(_musicOn) startMusic(); }, 1500); } }catch(e){}
+/* legacy auto-music removed — title/battle music handled by startTitleMusic/startBattleMusic to prevent double playback */ try{ if(localStorage.getItem('mw_music_on')==='1'){ _musicOn=true; } }catch(e){}
 
 function openM(title,body,btns){
   (function(){const e=document.getElementById('mtitle');if(e)e.textContent=title;})();
@@ -9801,17 +9812,20 @@ async function applyOpponentArt(manifest){
 // ═══ STAGE SELECT ═══
 // Song titles for each battlefield slot (shown under the stage image).
 const STAGE_SONGS = {
-  1: 'Arena I',
-  3: 'Arena III',
-  4: 'Arena IV'
+  1: 'Arcade Revolt',
+  2: 'Gutter Victory',
+  3: 'Starlight Ascension',
+  4: 'Sunlit Steel Drum'
 };
 let _stageChosen = null;       // slot number the player picked (or 'random')
 let _pendingStartGame = false; // guard so startGame proceeds after stage pick
 function _availableStages(){
-  // A stage is selectable if it has a background image uploaded.
+  // A stage is selectable if it has a background image OR a soundtrack (uploaded or embedded).
   const out=[];
   for(let i=1;i<=4;i++){
-    if(artOverrides['bg_arena_'+i]) out.push(i);
+    const hasBg = !!artOverrides['bg_arena_'+i];
+    const hasMusic = !!artOverrides['bgm_arena_'+i] || (typeof _embeddedBgm==='object' && !!_embeddedBgm['bgm_arena_'+i]);
+    if(hasBg || hasMusic) out.push(i);
   }
   return out;
 }
@@ -9819,23 +9833,52 @@ function showStageSelect(onChosen){
   const stages=_availableStages();
   // No custom stages → skip straight through.
   if(!stages.length){ _stageChosen='random'; onChosen(); return; }
-  let html='<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-height:52vh;overflow-y:auto;padding:4px">';
+  _previewSel = stages[0]; // default highlighted = first stage
+  let html='<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-height:48vh;overflow-y:auto;padding:4px">';
   stages.forEach(i=>{
     const img=artOverrides['bg_arena_'+i];
     const song=STAGE_SONGS[i]||('Arena '+i);
     const hasMusic = !!(artOverrides['bgm_arena_'+i] || (typeof _embeddedBgm==='object' && _embeddedBgm['bgm_arena_'+i]));
-    html+='<div class="stage-card" onclick="_pickStage('+i+')" style="cursor:pointer;width:130px;border:2px solid rgba(240,176,48,.35);border-radius:12px;overflow:hidden;background:#0a0c14;transition:transform .12s,border-color .12s">'
-       +'<div style="height:78px;background:url(\''+img+'\') center/cover;"></div>'
+    html+='<div class="stage-card" id="stagecard-'+i+'" onclick="_selectStage('+i+')" style="cursor:pointer;width:130px;border:2px solid '+(i===_previewSel?'#f0c040':'rgba(240,176,48,.35)')+';border-radius:12px;overflow:hidden;background:#0a0c14;transition:transform .12s,border-color .12s">'
+       +'<div style="height:78px;background:url(\''+img+'\') center/cover;position:relative">'
+       +'<div id="stageplay-'+i+'" style="position:absolute;bottom:4px;right:4px;font-size:13px;opacity:'+(hasMusic?'.85':'0')+'">\u25b6\ufe0f</div></div>'
        +'<div style="padding:6px 4px;text-align:center;font-family:\'Orbitron\',monospace">'
        +'<div style="font-size:11px;font-weight:800;color:#f0c040;letter-spacing:.5px">'+song+'</div>'
-       +'<div style="font-size:8px;color:'+(hasMusic?'#5ad0e0':'#888')+';margin-top:2px">'+(hasMusic?'\u266a Music':'No music')+'</div>'
+       +'<div style="font-size:8px;color:'+(hasMusic?'#5ad0e0':'#888')+';margin-top:2px">'+(hasMusic?'\u266a tap to preview':'No music')+'</div>'
        +'</div></div>';
   });
-  html+='</div>';
+  html+='</div><div style="text-align:center;font-size:9px;color:#888;margin-top:6px">Tap a stage to preview its music, then hit Battle.</div>';
   openM('SELECT BATTLEFIELD', html,
-    [{l:'\ud83c\udfb2 Random Stage',cls:'mb',cb:()=>{ _pickStage('random'); }}]);
+    [{l:'\u2694\ufe0f BATTLE',cls:'mb',cb:()=>{ _stopStagePreview(); _pickStage(_previewSel); }},
+     {l:'\ud83c\udfb2 Random',cls:'mb',cb:()=>{ _stopStagePreview(); _pickStage('random'); }}]);
+}
+let _previewSel=null;
+let _stagePreviewEl=null;
+function _stopStagePreview(){
+  try{ if(_stagePreviewEl){ _stagePreviewEl.pause(); _stagePreviewEl.currentTime=0; _stagePreviewEl=null; } }catch(e){}
+}
+function _selectStage(i){
+  _previewSel=i;
+  // Highlight the chosen card, un-highlight others
+  try{
+    _availableStages().forEach(s=>{ const el=document.getElementById('stagecard-'+s); if(el) el.style.borderColor=(s===i?'#f0c040':'rgba(240,176,48,.35)'); });
+  }catch(e){}
+  // Play a short music preview for this stage
+  _stopStagePreview();
+  try{
+    const src = artOverrides['bgm_arena_'+i] || (typeof _embeddedBgm==='object' && _embeddedBgm['bgm_arena_'+i]);
+    if(src && localStorage.getItem('mw_music_on')!=='false'){
+      // Pause title music during preview so they don't overlap
+      try{ if(_titleMusicEl) _titleMusicEl.pause(); }catch(e){}
+      const a=new Audio(src); a.volume=0.5; _stagePreviewEl=a;
+      a.play().catch(()=>{});
+      // Stop the preview after 8 seconds
+      setTimeout(()=>{ if(_stagePreviewEl===a){ _stopStagePreview(); } }, 8000);
+    }
+  }catch(e){}
 }
 function _pickStage(sel){
+  _stopStagePreview();
   if(sel==='random'){
     _stageChosen='random';
     try{ pickRotatingBg(); }catch(e){}
@@ -9852,13 +9895,37 @@ let _afterStageSelect=null;
 
 // Intercept: show stage select before the match begins (once per match start).
 function startGame(){
-  // If a stage hasn't been chosen for this match yet and stages exist, show the picker first.
-  if(!_stageChosen && _availableStages().length){
-    _afterStageSelect=()=>{ _startGameNow(); };
-    showStageSelect(()=>{});
+  // Ensure battlefield art is loaded from storage BEFORE deciding whether to show the stage picker.
+  // (Art loads async from IndexedDB, so on a fresh open artOverrides may not be populated yet.)
+  if(!_stageChosen){
+    _ensureStageArt(()=>{
+      if(_availableStages().length){
+        _afterStageSelect=()=>{ _startGameNow(); };
+        showStageSelect(()=>{});
+      } else {
+        _startGameNow();
+      }
+    });
     return;
   }
   _startGameNow();
+}
+// Pull bg_arena_1..4 from IndexedDB into artOverrides if not already present, then continue.
+function _ensureStageArt(done){
+  try{
+    // If any arena bg is already in memory, we're good.
+    let haveAny=false; for(let i=1;i<=4;i++){ if(artOverrides['bg_arena_'+i]){ haveAny=true; break; } }
+    if(haveAny || typeof ArtDB!=='object' || !ArtDB.get){ done(); return; }
+    let pending=4, finished=false;
+    const finish=()=>{ if(!finished){ finished=true; done(); } };
+    for(let i=1;i<=4;i++){
+      ArtDB.get('bg_arena_'+i).then(v=>{
+        if(v){ artOverrides['bg_arena_'+i]=(typeof v==='string'?v:(v.value||v)); }
+      }).catch(()=>{}).finally(()=>{ if(--pending<=0) finish(); });
+    }
+    // Safety: don't hang if storage is slow
+    setTimeout(finish, 1200);
+  }catch(e){ done(); }
 }
 function _startGameNow(){
   // Honor an explicit stage pick; only randomize if the player chose Random (or no pick).
