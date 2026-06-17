@@ -965,6 +965,8 @@ body::after{
 @keyframes explodeCore{0%{opacity:0;transform:translate(-50%,-50%) scale(.1)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.6)}100%{opacity:0;transform:translate(-50%,-50%) scale(3.2)}}
 .cfx-explode-chunk{position:absolute;width:13px;height:13px;border-radius:3px;background:#ff8030;box-shadow:0 0 14px #ff5010;animation:explodeChunk .8s cubic-bezier(.2,.7,.3,1) forwards}
 @keyframes explodeChunk{0%{opacity:1;transform:translate(0,0) rotate(0deg) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(220deg) scale(.3)}}
+.cfx-coin-pop-scatter{position:fixed;width:54px;height:54px;transform:translate(-50%,-50%) scale(.3) rotate(0deg);opacity:0;filter:drop-shadow(0 0 16px rgba(240,200,60,.85));animation:coinPopScatter .9s cubic-bezier(.25,.85,.25,1.05) forwards;z-index:9999}
+@keyframes coinPopScatter{0%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(var(--rot0,0deg))}25%{opacity:1;transform:translate(-50%,-50%) scale(1.15) rotate(var(--rot1,10deg))}70%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(var(--rot2,-6deg))}100%{opacity:0;transform:translate(-50%,calc(-50% - 26px)) scale(.85) rotate(0deg)}}
 </style>
 </head>
 <body>
@@ -1077,7 +1079,7 @@ body::after{
 
   <!-- Action buttons -->
   <div class="title-actions">
-    <button class="sbtn sbtn-primary" onclick="startGame()">▶ START ROBATTLE</button>
+    <button class="sbtn sbtn-primary" onclick="startGameGate()">▶ START ROBATTLE</button>
     <div class="sbtn-row">
       <button class="sbtn" style="border-color:rgba(96,180,255,.4);color:#60b4ff" onclick="openDeckEditor()">🔧 EDIT</button>
       <button class="sbtn" style="border-color:rgba(64,216,152,.4);color:var(--green)" onclick="openPreMatchArt()">🎨 ART</button>
@@ -1091,7 +1093,7 @@ body::after{
       <button class="sbtn" style="border-color:rgba(240,176,48,.6);color:var(--gold);background:linear-gradient(135deg,rgba(240,176,48,.14),rgba(255,110,160,.1))" onclick="openRanked()">🏆 RANKED</button>
     </div>
     <div class="sbtn-row">
-      <button class="sbtn" style="border-color:rgba(90,208,224,.5);color:#5ad0e0" onclick="openStore()">🛒 STORE</button>
+      <button class="sbtn" style="border-color:rgba(90,208,224,.5);color:#5ad0e0" onclick="openStore()">🎒 ACCESSORIES</button>
     </div>
   </div>
 </div>
@@ -2629,9 +2631,9 @@ const BOTS={
   gokudo:     {name:'Gokudo',    atk:8,medal:'chain',hpBonus:4,art:'gokudo',    mcart:'mc_gokudo',color:'#f04020',passive:'Combo Cannon: +2 DMG per technique played this turn before attacking.'},
   wargreymon:    {name:'WarGreymon',    atk:5,medal:'digicore',art:'wargreymon',    mcart:'mc_warg',  color:'#f0c040',passive:'Dramon Destroyer: deals +3 DMG to equipped bots.'},
   metalgurumemon:{name:'MetalGurumemon',atk:4,medal:'digicore',art:'metalgurumemon',mcart:'mc_metal', color:'#9050d0',passive:'Missile Barrage: after attacking, deal 1 DMG to another enemy.'},
-  piraskull:       {name:'Piraskull',      atk:6,medal:'plunder',art:'bot_piraskull',      mcart:'bot_piraskull_mc',      color:'#d4a020',passive:"Captain's Cut: your attacks earn +1 extra Doubloon."},
-  taraba_craba:    {name:'Pirastar',        atk:5,medal:'plunder',art:'bot_taraba_craba',   mcart:'bot_taraba_craba_mc',   color:'#e0603a',passive:'Cannonade: before attacking, may spend 3 Doubloons to deal +5 dmg.'},
-  tentaclam:       {name:'TentaClam',      atk:4,medal:'plunder',art:'bot_tentaclam',      mcart:'bot_tentaclam_mc',      color:'#3aa0c0',passive:"Hoarder's Eye: end of turn, +1 Doubloon per other living crewmate (max +2)."},
+  piraskull:       {name:'Piraskull',      atk:6,medal:'plunder',hpBonus:3,art:'bot_piraskull',      mcart:'bot_piraskull_mc',      color:'#d4a020',passive:"Captain's Cut: your attacks earn +1 extra Doubloon."},
+  taraba_craba:    {name:'Pirastar',        atk:5,medal:'plunder',hpBonus:1,art:'bot_taraba_craba',   mcart:'bot_taraba_craba_mc',   color:'#e0603a',passive:'Cannonade: before attacking, may spend 3 Doubloons to deal +5 dmg.'},
+  tentaclam:       {name:'TentaClam',      atk:4,medal:'plunder',hpBonus:2,art:'bot_tentaclam',      mcart:'bot_tentaclam_mc',      color:'#3aa0c0',passive:"Hoarder's Eye: end of turn, +1 Doubloon per other living crewmate (max +2)."},
 };
 const MFR={
   ikki:{name:'Ikki Tenryou',pass:'Bot ≤5 HP → +1 Charge.'},
@@ -3407,7 +3409,8 @@ function defeat(bot,sk){
               // Stack medals: fusedMedal2 for the second fusion
               if(!b.fusedMedal){b.fusedMedal=deadBot.medal;}
               else{b.fusedMedal2=deadBot.medal;}
-              b.fusedPass=MEDAL[deadBot.medal].passive;
+              // Black Tide bots share one medal but each has a unique identity — fuse THEIR passive, not the generic medal text.
+              b.fusedPass=(deadBot.medal==='plunder'&&deadBot.passive)?deadBot.passive:MEDAL[deadBot.medal].passive;
               b.hp=Math.min(b.maxHp,b.hp+healAmt);
               addChg(b,1);
               // If Arcbeetle is last bot and just got a medal, recalculate actions
@@ -3444,7 +3447,7 @@ function defeat(bot,sk){
     })[0];
     if(!fuseTarget.fusedMedal)fuseTarget.fusedMedal=bot.medal;
     else fuseTarget.fusedMedal2=bot.medal;
-    fuseTarget.fusedPass=MEDAL[bot.medal].passive;
+    fuseTarget.fusedPass=(bot.medal==='plunder'&&bot.passive)?bot.passive:MEDAL[bot.medal].passive;
     fuseTarget.hp=Math.min(fuseTarget.maxHp,fuseTarget.hp+4);
     addChg(fuseTarget,1);
     log('CPU Medal Fusion: '+bot.mName+' → '+fuseTarget.name,'cpu');
@@ -3802,6 +3805,41 @@ function fxCoinPop(amount){
     _sfx('select');
   }catch(e){}
 }
+// Win Medals finisher: coin pop-ups scattered all over the screen (not just centered).
+function fxCoinPopBurst(amount, count){
+  try{
+    const url=coinArtUrl();
+    const n=Math.max(6, Math.min(16, count|| (amount?Math.min(16,6+Math.floor(amount/2)):8)));
+    const vw=(typeof window!=='undefined'&&window.innerWidth)||400;
+    const vh=(typeof window!=='undefined'&&window.innerHeight)||800;
+    for(let i=0;i<n;i++){
+      const delay=Math.random()*0.5;
+      setTimeout(()=>{
+        try{
+          const l=_fxLayer(1000);
+          if(url){
+            const img=document.createElement('img'); img.className='cfx-coin-pop-scatter'; img.src=url;
+            // Keep coins within a comfortable central-ish band so they read clearly on small screens.
+            const left=12+Math.random()*76; // 12%..88%
+            const top=14+Math.random()*60;  // 14%..74%
+            img.style.left=left+'%'; img.style.top=top+'%';
+            img.style.setProperty('--rot0',(Math.random()*40-20)+'deg');
+            img.style.setProperty('--rot1',(Math.random()*30-15)+'deg');
+            img.style.setProperty('--rot2',(Math.random()*16-8)+'deg');
+            const sizeJitter=44+Math.random()*22;
+            img.style.width=sizeJitter+'px'; img.style.height=sizeJitter+'px';
+            l.appendChild(img);
+          }
+        }catch(e){}
+      }, delay*1000);
+    }
+    if(amount!=null){
+      try{ fxCoinPop(amount); }catch(e){} // one centered "+N Doubloons" label so the total is still readable
+    }
+    _sfx('select');
+    try{ if(typeof SFX==='object'&&SFX.medaforce) SFX.medaforce(); }catch(e){}
+  }catch(e){}
+}
 // Small coin icons flying from the action toward the active bot's coin badge.
 function fxCoinGather(n){
   try{
@@ -3875,6 +3913,7 @@ function runPhase(){
 }
 
 function doCharge(sk){
+  if(sk==='p'){ G._cannonadeAsked=false; } // safety reset — never leave Cannonade's prompt-flag stuck across turns
   G[sk].bots.forEach(bot=>{
     if(sk==='p'){bot.taunting=false;} // taunt resets each player turn start
     if(bot.def)return;
@@ -4194,8 +4233,29 @@ function atkEnemy(idx){
   const _atkCard=G.p.selCard; // capture before resolve clears state
   // Ranged snipe at a support bot deals reduced damage (front bot takes full).
   G._snipeTarget = (idx!==G.c.activeBot);
+  // Pirastar's Cannonade: may spend 3 Doubloons before attacking for +5 dmg.
+  if(a.key==='taraba_craba' && coins('p')>=3 && !G._cannonadeAsked){
+    G._cannonadeAsked=true;
+    openM('Cannonade',
+      'Spend <b style="color:#d4a020">3 Doubloons</b> for <b style="color:#e0603a">+5 damage</b> on this attack? (You have '+coins('p')+'.)',
+      [
+        {l:'\ud83d\udca5 Spend 3 — +5 DMG',cls:'mb bad',cb:()=>{
+          spendCoins('p',3); a._cannonadeBonus=5;
+          try{ fxCoinPop(3); }catch(e){}
+          log('Cannonade: spent 3 Doubloons for +5 damage!','atk');
+          closeM(); _finishAtkEnemy(a,d,idx,_atkCard);
+        }},
+        {l:'Skip',cls:'mb',cb:()=>{ closeM(); _finishAtkEnemy(a,d,idx,_atkCard); }}
+      ]);
+    return;
+  }
+  G._cannonadeAsked=false;
+  _finishAtkEnemy(a,d,idx,_atkCard);
+}
+function _finishAtkEnemy(a,d,idx,_atkCard){
   resolveAtk(a,d,'p',_atkCard);
   G._snipeTarget = false;
+  G._cannonadeAsked=false;
   try{ if(typeof itutOnAttack==='function') itutOnAttack(); }catch(e){}
   if(G_online&&G_myTurn){
     // Attacker's result is authoritative — send defender's exact post-attack state
@@ -4284,6 +4344,7 @@ function resolveAtk(a,d,sk,techId){
   if(a.equip&&a.equip.fx==='eq_ninja_scroll'){total+=2;}
   if(a.equip&&a.equip.fx==='eq_cannon_array'){total+=2;}
   if(a.equip&&a.equip.fx==='bt_coincannon'){total+=1;} // Coin Cannon +1 dmg
+  if(a._cannonadeBonus){ total+=a._cannonadeBonus; delete a._cannonadeBonus; } // Pirastar Cannonade
   // Spider Web buff on Spidarman
   if(a.key==='spidarman'&&(a._spiderWebBuff||0)>0){total+=a._spiderWebBuff;}
   // Dramon Destroyer — WarGreymon +3 DMG vs equipped bots
@@ -5203,7 +5264,7 @@ function resolveMF(fx,bonus=0){
         cls:'mb bad',
         cb:()=>{
           spendCoins('p',have);
-          try{ fxCoinPop(have); fxExplodeAoE(); }catch(e){}
+          try{ fxCoinPopBurst(have, Math.min(16,8+have)); _fxShake(); }catch(e){}
           dmg(t,dmgAmt,'c');
           log('Win Medals: spent '+have+' Doubloons — '+t.name+' hit for '+dmgAmt+'!','atk');
           closeM();renderAll();if(G_online&&G_myTurn)_syncNow();
@@ -10212,7 +10273,7 @@ const MWStore = (function(){
 // ═══════════════════════════════════════════════════════════
 function openStore(){
   // Build/refresh then render. Uses the modal system (openM).
-  openM('STORE', '<div style="text-align:center;padding:20px;color:var(--text3)">Loading store…</div>', [{l:'Close',cls:'mb',cb:()=>closeM()}]);
+  openM('ACCESSORIES', '<div style="text-align:center;padding:20px;color:var(--text3)">Loading accessories…</div>', [{l:'Close',cls:'mb',cb:()=>closeM()}]);
   (async()=>{
     try{
       if(!MWStore.catalog()) await MWStore.loadCatalog();
@@ -10225,8 +10286,8 @@ function openStore(){
 function renderStore(){
   const cat = MWStore.catalog();
   if(!cat){
-    openM('STORE',
-      '<div style="text-align:center;padding:16px;color:var(--text3);line-height:1.5">The store is unavailable right now.<br>It needs a server connection.</div>',
+    openM('ACCESSORIES',
+      '<div style="text-align:center;padding:16px;color:var(--text3);line-height:1.5">Accessories are unavailable right now.<br>They need a server connection.</div>',
       [{l:'Close',cls:'mb',cb:()=>closeM()}]);
     return;
   }
@@ -10238,7 +10299,6 @@ function renderStore(){
   html+='<div style="display:flex;flex-direction:column;gap:10px;max-height:54vh;overflow-y:auto;padding:2px">';
   cat.forEach(p=>{
     const ownedPack = MWStore.ownsPack(p.id);
-    const price = '$'+(p.priceCents/100).toFixed(2);
     html+='<div style="border:1px solid '+(ownedPack?'rgba(90,224,140,.5)':'var(--border)')+';border-radius:12px;padding:10px 12px;background:#0c1018">'
       +'<div style="display:flex;align-items:center;gap:8px">'
         +'<div style="font-size:20px">'+(typeIcon[p.type]||'\ud83d\udecd\ufe0f')+'</div>'
@@ -10248,14 +10308,14 @@ function renderStore(){
         +'</div>'
         +'<div style="text-align:right">'
           + (ownedPack
-              ? '<div style="font-size:11px;font-weight:800;color:#5ae08c">\u2713 OWNED</div>'
-              : '<button class="mb" style="padding:7px 12px;font-size:11px;white-space:nowrap" onclick="storeBuy(\''+p.id+'\')">'+price+'</button>')
+              ? '<div style="font-size:11px;font-weight:800;color:#5ae08c">\u2713 UNLOCKED</div>'
+              : '<button class="mb" style="padding:7px 12px;font-size:11px;white-space:nowrap" onclick="storeBuy(\''+p.id+'\')">Unlock</button>')
         +'</div>'
       +'</div>'
     +'</div>';
   });
   html+='</div>';
-  openM('STORE', html, [{l:'Close',cls:'mb',cb:()=>closeM()}]);
+  openM('ACCESSORIES', html, [{l:'Close',cls:'mb',cb:()=>closeM()}]);
 }
 
 async function storeBuy(packId){
@@ -10263,14 +10323,14 @@ async function storeBuy(packId){
   const r = await MWStore.buy(packId);
   if(r.redirecting) return; // leaving to Stripe
   if(r.ok){
-    if(r.alreadyOwned){ banner&&banner('ALREADY OWNED','#5ad0e0'); }
-    else { banner&&banner('PURCHASE COMPLETE!','#5ae08c'); try{ SFX&&SFX.victory&&SFX.victory(); }catch(e){} }
+    if(r.alreadyOwned){ banner&&banner('ALREADY UNLOCKED','#5ad0e0'); }
+    else { banner&&banner('UNLOCKED!','#5ae08c'); try{ SFX&&SFX.victory&&SFX.victory(); }catch(e){} }
     // Apply any newly-unlocked cosmetics immediately, then re-render the store.
     try{ applyOwnedCosmetics(); }catch(e){}
     renderStore();
   } else {
     const msg = r.error==='no_server' ? 'Store needs a server connection.' : 'Purchase could not be completed.';
-    openM('STORE', '<div style="padding:14px;text-align:center;color:#ff8080;line-height:1.5">'+msg+'</div>', [{l:'Back',cls:'mb',cb:()=>renderStore()},{l:'Close',cls:'mb',cb:()=>closeM()}]);
+    openM('ACCESSORIES', '<div style="padding:14px;text-align:center;color:#ff8080;line-height:1.5">'+msg+'</div>', [{l:'Back',cls:'mb',cb:()=>renderStore()},{l:'Close',cls:'mb',cb:()=>closeM()}]);
   }
 }
 
@@ -10564,6 +10624,20 @@ function _pickStage(sel){
 let _afterStageSelect=null;
 
 // Intercept: show stage select before the match begins (once per match start).
+let _disclaimerShown=false;
+function startGameGate(){
+  if(_disclaimerShown){ startGame(); return; }
+  openM(
+    '⚠️ Fan Project Disclaimer',
+    '<div style="text-align:left;font-size:12px;line-height:1.6;color:var(--text2)">'+
+      'Medal Wars is an unofficial, non-commercial fan game created by a fan, for fans.<br><br>'+
+      'It is <b style="color:var(--gold)">not affiliated with, endorsed by, or sponsored by</b> the official Medabots brand, its creators, publishers, or rights holders.<br><br>'+
+      'All trademarks, character names, and original IP referenced or inspired by Medabots remain the property of their respective owners. No copyright or trademark infringement is intended.<br><br>'+
+      'This project exists purely as a tribute and will be taken down upon request from the rights holders.'+
+    '</div>',
+    [{l:'I Understand — Continue',cls:'mb ok',cb:()=>{ _disclaimerShown=true; closeM(); startGame(); }}]
+  );
+}
 function startGame(){
   // Ensure battlefield art is loaded from storage BEFORE deciding whether to show the stage picker.
   // (Art loads async from IndexedDB, so on a fresh open artOverrides may not be populated yet.)

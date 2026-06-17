@@ -155,17 +155,15 @@ async function createCheckout(token, packId, origin) {
 
   const base = PUBLIC_BASE_URL || origin || '';
 
-  // PREVIEW MODE: no Stripe — simulate a completed purchase so the flow is testable.
-  if (!stripe) {
-    grant(token, packId, { via: 'preview' });
-    return {
-      ok: true,
-      preview: true,
-      message: 'Preview mode: pack granted without payment.',
-      // A URL the client can treat like a return; here it just signals success.
-      url: (base ? base : '') + '/?store=preview_success&pack=' + encodeURIComponent(packId)
-    };
-  }
+  // ACCESSORIES ARE FREE — always grant directly, never route through Stripe.
+  // (The client shows no price; charging money here would be a dangerous mismatch.)
+  grant(token, packId, { via: 'free_unlock' });
+  return {
+    ok: true,
+    preview: true,
+    message: 'Accessory unlocked — no payment required.',
+    url: (base ? base : '') + '/?store=unlock_success&pack=' + encodeURIComponent(packId)
+  };
 
   // LIVE/TEST STRIPE: create a hosted Checkout session.
   try {
