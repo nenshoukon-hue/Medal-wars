@@ -13,6 +13,7 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT || 8080;
+const MW_SERVER_BUILD = 'v4.0'; // keep in sync with the client's MW_BUILD so checkDeploySync() is meaningful
 
 // Beta-key gating toggle. Set BETA_GATE=on in Railway to require keys for online play.
 const BETA_GATE = process.env.BETA_GATE === 'on';
@@ -165,7 +166,7 @@ const server = http.createServer((req, res) => {
   // Health check (moved to /health)
   if (req.url === '/health' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', version: 'v3.0-ranked', features: { ranked: true, queue: true, betakeys: true }, rooms: rooms.size, queue: rankedQueue.length, uptime: process.uptime(), r2: R2.enabled() }));
+    res.end(JSON.stringify({ status: 'ok', version: MW_SERVER_BUILD, features: { ranked: true, queue: true, betakeys: true }, rooms: rooms.size, queue: rankedQueue.length, uptime: process.uptime(), r2: R2.enabled() }));
     return;
   }
 

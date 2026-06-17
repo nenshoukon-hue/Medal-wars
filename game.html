@@ -2613,7 +2613,7 @@ const MEDAL={
 };
 const BOTS={
   metabee:  {name:'Metabee',  atk:5,medal:'blaze',   art:'metabee',  mcart:'mc_meta',color:'#f06424',passive:'On attack: if target has burn, deal +1 extra dmg.'},
-  arcbeetle:{name:'Arcbeetle-',atk:4,medal:'lightning',hpBonus:2,art:'arcbeetle',mcart:'mc_arc', color:'#2a80f0',passive:'After attacking: gain +1 Charge on Lightning Medal.'},
+  arcbeetle:{name:'Arcbeetle-',atk:4,medal:'lightning',hpBonus:4,art:'arcbeetle',mcart:'mc_arc', color:'#2a80f0',passive:'After attacking: gain +1 Charge on Lightning Medal.'},
   warbandit:{name:'Warbandit',atk:4,medal:'psycho',   art:'warbandit',mcart:'mc_war', color:'#9070f0',passive:'Wildfire: when your Technique burns an enemy, spread 1 burn to another enemy.'},
   rokusho:  {name:'Roks',  atk:4,medal:'titan',    art:'rokusho',  mcart:'mc_rok', color:'#8090a0',passive:'Takes 1 less damage (stacks with Titan Medal).'},
   sumilidon:{name:'Sumilidon',atk:5,medal:'blaze',    art:'sumilidon',mcart:'mc_sumi',color:'#f06424',passive:'Ravager: +1 DMG for every 5 HP missing (the more wounded, the deadlier).'},
@@ -9512,13 +9512,6 @@ async function checkDeploySync(){
 }
 
 function openRanked(){
-  // Ranked is temporarily disabled while we finish online infrastructure.
-  openM('\ud83c\udfc6 Ranked Mode',
-    '<div style="text-align:center;line-height:1.6"><b style="color:var(--gold);font-size:15px">Coming Soon!</b><br><br>Ranked play is under construction while we polish online multiplayer. Check back in a future update \u2014 your matches against the CPU still sharpen your skills in the meantime!</div>',
-    [{l:'Back',cls:'mb ok',cb:()=>closeM()}]);
-  return;
-}
-function openRanked_DISABLED(){
   (async()=>{
     // Ranked requires online + beta access
     if(!MWNet.available()){
