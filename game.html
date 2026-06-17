@@ -955,7 +955,7 @@ body::after{
     <div id="prematch-storage-info" style="font-size:9px;color:var(--text3);margin-top:6px"></div>
   </div>
   <div style="display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0">
-    <button class="pm-tab" data-tab="bots" onclick="switchPmTab('bots')" style="flex:1;padding:10px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;background:rgba(240,184,32,.1);border:none;border-bottom:2px solid var(--gold);color:var(--gold);cursor:pointer">BOTS</button>
+    <button class="pm-tab" data-tab="stages" onclick="switchPmTab('stages')" style="flex:1;padding:10px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;background:rgba(240,184,32,.1);border:none;border-bottom:2px solid var(--gold);color:var(--gold);cursor:pointer">STAGES</button><button class="pm-tab" data-tab="bots" onclick="switchPmTab('bots')" style="flex:1;padding:10px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text2);cursor:pointer">BOTS</button>
     <button class="pm-tab" data-tab="cards" onclick="switchPmTab('cards')" style="flex:1;padding:10px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text2);cursor:pointer">CARDS</button>
     <button class="pm-tab" data-tab="medals" onclick="switchPmTab('medals')" style="flex:1;padding:10px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text2);cursor:pointer">MEDALS</button>
   </div>
@@ -2560,9 +2560,9 @@ const BOTS={
   beetle_gun:{name:'Seagaru',atk:6,medal:'zero',art:'beetle_gun',mcart:'mc_beetle_gun',color:'#b0b8c8',passive:'Sky Buster: ranged attacks deal +2 when this bot is at 4+ Charge.'},
   neutranurse:{name:'Neutranurse',atk:3,medal:'forge',art:'neutranurse',mcart:'mc_neutranurse',color:'#40c0a0',passive:'Hot Forge: when you play an equipment card, draw a card.'},
   blackram:{name:'Blackram',atk:4,medal:'forge',art:'blackram',mcart:'mc_blackram',color:'#a08060',passive:'Scrap & Rebuild: when an equipped bot is defeated, return one of its equipment to your hand.'},
-  nin_ninja:  {name:'Nin-Ninja', atk:4,medal:'chain',art:'nin_ninja', mcart:'mc_nin',  color:'#4080f0',passive:'Dual Technique: may play 2 technique cards per turn when active.'},
-  foxuno:     {name:'Foxuno',    atk:3,medal:'chain',art:'foxuno',    mcart:'mc_foxuno',color:'#40d898',passive:'Battle Remedy: on attack, heal the lowest-HP ally for 2 HP.'},
-  gokudo:     {name:'Gokudo',    atk:6,medal:'chain',art:'gokudo',    mcart:'mc_gokudo',color:'#f04020',passive:'Combo Cannon: deals +1 DMG per technique card played this turn before attacking.'},
+  nin_ninja:  {name:'Nin-Ninja', atk:6,medal:'chain',hpBonus:4,art:'nin_ninja', mcart:'mc_nin',  color:'#4080f0',passive:'Dual Technique: 2nd Technique each turn is FREE.'},
+  foxuno:     {name:'Foxuno',    atk:5,medal:'chain',hpBonus:4,art:'foxuno',    mcart:'mc_foxuno',color:'#40d898',passive:'Battle Remedy: 2nd action each turn is FREE; on attack, heal lowest-HP ally 2 HP.'},
+  gokudo:     {name:'Gokudo',    atk:8,medal:'chain',hpBonus:4,art:'gokudo',    mcart:'mc_gokudo',color:'#f04020',passive:'Combo Cannon: +2 DMG per technique played this turn before attacking.'},
   wargreymon:    {name:'WarGreymon',    atk:5,medal:'digicore',art:'wargreymon',    mcart:'mc_warg',  color:'#f0c040',passive:'Dramon Destroyer: deals +3 DMG to equipped bots.'},
   metalgurumemon:{name:'MetalGurumemon',atk:4,medal:'digicore',art:'metalgurumemon',mcart:'mc_metal', color:'#9050d0',passive:'Missile Barrage: after attacking, deal 1 DMG to another enemy.'},
 };
@@ -3040,6 +3040,8 @@ function calcActionsLeft(){
   // Chain Medal: 3rd action is free — grant extra action if chain medal equipped
   const chainBots=alive(G.p).filter(b=>(b.medal==='chain'||b.fusedMedal==='chain'||b.fusedMedal2==='chain'));
   if(chainBots.length>=2&&actionsLeft<=1) actions=Math.max(actions,2); // two chain bots = bonus action
+  // Foxuno Medal: your 2nd action each turn is FREE (grants an extra action while Foxuno is in play).
+  if(alive(G.p).some(b=>b.key==='foxuno'&&!b.def)) actions=Math.max(actions,2);
   const ls=getLastStand('p');
   if(ls){
     // Arcbeetle's Last Stand grants extra actions; others grant their own effect
@@ -3742,11 +3744,14 @@ function ninjaFireTech(card, target){
   const nin=getActiveBot('p');
   if(!nin||nin.key!=='nin_ninja')return;
   // Deduct action only for first technique; 2nd is passive free
+  // Shadow Slash is a FREE chain technique: it never costs an action and never uses a technique slot.
+  const _isShadowSlash=(card.fx==='deal3_chain_free');
   const techNum=(G.p._techsThisTurn||0)+1;
-  const isFree=(techNum===2&&!G.p._ninFreeExtra)||(G.p._ninFreeExtra&&techNum===3);
-  // Actually: first tech costs action, second is FREE (dual technique passive)
   const isSecond=techNum===2;
-  if(techNum===1){
+  if(_isShadowSlash){
+    log('Shadow Slash: FREE chain technique!','chg');
+    banner('SHADOW SLASH!','#4080f0');
+  } else if(techNum===1){
     if(actionsLeft<=0){log('No actions left.','info');return;}
     actionsLeft--;
   } else if(isSecond){
@@ -3760,8 +3765,9 @@ function ninjaFireTech(card, target){
     return;
   }
   dsc(G.p,card.uid);
-  if(G_online&&G_myTurn) MWNet.move({type:'card',uid:card.uid,id:card.id||card.uid,ctype:'technique',tgt:G.c.bots.indexOf(d)});
-  G.p._techsThisTurn=(G.p._techsThisTurn||0)+1;
+  if(G_online&&G_myTurn) MWNet.move({type:'card',uid:card.uid,id:card.id||card.uid,ctype:'technique',tgt:G.c.bots.indexOf(target)});
+  // Shadow Slash does not consume a technique slot (free chain); everything else does.
+  if(!_isShadowSlash) G.p._techsThisTurn=(G.p._techsThisTurn||0)+1;
   // Track combo count for Gokudo
   alive(G.p).forEach(b=>{if(!b.def)b._comboCount=(b._comboCount||0)+1;});
   checkKarinPassive();
@@ -3987,7 +3993,7 @@ function resolveAtk(a,d,sk,techId){
   if((a._taiBonus||0)>0){total+=a._taiBonus;}
   // Gokudo Combo Cannon: +1 per technique played this turn
   if(a.key==='gokudo'&&(a._comboCount||0)>0){
-    const bonus=a._comboCount*(a._finalShotLS?2:1);
+    const bonus=a._comboCount*(a._finalShotLS?4:2); // Combo Cannon buffed: +2 per tech (×2 on Final Shot)
     total+=bonus;
     if(a._finalShotLS){G._pierceDmg=true;log('FINAL SHOT: Combo ×2 pierce!','chg');}
   }
@@ -4605,13 +4611,13 @@ function playFusionX(card, sk){
         if(!(G.p.mf&&G.p.mf.pass&&G.p.mf.pass.includes('Fusion Engineer'))) actionsLeft--;
         else log('Fusion Engineer: fusion costs no action!','chg');
         // Absorb Arcbeetle into Machairodus -> Masterbeetle
-        const combinedAtk=mach.atk+arc.atk+3;
-        const pooledHp=mach.hp+Math.ceil(arc.hp*0.6)+10;
+        const combinedAtk=13; // fixed (nerfed from snowbally combined value)
+        const pooledHp=30; // fixed HP (nerf)
         mach._masterbeetle=true;
         mach.name='Masterbeetle';
         mach.key='machairodus'; // keep key for art validity; render swaps art via _masterbeetle
         mach.atk=combinedAtk;
-        mach.maxHp=mach.maxHp+Math.ceil(arc.maxHp*0.6)+10;
+        mach.maxHp=30; // fixed max HP (nerf)
         mach.hp=Math.min(pooledHp,mach.maxHp);
         mach._fusionStalk=true; mach._stalwaysOn=true;     // Machairodus Stalk always available
         mach._fusionCharge=true;    // Arcbeetle charge-on-attack
@@ -4653,8 +4659,8 @@ function playFusionMaster(card, sk){
         else log('Fusion Engineer: fusion costs no action!','chg');
         mb._masterMode=true;
         mb.name='Masterbeetle \u039e';
-        mb.atk+=3;
-        mb.maxHp+=14; mb.hp=Math.min(mb.hp+14,mb.maxHp);
+        mb.atk=18; // fixed (nerf from snowbally +increments)
+        mb.maxHp=40; mb.hp=Math.min(mb.hp+14,40); // fixed max HP (nerf)
         mb._masterReduce=3;   // -3 damage taken
         mb._masterAoE=true;   // attacks hit all enemies
         mb._masterHeal=3;     // heal 3/turn
@@ -4834,14 +4840,20 @@ function resolveMF(fx,bonus=0){
     // Inferno Surge: pick one enemy, deal 8 direct
     openM(
       'Inferno Surge — Choose Target',
-      'Deal <b style="color:var(--blaze2)">'+(8+bonus)+' unblockable damage</b> to one enemy Medabot.',
+      'Deal <b style="color:var(--blaze2)">'+(8+bonus)+' unblockable damage</b> to one enemy and set it ablaze. <b>+3 dmg if already burning.</b>',
       enemies.map(t=>({
         l:'⚔ '+t.name+'  —  '+t.hp+' HP',
         cls:'mb bad',
         cb:()=>{
           try{ fxFlame(); }catch(e){}
-          dmg(t,(8+bonus)*mfMult,'c');
-          log('Inferno Surge: '+t.name+' hit for '+((8+bonus)*mfMult)+'!','atk');
+          // Burn benefit: +3 bonus damage if the target is already burning, then (re)apply burn.
+          const wasBurning=!!t.burn;
+          let dmgAmt=(8+bonus)*mfMult + (wasBurning?3:0);
+          dmg(t,dmgAmt,'c');
+          t.burn=true; t.burnAmt=Math.max(t.burnAmt||0,2); // leaves a strong burn
+          log('Inferno Surge: '+t.name+' hit for '+dmgAmt+(wasBurning?' (burning bonus!)':'')+' and set ablaze!','atk');
+          // Wildfire synergy: if a Warbandit is in play, spread the burn.
+          try{ const wf=alive(G.p).find(x=>x.key==='warbandit'&&!x.def); if(wf){ const o2=alive(G.c).find(e=>e!==t&&!e.def&&!e.burn); if(o2){o2.burn=true;o2.burnAmt=2;log('Wildfire: burn spreads to '+o2.name+'!','chg');} } }catch(e){}
           closeM();renderAll();
         }
       })).concat([{l:'Cancel',cls:'mb',cb:()=>{_cancelMedaforce();}}])
@@ -5780,7 +5792,7 @@ function aiDoMedachange(){
     const mc=mcs.find(c=>c.fx==='mc_bot_rokusho');
     if(mc){
       dsc(G.c,mc.uid);
-      _cMB._masterMode=true; _cMB.name='Masterbeetle \u039e'; _cMB.atk+=3; _cMB.maxHp+=14; _cMB.hp=Math.min(_cMB.hp+14,_cMB.maxHp);
+      _cMB._masterMode=true; _cMB.name='Masterbeetle \u039e'; _cMB.atk=18; _cMB.maxHp=40; _cMB.hp=Math.min(_cMB.hp+14,40);
       _cMB._masterReduce=3; _cMB._masterAoE=true; _cMB._masterHeal=3; _cMB.changed=true;
       _cRok.def=true; _cRok._absorbed=true; G.c.activeBot=G.c.bots.indexOf(_cMB);
       log('CPU MASTER MEDACHANGE: Masterbeetle \u039e!','mc');banner('CPU MASTER MEDACHANGE!','#f0c040');try{medaforceFX('#ffd040');}catch(e){}
@@ -5793,9 +5805,7 @@ function aiDoMedachange(){
     if(mc){
       dsc(G.c,mc.uid);
       _cMach._masterbeetle=true; _cMach.name='Masterbeetle';
-      _cMach.atk=_cMach.atk+_cArc.atk+3;
-      _cMach.maxHp=_cMach.maxHp+Math.ceil(_cArc.maxHp*0.6)+10;
-      _cMach.hp=Math.min(_cMach.hp+Math.ceil(_cArc.hp*0.6)+10,_cMach.maxHp);
+      _cMach.atk=13; _cMach.maxHp=30; _cMach.hp=Math.min(30,_cMach.maxHp);
       _cMach._fusionStalk=true; _cMach._stalwaysOn=true; _cMach._fusionCharge=true; _cMach._fusionPierce=true; _cMach.color='#f0c040';
       _cArc.def=true; _cArc._absorbed=true; G.c.activeBot=G.c.bots.indexOf(_cMach);
       log('CPU X FUSION CHANGE: Masterbeetle forms!','mc');banner('CPU MASTERBEETLE!','#f0c040');try{medaforceFX('#f0c040');}catch(e){}
@@ -7670,7 +7680,7 @@ function startLastStandTest(){
 
 
 // ── PRE-MATCH ART GALLERY ───────────────────────────────────
-let _pmTab = 'bots';
+let _pmTab = 'stages';
 
 
 // ═══ BULK ART UPLOAD ═══
@@ -7792,6 +7802,36 @@ function renderPmGrid(tab){
   const grid = document.getElementById('pm-grid');
   if(!grid) return;
   grid.innerHTML = '';
+  if(tab === 'stages'){
+    // ── STAGE BACKGROUNDS ──
+    const lblBG = document.createElement('div');
+    lblBG.style.cssText = 'grid-column:1/-1;font-family:"Orbitron",monospace;font-size:8px;font-weight:700;color:#f0c040;letter-spacing:.8px;padding:4px 0 2px;border-bottom:1px solid var(--border)';
+    lblBG.textContent = '\ud83c\udfdf\ufe0f STAGE BACKGROUNDS'; grid.appendChild(lblBG);
+    const noteBG = document.createElement('div');
+    noteBG.style.cssText = 'grid-column:1/-1;font-size:9px;color:var(--text3);padding:2px 0 6px;line-height:1.4';
+    noteBG.textContent = 'Upload an image per stage (bg_arena_1\u20134). Each becomes a selectable battlefield before a match.';
+    grid.appendChild(noteBG);
+    const songNames={1:(typeof STAGE_SONGS==='object'&&STAGE_SONGS[1])||'Arena 1',2:(typeof STAGE_SONGS==='object'&&STAGE_SONGS[2])||'Arena 2',3:(typeof STAGE_SONGS==='object'&&STAGE_SONGS[3])||'Arena 3',4:(typeof STAGE_SONGS==='object'&&STAGE_SONGS[4])||'Arena 4'};
+    for(let i=1;i<=4;i++){
+      const has=!!artOverrides['bg_arena_'+i];
+      grid.appendChild(makePmSlot('bg_arena_'+i, songNames[i]+(has?' \u2713':''), '#f0c040', ''));
+    }
+    // ── BATTLEFIELD MUSIC ──
+    const lblBM = document.createElement('div');
+    lblBM.style.cssText = 'grid-column:1/-1;font-family:"Orbitron",monospace;font-size:8px;font-weight:700;color:#5ad0e0;letter-spacing:.8px;padding:4px 0 2px;border-bottom:1px solid var(--border);margin-top:10px';
+    lblBM.textContent = '\ud83c\udfb5 BATTLEFIELD MUSIC'; grid.appendChild(lblBM);
+    const noteBM = document.createElement('div');
+    noteBM.style.cssText = 'grid-column:1/-1;font-size:9px;color:var(--text3);padding:2px 0 6px;line-height:1.4';
+    noteBM.textContent = 'Stages 1, 3 & 4 ship with built-in music. Upload bgm_arena_1\u20134.mp3 to override a track.';
+    grid.appendChild(noteBM);
+    for(let i=1;i<=4;i++){
+      const up=!!artOverrides['bgm_arena_'+i];
+      const embedded=(typeof _embeddedBgm==='object'&&!!_embeddedBgm['bgm_arena_'+i]);
+      const status=up?' \u2713':(embedded?' \u266a':'');
+      grid.appendChild(makePmSlot('bgm_arena_'+i, (songNames[i]||('Arena '+i))+status, '#5ad0e0', ''));
+    }
+    return;
+  }
   if(tab === 'bots'){
     // All unique bots from ALL decks
     const botKeys = [...new Set(Object.values(DECKS).flatMap(d=>d.bots))];
@@ -7819,18 +7859,6 @@ function renderPmGrid(tab){
     lblF.textContent = 'FUSION FORMS'; grid.appendChild(lblF);
     grid.appendChild(makePmSlot('bot_masterbeetle', 'Masterbeetle', '#f0c040', gA('machairodus',80,80)));
     grid.appendChild(makePmSlot('bot_masterbeetle_master', 'Masterbeetle \u039e (Master)', '#ffd040', gA('machairodus',80,80)));
-    // Battlefield soundtrack section (optional per-arena music)
-    const lblBM = document.createElement('div');
-    lblBM.style.cssText = 'grid-column:1/-1;font-family:"Orbitron",monospace;font-size:8px;font-weight:700;color:#5ad0e0;letter-spacing:.8px;padding:4px 0 2px;border-bottom:1px solid var(--border);margin-top:8px';
-    lblBM.textContent = '\ud83c\udfb5 BATTLEFIELD MUSIC (bgm_arena_1\u20134.mp3)'; grid.appendChild(lblBM);
-    const noteBM = document.createElement('div');
-    noteBM.style.cssText = 'grid-column:1/-1;font-size:9px;color:var(--text3);padding:2px 0 4px;line-height:1.4';
-    noteBM.textContent = 'Upload an audio file named bgm_arena_1.mp3 (\u20134) via Bulk Upload. Each plays when its matching battlefield (bg_arena_1\u20134) is chosen.';
-    grid.appendChild(noteBM);
-    for(let i=1;i<=4;i++){
-      const has=!!artOverrides['bgm_arena_'+i];
-      grid.appendChild(makePmSlot('bgm_arena_'+i, 'Arena '+i+' Music'+(has?' \u2713':''), '#5ad0e0', ''));
-    }
     // Medafighters section
     const lbl3 = document.createElement('div');
     lbl3.style.cssText = 'grid-column:1/-1;font-family:"Orbitron",monospace;font-size:8px;font-weight:700;color:var(--text3);letter-spacing:.8px;padding:4px 0 2px;border-bottom:1px solid var(--border);margin-top:8px';
