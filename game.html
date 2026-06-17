@@ -409,6 +409,8 @@ body::after{
 /* ── HAND CARDS — 2:3 portrait ── */
 .hc{
   width:76px;height:114px;min-width:76px;max-width:76px;min-height:114px;max-height:114px; /* 2:3 locked */
+  transform:var(--hc-rot,rotate(0deg)) translateY(var(--hc-y,0px));
+  transition:transform .14s ease;
   box-sizing:border-box;flex:0 0 76px;flex-shrink:0;flex-grow:0;border-radius:7px;
   border:1.5px solid rgba(255,255,255,.1);
   background:linear-gradient(160deg,rgba(20,28,46,.95),rgba(10,14,24,.98));
@@ -922,7 +924,7 @@ body::after{
 .fx-shadowveil{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(140,60,240,.35),transparent 60%);opacity:0;animation:fxVeil .7s ease-out forwards}
 @keyframes fxVeil{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
 /* ── Combo Cannon: red orb that launches and bursts ── */
-.fx-orb{position:absolute;left:50%;top:60%;width:90px;height:90px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#ff5030 45%,#c01010 80%);box-shadow:0 0 40px #ff3020,0 0 80px #ff2010;transform:translate(-50%,-50%) scale(0);animation:fxOrb .7s cubic-bezier(.3,.7,.3,1) forwards}
+.fx-orb{position:absolute;left:50%;top:60%;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#40b0ff 42%,#1050e0 80%);box-shadow:0 0 56px #2090ff,0 0 110px #1060ff;transform:translate(-50%,-50%) scale(0);animation:fxOrb .75s cubic-bezier(.3,.7,.3,1) forwards}
 @keyframes fxOrb{0%{transform:translate(-50%,-50%) scale(0);opacity:0}25%{transform:translate(-50%,-50%) scale(1);opacity:1}70%{transform:translate(-50%,-180%) scale(1.1);opacity:1}100%{transform:translate(-50%,-220%) scale(2.4);opacity:0}}
 .fx-orb-flash{position:absolute;left:50%;top:0;width:40vw;height:40vw;border-radius:50%;background:radial-gradient(circle,rgba(255,60,40,.5),transparent 60%);transform:translate(-50%,-30%) scale(0);animation:fxOrbFlash .5s .5s ease-out forwards}
 @keyframes fxOrbFlash{0%{opacity:0;transform:translate(-50%,-30%) scale(.3)}40%{opacity:1;transform:translate(-50%,-30%) scale(1.2)}100%{opacity:0;transform:translate(-50%,-30%) scale(1.6)}}
@@ -931,6 +933,22 @@ body::after{
 @keyframes fxBlueX{0%{opacity:0;transform:translate(-50%,-150%) rotate(-15deg) scale(.4)}55%{opacity:1;transform:translate(-50%,-50%) rotate(0deg) scale(1.3)}75%{transform:translate(-50%,-50%) rotate(0deg) scale(1.1)}100%{opacity:0;transform:translate(-50%,-50%) rotate(0deg) scale(1.15)}}
 .fx-bluefire{position:absolute;left:50%;top:50%;width:46vw;height:46vw;border-radius:50%;background:radial-gradient(circle,rgba(60,160,255,.5),rgba(30,90,255,.25) 45%,transparent 70%);transform:translate(-50%,-50%) scale(0);animation:fxBlueFire .8s ease-out forwards}
 @keyframes fxBlueFire{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}45%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}}
+
+/* ── Universal card-play FX families ── */
+.cfx-slash{position:absolute;left:50%;top:50%;width:120vw;height:10px;background:linear-gradient(90deg,transparent,#fff 50%,transparent);box-shadow:0 0 20px var(--cfx,#9ce0ff);transform:translate(-50%,-50%) rotate(-28deg) scaleX(0);opacity:0;border-radius:6px;animation:cfxSlash .5s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes cfxSlash{0%{opacity:0;transform:translate(-50%,-50%) rotate(-28deg) scaleX(0)}35%{opacity:1;transform:translate(-50%,-50%) rotate(-28deg) scaleX(1)}100%{opacity:0;transform:translate(-50%,-50%) rotate(-28deg) scaleX(1)}}
+.cfx-emberlet{position:absolute;left:50%;top:55%;font-size:64px;filter:drop-shadow(0 0 16px #ff7a2e);transform:translate(-50%,-50%) scale(.4);opacity:0;animation:cfxPop .7s ease-out forwards}
+.cfx-glow{position:absolute;left:50%;top:52%;width:34vw;height:34vw;border-radius:50%;transform:translate(-50%,-50%) scale(0);background:radial-gradient(circle,var(--cfx,#40e090)55,transparent 62%);opacity:0;animation:cfxGlow .7s ease-out forwards}
+@keyframes cfxGlow{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}45%{opacity:.9;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.3)}}
+@keyframes cfxPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}40%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-58%) scale(1)}}
+.cfx-icon{position:absolute;left:50%;top:52%;font-size:72px;transform:translate(-50%,-50%) scale(.4);opacity:0;filter:drop-shadow(0 0 14px var(--cfx,#fff));animation:cfxPop .7s ease-out forwards}
+.cfx-ring{position:absolute;left:50%;top:52%;width:120px;height:120px;border-radius:50%;border:4px solid var(--cfx,#7cc0ff);transform:translate(-50%,-50%) scale(.2);opacity:0;animation:cfxRing .6s ease-out forwards}
+@keyframes cfxRing{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}40%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.8)}}
+.cfx-card{position:absolute;left:50%;top:60%;width:40px;height:58px;border-radius:5px;background:linear-gradient(160deg,#2a3958,#0e1626);border:1.5px solid #6fa8ff;transform:translate(-50%,-50%) scale(.6) rotate(0);opacity:0;animation:cfxCard .65s ease-out forwards}
+@keyframes cfxCard{0%{opacity:0;transform:translate(-50%,10%) scale(.6) rotate(-10deg)}45%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(4deg)}100%{opacity:0;transform:translate(-50%,-90%) scale(.9) rotate(-3deg)}}
+.cfx-trapsnap{position:absolute;left:50%;top:52%;width:30vw;height:30vw;border-radius:8px;border:3px dashed var(--cfx,#f0a040);transform:translate(-50%,-50%) scale(1.4);opacity:0;animation:cfxSnap .5s cubic-bezier(.3,.9,.3,1) forwards}
+@keyframes cfxSnap{0%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}40%{opacity:1;transform:translate(-50%,-50%) scale(.9)}100%{opacity:0;transform:translate(-50%,-50%) scale(.8)}}
+.cfx-spark2{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--cfx,#ffe070);box-shadow:0 0 8px var(--cfx,#ffd040);animation:fxSpark .6s ease-out forwards}
 </style>
 </head>
 <body>
@@ -3612,7 +3630,6 @@ function fxComboCannon(){
   try{
     const l=_fxLayer(1000);
     const orb=document.createElement('div'); orb.className='fx-orb'; l.appendChild(orb);
-    const fl=document.createElement('div'); fl.className='fx-orb-flash'; l.appendChild(fl);
     try{ if(typeof SFX==='object'){ if(SFX.zap)SFX.zap(); if(SFX.medaforce)setTimeout(()=>{try{SFX.medaforce();}catch(e){}},450); } }catch(e){}
     _fxShake();
   }catch(e){}
@@ -3634,6 +3651,83 @@ function fxBlueX(){
     }
     try{ if(typeof SFX==='object'){ if(SFX.medaforce)SFX.medaforce(); if(SFX.zap)setTimeout(()=>{try{SFX.zap();}catch(e){}},300); } }catch(e){}
     _fxShake();
+  }catch(e){}
+}
+
+// ═══════════════════════════════════════════════════════════
+// UNIVERSAL CARD FX — every card gets a visual when played.
+// Picks an effect-family visual from the card's fx string; if no
+// family matches, falls back to a per-type visual. Lightweight DOM
+// overlays via _fxLayer; never throws.
+// ═══════════════════════════════════════════════════════════
+function _cfxBase(cls, opts){
+  try{
+    const l=_fxLayer((opts&&opts.life)||900);
+    const el=document.createElement('div'); el.className=cls;
+    if(opts&&opts.color) el.style.setProperty('--cfx', opts.color);
+    if(opts&&opts.text!=null) el.textContent=opts.text;
+    l.appendChild(el);
+    return l;
+  }catch(e){ return null; }
+}
+function _cfxSparks(l, color, n){
+  try{
+    for(let i=0;i<(n||8);i++){
+      const sp=document.createElement('div'); sp.className='cfx-spark2';
+      if(color) sp.style.setProperty('--cfx', color);
+      const ang=(Math.PI*2/(n||8))*i, dist=90+Math.random()*90;
+      sp.style.left='50%'; sp.style.top='52%';
+      sp.style.setProperty('--dx',(Math.cos(ang)*dist)+'px');
+      sp.style.setProperty('--dy',(Math.sin(ang)*dist)+'px');
+      l.appendChild(sp);
+    }
+  }catch(e){}
+}
+function _sfx(name){ try{ if(typeof SFX==='object'&&SFX[name]) SFX[name](); }catch(e){} }
+
+// Classify a card's fx string into an effect family. Returns a family key.
+function _cardFxFamily(fx, type){
+  const f=(fx||'').toLowerCase();
+  if(/burn|ember|flame|scorch|inferno|heat|fire|blaze/.test(f)) return 'burn';
+  if(/heal|remedy|medic|mend|restore/.test(f)) return 'heal';
+  if(/pierce|siege|cannon|barrage|burst|railgun/.test(f)) return 'pierce';
+  if(/drain|exhaust|suppress|weaken|sap/.test(f)) return 'drain';
+  if(/charge|recharge|overcharge|overload|energ/.test(f)) return 'charge';
+  if(/draw|search|locate|scout|tutor/.test(f)) return 'draw';
+  if(/chain|combo|slash|strike|cut|blade|deal\d/.test(f)) return 'slash';
+  if(/guard|block|shield|barrier|negate|reflect|counter|honor/.test(f)) return 'guard';
+  if(/evolve|fusion|medachange|ascend/.test(f)) return 'evolve';
+  if(type==='trap') return 'trap';
+  if(type==='equipment') return 'equip';
+  if(type==='medaforce') return 'pierce';
+  return 'generic';
+}
+
+// Per-family visual. color/icon chosen to read at a glance.
+function _playFamilyFx(fam, card){
+  const color=(card&&card.color)||'#9ce0ff';
+  switch(fam){
+    case 'burn': { const l=_cfxBase('cfx-emberlet',{text:'\uD83D\uDD25',life:800}); if(l)_cfxSparks(l,'#ff7a2e',8); _sfx('medaforce'); break; }
+    case 'heal': { _cfxBase('cfx-glow',{color:'#40e090',life:800}); const l=_cfxBase('cfx-icon',{text:'\u271A',color:'#5ae08c',life:800}); _sfx('select'); break; }
+    case 'pierce': { const l=_cfxBase('cfx-slash',{color:'#ffd060',life:600}); if(l)_cfxSparks(l,'#ffd040',10); _sfx('attack'); break; }
+    case 'drain': { _cfxBase('cfx-glow',{color:'#a060f0',life:800}); _cfxBase('cfx-icon',{text:'\uD83C\uDF00',color:'#b080ff',life:800}); _sfx('zap'); break; }
+    case 'charge': { const l=_cfxBase('cfx-ring',{color:'#40c0ff',life:700}); if(l)_cfxSparks(l,'#7cd0ff',10); _sfx('zap'); break; }
+    case 'draw': { _cfxBase('cfx-card',{life:700}); _cfxBase('cfx-card',{life:760}); _sfx('handSkim'); break; }
+    case 'slash': { _cfxBase('cfx-slash',{color:color,life:550}); _sfx('slash'); break; }
+    case 'guard': { _cfxBase('cfx-ring',{color:'#7cc0ff',life:650}); _cfxBase('cfx-icon',{text:'\uD83D\uDEE1\uFE0F',color:'#9cc8ff',life:700}); _sfx('select'); break; }
+    case 'evolve': { _cfxBase('cfx-glow',{color:'#f0c040',life:800}); const l=_cfxBase('cfx-icon',{text:'\u2728',color:'#ffd040',life:800}); if(l)_cfxSparks(l,'#ffd040',12); _sfx('medachange'); break; }
+    case 'trap': { _cfxBase('cfx-trapsnap',{color:'#f0a040',life:550}); _sfx('trapTrigger'); break; }
+    case 'equip': { _cfxBase('cfx-ring',{color:color,life:650}); _cfxBase('cfx-icon',{text:'\u2699\uFE0F',color:color,life:700}); _sfx('select'); break; }
+    default: { _cfxBase('cfx-glow',{color:color,life:650}); _sfx('cardPlay'); }
+  }
+}
+
+// Public entry: call when any card is played.
+function playCardFx(card){
+  try{
+    if(!card) return;
+    const fam=_cardFxFamily(card.fx, card.type);
+    _playFamilyFx(fam, card);
   }catch(e){}
 }
 
@@ -3771,6 +3865,8 @@ function clickCard(card){
   if(!canPlay(card))return;
   if(G_online&&!G_myTurn){log('Not your turn.','info');return;}
   SFX.cardPlay();
+  // Universal play FX (medaforces & techniques have their own dedicated effects).
+  if(card.type!=='medaforce'&&card.type!=='technique'){ try{ playCardFx(card); }catch(e){} }
   if(card.type==='trap'){playTrap(card);return;}
   if(card.type==='equipment'){playEquip(card);return;}
   if(card.type==='medachange'){playMC(card);return;}
@@ -4207,6 +4303,8 @@ function resolveAtk(a,d,sk,techId){
 
 function applyTech(c,a,d,sk){
   const fx=c.fx;let b=0;
+  // Universal technique FX (player side only — CPU techniques are logged, not flashed).
+  if(sk==='p'){ try{ playCardFx(c); }catch(e){} }
   // ── CROSS MESSIAH charge-scaling techniques ──
   if(fx==='cm_blade'){ b=3+Math.floor((a.charge||0)/2); log('Charge Blade: +'+b+' (scaled with Charge)!','atk'); return b; }
   if(fx==='cm_buster'){ b=2+((a.charge||0)>=4?2:0); log('Charge Buster: +'+b+'!','atk'); return b; }
@@ -6470,6 +6568,7 @@ function cpuAtk(){
 function applyTechP(tech,a,d){
   // Standalone technique fire for Nin-Ninja dual tech
   if(!tech||!d)return 0;
+  try{ playCardFx(tech); }catch(e){}
   const fx=tech.fx;
   let b=0;
   if(fx==='deal3_chain_free'){b=3;log('Shadow Slash: +3 to '+d.name+'!','atk');}
@@ -6845,8 +6944,12 @@ function mkCardEl(card,i,total){
   const mid=(n-1)/2;
   const rot=n>1?((i-mid)/(mid||1))*7:0;
   const yOff=n>1?(Math.abs(i-mid)*1.5):0;
+  // Set rotation/offset as CSS variables so the .hc / .hc.sel rules compose the
+  // full transform (incl. scale on select). Setting transform inline here would
+  // override those state rules and cause cards to look like they resize on re-render.
+  div.style.setProperty('--hc-rot',`rotate(${rot.toFixed(1)}deg)`);
+  div.style.setProperty('--hc-y',`${yOff.toFixed(1)}px`);
   div.style.setProperty('--hc-base-rot',`rotate(${rot.toFixed(1)}deg)`);
-  div.style.transform=`rotate(${rot.toFixed(1)}deg) translateY(${yOff.toFixed(1)}px)`;
   div.style.transformOrigin='bottom center';
   div.style.zIndex=String(i+1);
   div.style.animationDelay=(i*.06)+'s';
