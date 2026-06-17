@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <script>
-const MW_BUILD='v3.3';
+const MW_BUILD='v3.4';
 
 // ═══ DEV MODE (art upload lock) ═══
 // When dev mode is ON, you (the operator) can sync/publish shared art.
@@ -1079,7 +1079,7 @@ body::after{
   <!-- HEADER -->
   <div id="hdr">
     <span class="m-logo">MW</span>
-    <span class="m-vtag">v3.3</span>
+    <span class="m-vtag">v3.4</span>
     <span class="m-turn" id="tnum">T1</span>
     <span class="m-phase charge" id="mphase">CHARGE</span>
     <div id="m-ticker">Ready.</div>
@@ -4774,13 +4774,13 @@ function playFusionX(card, sk){
         if(!(G.p.mf&&G.p.mf.pass&&G.p.mf.pass.includes('Fusion Engineer'))) actionsLeft--;
         else log('Fusion Engineer: fusion costs no action!','chg');
         // Absorb Arcbeetle into Machairodus -> Masterbeetle
-        const combinedAtk=13; // fixed (nerfed from snowbally combined value)
-        const pooledHp=30; // fixed HP (nerf)
+        const combinedAtk=16; // fixed (nerfed from snowbally combined value)
+        const pooledHp=36; // fixed HP (nerf)
         mach._masterbeetle=true;
         mach.name='Masterbeetle';
         mach.key='machairodus'; // keep key for art validity; render swaps art via _masterbeetle
         mach.atk=combinedAtk;
-        mach.maxHp=30; // fixed max HP (nerf)
+        mach.maxHp=36; // fixed max HP (nerf)
         mach.hp=Math.min(pooledHp,mach.maxHp);
         mach._fusionStalk=true; mach._stalwaysOn=true;     // Machairodus Stalk always available
         mach._fusionCharge=true;    // Arcbeetle charge-on-attack
@@ -4822,8 +4822,8 @@ function playFusionMaster(card, sk){
         else log('Fusion Engineer: fusion costs no action!','chg');
         mb._masterMode=true;
         mb.name='Masterbeetle \u039e';
-        mb.atk=18; // fixed (nerf from snowbally +increments)
-        mb.maxHp=40; mb.hp=Math.min(mb.hp+14,40); // fixed max HP (nerf)
+        mb.atk=19; // fixed (nerf from snowbally +increments)
+        mb.maxHp=42; mb.hp=Math.min(mb.hp+14,42); // fixed max HP (nerf)
         mb._masterReduce=3;   // -3 damage taken
         mb._masterAoE=true;   // attacks hit all enemies
         mb._masterHeal=3;     // heal 3/turn
@@ -5956,7 +5956,7 @@ function aiDoMedachange(){
     const mc=mcs.find(c=>c.fx==='mc_bot_rokusho');
     if(mc){
       dsc(G.c,mc.uid);
-      _cMB._masterMode=true; _cMB.name='Masterbeetle \u039e'; _cMB.atk=18; _cMB.maxHp=40; _cMB.hp=Math.min(_cMB.hp+14,40);
+      _cMB._masterMode=true; _cMB.name='Masterbeetle \u039e'; _cMB.atk=19; _cMB.maxHp=42; _cMB.hp=Math.min(_cMB.hp+14,42);
       _cMB._masterReduce=3; _cMB._masterAoE=true; _cMB._masterHeal=3; _cMB.changed=true;
       _cRok.def=true; _cRok._absorbed=true; G.c.activeBot=G.c.bots.indexOf(_cMB);
       log('CPU MASTER MEDACHANGE: Masterbeetle \u039e!','mc');banner('CPU MASTER MEDACHANGE!','#f0c040');try{medaforceFX('#ffd040');}catch(e){}
@@ -5969,7 +5969,7 @@ function aiDoMedachange(){
     if(mc){
       dsc(G.c,mc.uid);
       _cMach._masterbeetle=true; _cMach.name='Masterbeetle';
-      _cMach.atk=13; _cMach.maxHp=30; _cMach.hp=Math.min(30,_cMach.maxHp);
+      _cMach.atk=16; _cMach.maxHp=36; _cMach.hp=Math.min(36,_cMach.maxHp);
       _cMach._fusionStalk=true; _cMach._stalwaysOn=true; _cMach._fusionCharge=true; _cMach._fusionPierce=true; _cMach.color='#f0c040';
       _cArc.def=true; _cArc._absorbed=true; G.c.activeBot=G.c.bots.indexOf(_cMach);
       log('CPU X FUSION CHANGE: Masterbeetle forms!','mc');banner('CPU MASTERBEETLE!','#f0c040');try{medaforceFX('#f0c040');}catch(e){}
