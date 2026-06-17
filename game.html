@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <script>
-const MW_BUILD='v3.2-fx';
+const MW_BUILD='v3.3';
 
 // ═══ DEV MODE (art upload lock) ═══
 // When dev mode is ON, you (the operator) can sync/publish shared art.
@@ -206,7 +206,7 @@ body::after{
 /* ── TEAM ZONES ── */
 .m-zone{
   display:block;position:relative;overflow:hidden;
-  min-height:205px;
+  min-height:128px;
 }
 .m-zone.cpu-z{
   border-bottom:1.5px solid rgba(240,64,64,.15);
@@ -218,11 +218,11 @@ body::after{
 }
 
 /* Triangle slot positioning */
-.bot-slot{position:absolute;transition:left .3s cubic-bezier(.34,1.2,.64,1),right .3s cubic-bezier(.34,1.2,.64,1),top .3s cubic-bezier(.34,1.2,.64,1),bottom .3s cubic-bezier(.34,1.2,.64,1),opacity .3s ease}
+.bot-slot{position:absolute;transition:all .3s cubic-bezier(.34,1.2,.64,1)}
 /* Player zone: active bottom-center, supports top sides */
-.plr-z .slot-active{bottom:2px;left:50%;transform:translateX(-50%);z-index:3}
-.plr-z .slot-support-0{top:-6px;left:-4%;z-index:2}
-.plr-z .slot-support-1{top:-6px;right:-4%;z-index:2}
+.plr-z .slot-active{bottom:4px;left:50%;transform:translateX(-50%);z-index:3}
+.plr-z .slot-support-0{top:4px;left:18%;z-index:2}
+.plr-z .slot-support-1{top:4px;right:18%;z-index:2}
 /* CPU zone: active top-center, supports bottom sides */
 .cpu-z .slot-active{top:4px;left:50%;transform:translateX(-50%);z-index:3}
 .cpu-z .slot-support-0{bottom:4px;left:18%;z-index:2}
@@ -245,11 +245,12 @@ body::after{
 /* ── BOT CARDS ── */
 .solo-zone{display:flex !important;align-items:center;justify-content:center;}
 .solo-zone .bot-slot{position:relative !important;inset:auto !important;transform:none !important;width:auto !important;height:auto !important;}
-.solo-zone .bc{
+.solo-zone .bc{width:120px !important;}
+.bc{
   flex-shrink:0;border-radius:10px;
   border:1.5px solid rgba(255,255,255,.12);
   background:linear-gradient(160deg,rgba(18,26,48,.95),rgba(8,12,24,.98));
-  overflow:hidden;transition:border-color .22s ease,box-shadow .22s ease,opacity .22s ease,filter .22s ease;
+  overflow:hidden;transition:all .22s cubic-bezier(.34,1.2,.64,1);
   position:relative;cursor:default;
   box-shadow:0 6px 20px rgba(0,0,0,.7);
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
@@ -261,10 +262,9 @@ body::after{
   transform:translateY(-3px);
 }
 .bc.support-bot{
-  opacity:.8;
-  transform:scale(.6);
-  transform-origin:top center;
-  filter:brightness(.82) saturate(.8);
+  width:80px;opacity:.82;
+  transform:translateY(2px);
+  filter:brightness(.85) saturate(.8);
 }
 .bc.support-bot.clickable:hover,.bc.support-bot.sel{opacity:1;filter:none;transform:none}
 .bc.def{opacity:.2;filter:grayscale(1);transform:none!important;width:70px!important}
@@ -842,8 +842,7 @@ body::after{
 /* bot-slot positioning for triangle formation */
 .bot-slot{
   position:absolute;
-  /* Only animate position/opacity — never 'all' (that animated size/content changes and caused mid-battle resizing). */
-  transition:left .3s cubic-bezier(.34,1.2,.64,1),right .3s cubic-bezier(.34,1.2,.64,1),top .3s cubic-bezier(.34,1.2,.64,1),bottom .3s cubic-bezier(.34,1.2,.64,1),opacity .3s ease;
+  transition:all .3s cubic-bezier(.34,1.2,.64,1);
 }
 /* trap zone in mobile player zone */
 #trap-zone{
@@ -1080,7 +1079,7 @@ body::after{
   <!-- HEADER -->
   <div id="hdr">
     <span class="m-logo">MW</span>
-    <span class="m-vtag">v3.2</span>
+    <span class="m-vtag">v3.3</span>
     <span class="m-turn" id="tnum">T1</span>
     <span class="m-phase charge" id="mphase">CHARGE</span>
     <div id="m-ticker">Ready.</div>
