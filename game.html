@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <script>
-const MW_BUILD='v3.0-ranked';
+const MW_BUILD='v3.1-fx';
 
 // ═══ DEV MODE (art upload lock) ═══
 // When dev mode is ON, you (the operator) can sync/publish shared art.
@@ -218,7 +218,7 @@ body::after{
 }
 
 /* Triangle slot positioning */
-.bot-slot{position:absolute;transition:all .3s cubic-bezier(.34,1.2,.64,1)}
+.bot-slot{position:absolute;transition:left .3s cubic-bezier(.34,1.2,.64,1),right .3s cubic-bezier(.34,1.2,.64,1),top .3s cubic-bezier(.34,1.2,.64,1),bottom .3s cubic-bezier(.34,1.2,.64,1),opacity .3s ease}
 /* Player zone: active bottom-center, supports top sides */
 .plr-z .slot-active{bottom:4px;left:50%;transform:translateX(-50%);z-index:3}
 .plr-z .slot-support-0{top:4px;left:18%;z-index:2}
@@ -245,20 +245,18 @@ body::after{
 /* ── BOT CARDS ── */
 .solo-zone{display:flex !important;align-items:center;justify-content:center;}
 .solo-zone .bot-slot{position:relative !important;inset:auto !important;transform:none !important;width:auto !important;height:auto !important;}
-.solo-zone .bc{width:120px !important;}
-.bc{
+.solo-zone .bc{
   flex-shrink:0;border-radius:10px;
   border:1.5px solid rgba(255,255,255,.12);
   background:linear-gradient(160deg,rgba(18,26,48,.95),rgba(8,12,24,.98));
-  overflow:hidden;transition:all .22s cubic-bezier(.34,1.2,.64,1);
+  overflow:hidden;transition:border-color .22s ease,box-shadow .22s ease,opacity .22s ease,filter .22s ease;
   position:relative;cursor:default;
   box-shadow:0 6px 20px rgba(0,0,0,.7);
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
   width:96px; /* bigger for readability */
 }
 .bc.active-bot{
-  width:112px;
-  border-color:rgba(255,255,255,.25);
+  border-color:rgba(255,255,255,.45);
   box-shadow:0 8px 28px rgba(0,0,0,.8),0 0 0 1.5px rgba(255,255,255,.12),0 0 20px rgba(255,255,255,.04);
   transform:translateY(-3px);
 }
@@ -843,7 +841,8 @@ body::after{
 /* bot-slot positioning for triangle formation */
 .bot-slot{
   position:absolute;
-  transition:all .3s cubic-bezier(.34,1.2,.64,1);
+  /* Only animate position/opacity — never 'all' (that animated size/content changes and caused mid-battle resizing). */
+  transition:left .3s cubic-bezier(.34,1.2,.64,1),right .3s cubic-bezier(.34,1.2,.64,1),top .3s cubic-bezier(.34,1.2,.64,1),bottom .3s cubic-bezier(.34,1.2,.64,1),opacity .3s ease;
 }
 /* trap zone in mobile player zone */
 #trap-zone{
@@ -926,8 +925,6 @@ body::after{
 /* ── Combo Cannon: red orb that launches and bursts ── */
 .fx-orb{position:absolute;left:50%;top:60%;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#40b0ff 42%,#1050e0 80%);box-shadow:0 0 56px #2090ff,0 0 110px #1060ff;transform:translate(-50%,-50%) scale(0);animation:fxOrb .75s cubic-bezier(.3,.7,.3,1) forwards}
 @keyframes fxOrb{0%{transform:translate(-50%,-50%) scale(0);opacity:0}25%{transform:translate(-50%,-50%) scale(1);opacity:1}70%{transform:translate(-50%,-180%) scale(1.1);opacity:1}100%{transform:translate(-50%,-220%) scale(2.4);opacity:0}}
-.fx-orb-flash{position:absolute;left:50%;top:0;width:40vw;height:40vw;border-radius:50%;background:radial-gradient(circle,rgba(255,60,40,.5),transparent 60%);transform:translate(-50%,-30%) scale(0);animation:fxOrbFlash .5s .5s ease-out forwards}
-@keyframes fxOrbFlash{0%{opacity:0;transform:translate(-50%,-30%) scale(.3)}40%{opacity:1;transform:translate(-50%,-30%) scale(1.2)}100%{opacity:0;transform:translate(-50%,-30%) scale(1.6)}}
 /* ── Titan X (X Burst): giant blue FIRE X dropping on the enemy ── */
 .fx-bluex{position:absolute;left:50%;top:50%;transform:translate(-50%,-150%) rotate(0deg) scale(.4);font-size:180px;font-weight:900;font-family:'Orbitron',sans-serif;color:#d8f0ff;text-shadow:0 0 30px #2090ff,0 0 60px #1060ff,0 0 90px #40c0ff;opacity:0;animation:fxBlueX .85s cubic-bezier(.3,.9,.2,1) forwards}
 @keyframes fxBlueX{0%{opacity:0;transform:translate(-50%,-150%) rotate(-15deg) scale(.4)}55%{opacity:1;transform:translate(-50%,-50%) rotate(0deg) scale(1.3)}75%{transform:translate(-50%,-50%) rotate(0deg) scale(1.1)}100%{opacity:0;transform:translate(-50%,-50%) rotate(0deg) scale(1.15)}}
@@ -1080,7 +1077,7 @@ body::after{
   <!-- HEADER -->
   <div id="hdr">
     <span class="m-logo">MW</span>
-    <span class="m-vtag">v3</span>
+    <span class="m-vtag">v3.1</span>
     <span class="m-turn" id="tnum">T1</span>
     <span class="m-phase charge" id="mphase">CHARGE</span>
     <div id="m-ticker">Ready.</div>
@@ -6779,7 +6776,7 @@ function mkBotEl(bot,idx,sk){
   div.className=cls;
   const isMob=window.innerWidth<600;
   const isAct=G[sk].activeBot===idx&&!bot.def;
-  const baseBotW=isMob?(isAct?108:82):(isAct?128:100);
+  const baseBotW=isMob?96:114; // uniform size — active bot is shown by highlight, not by resizing
   // Art zone matches the portrait art ratio (~1.35x tall) so object-fit:cover
   // fills the whole frame edge-to-edge without leaving letterbox bars.
   const artH=Math.round(baseBotW * 1.35);
