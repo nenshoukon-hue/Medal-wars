@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <script>
-const MW_BUILD='v4.0';
+const MW_BUILD='v4.1-wakeping';
 
 // ═══ DEV MODE (art upload lock) ═══
 // When dev mode is ON, you (the operator) can sync/publish shared art.
@@ -1103,7 +1103,7 @@ body::after{
   <!-- HEADER -->
   <div id="hdr">
     <span class="m-logo">MW</span>
-    <span class="m-vtag">v4.0</span>
+    <span class="m-vtag">v4.1</span>
     <span class="m-turn" id="tnum">T1</span>
     <span class="m-phase charge" id="mphase">CHARGE</span>
     <div id="m-ticker">Ready.</div>
@@ -9354,17 +9354,40 @@ function maybeShowTutorial(){
 // MWNet - online multiplayer client (room-code relay)
 const MWNet = (function(){
   const SERVER_URL = (window.MW_SERVER_URL || null);
+  function _anonId(){ try{ let a=localStorage.getItem('mw_anon_id'); if(!a){ a='anon'+Math.random().toString(36).slice(2,12); localStorage.setItem('mw_anon_id',a); } return a; }catch(e){ return 'anon'+Math.random().toString(36).slice(2,12); } }
+  function _httpBase(){ if(!SERVER_URL) return null; return SERVER_URL.replace(/^wss:/,'https:').replace(/^ws:/,'http:'); }
+  let _wokenOnce = false; // once we've seen a real HTTP 200, don't re-wake every connect() in this session
+  // Free-tier hosts (Railway, etc.) sleep when idle. Racing a cold start with the WS
+  // upgrade often fails outright. Hit plain HTTP /health first — which already has
+  // good retry semantics — and only attempt the WebSocket once the server answers.
+  function _wakeServer(onStatus){
+    return new Promise((resolve)=>{
+      const base = _httpBase();
+      if(!base || _wokenOnce){ resolve(true); return; } // nothing to wake, or already confirmed awake
+      if(onStatus) onStatus('waking');
+      const ctrl = (typeof AbortController!=='undefined') ? new AbortController() : null;
+      const to = setTimeout(()=>{ try{ if(ctrl) ctrl.abort(); }catch(e){} }, 28000);
+      fetch(base+'/health', ctrl?{signal:ctrl.signal}:{})
+        .then((r)=>{ clearTimeout(to); _wokenOnce = !!(r && r.ok); resolve(_wokenOnce); })
+        .catch(()=>{ clearTimeout(to); resolve(false); });
+    });
+  }
   function _saveReconnect(){ try{ if(_code&&_seat!==null) localStorage.setItem('mw_reconnect', JSON.stringify({code:_code, seat:_seat, t:Date.now()})); }catch(e){} }
   function _loadReconnect(){ try{ const r=JSON.parse(localStorage.getItem('mw_reconnect')||'null'); if(r&&Date.now()-r.t<120000) return r; }catch(e){} return null; }
   let ws = null, _seat = null, _code = null, _seed = null, _connected = false, _oppDeck = null, _oppMf = null;
   const handlers = {};
   function on(type, fn){ handlers[type] = fn; }
   function fire(type, data){ if(handlers[type]) handlers[type](data); }
+  let _wakeStatusFn = null;
   function connect(){
     return new Promise((resolve, reject)=>{
       if(!SERVER_URL){ reject(new Error('no_server')); return; }
       // If already connected, resolve immediately
       if(ws && ws.readyState===WebSocket.OPEN){ resolve(); return; }
+      _wakeServer(_wakeStatusFn).then(()=>{ _openSocket(resolve, reject); });
+    });
+  }
+  function _openSocket(resolve, reject){
       let settled = false;
       const done = (fn,arg)=>{ if(!settled){ settled=true; fn(arg); } };
       // 10s connection timeout so we never hang silently
@@ -9386,12 +9409,12 @@ const MWNet = (function(){
           fire(m.type, m);
         };
       }catch(e){ reject(e); }
-    });
   }
   function sendRaw(obj){ if(ws && ws.readyState===WebSocket.OPEN) ws.send(JSON.stringify(obj)); }
   return {
     available(){ return !!SERVER_URL; },
     connected(){ return _connected; },
+    onWakeStatus(fn){ _wakeStatusFn = fn; },
     seat(){ return _seat; }, code(){ return _code; }, seed(){ return _seed; }, oppDeck(){ return _oppDeck; }, oppMf(){ return _oppMf; },
     reconnect(){ const info=_loadReconnect(); if(!info) return false; connect().then(()=>{ sendRaw({type:'reconnect', code:info.code, seat:info.seat}); }).catch(()=>{}); return true; },
     hasSession(){ return !!_loadReconnect(); },
@@ -9560,6 +9583,7 @@ function _startQueue(){
   _queueSecs=0;
   const mfName=(DECKS[deck] && DECKS[deck].mf) || 'ikki';
   _showQueueScreen();
+  MWNet.onWakeStatus((status)=>{ if(status==='waking') _setQueueStatus('Waking up the match server\u2026 this can take up to 20s on first connect.'); });
   MWNet.queue(deck, mfName, _playerName()).catch((err)=>{
     _stopQueueTimer();
     const url=(window.MW_SERVER_URL||'(none)');
@@ -9579,7 +9603,7 @@ function _showQueueScreen(){
   openM('Finding Match\u2026',
     '<div style="text-align:center;padding:6px 0">'+
       '<div class="queue-spinner" style="margin:0 auto 14px;width:42px;height:42px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--gold);border-radius:50%;animation:queueSpin .9s linear infinite"></div>'+
-      '<div style="font-size:12px;color:var(--text2)">Searching for an opponent near your rank\u2026</div>'+
+      '<div id="queue-status" style="font-size:12px;color:var(--text2)">Searching for an opponent near your rank\u2026</div>'+
       '<div id="queue-timer" style="font-family:Orbitron,monospace;font-size:11px;color:var(--text3);margin-top:6px">0:00</div>'+
       '<div id="queue-practice-hint" style="font-size:10px;color:var(--text3);margin-top:10px;opacity:0;transition:opacity .4s">No opponents yet \u2014 you can practice vs CPU instead.</div>'+
     '</div>',
@@ -9592,6 +9616,10 @@ function _showQueueScreen(){
     if(el){ const m=Math.floor(_queueSecs/60), s=_queueSecs%60; el.textContent=m+':'+(s<10?'0':'')+s; }
     if(_queueSecs>=15){ const hint=document.getElementById('queue-practice-hint'); if(hint) hint.style.opacity='1'; }
   },1000);
+}
+function _setQueueStatus(text){
+  const el=document.getElementById('queue-status');
+  if(el) el.textContent=text;
 }
 function _stopQueueTimer(){ if(_queueTimer){ clearInterval(_queueTimer); _queueTimer=null; } }
 
