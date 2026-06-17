@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <script>
-const MW_BUILD='v3.1-fx';
+const MW_BUILD='v3.2-fx';
 
 // ═══ DEV MODE (art upload lock) ═══
 // When dev mode is ON, you (the operator) can sync/publish shared art.
@@ -206,7 +206,7 @@ body::after{
 /* ── TEAM ZONES ── */
 .m-zone{
   display:block;position:relative;overflow:hidden;
-  min-height:128px;
+  min-height:205px;
 }
 .m-zone.cpu-z{
   border-bottom:1.5px solid rgba(240,64,64,.15);
@@ -220,9 +220,9 @@ body::after{
 /* Triangle slot positioning */
 .bot-slot{position:absolute;transition:left .3s cubic-bezier(.34,1.2,.64,1),right .3s cubic-bezier(.34,1.2,.64,1),top .3s cubic-bezier(.34,1.2,.64,1),bottom .3s cubic-bezier(.34,1.2,.64,1),opacity .3s ease}
 /* Player zone: active bottom-center, supports top sides */
-.plr-z .slot-active{bottom:4px;left:50%;transform:translateX(-50%);z-index:3}
-.plr-z .slot-support-0{top:4px;left:18%;z-index:2}
-.plr-z .slot-support-1{top:4px;right:18%;z-index:2}
+.plr-z .slot-active{bottom:2px;left:50%;transform:translateX(-50%);z-index:3}
+.plr-z .slot-support-0{top:-6px;left:-4%;z-index:2}
+.plr-z .slot-support-1{top:-6px;right:-4%;z-index:2}
 /* CPU zone: active top-center, supports bottom sides */
 .cpu-z .slot-active{top:4px;left:50%;transform:translateX(-50%);z-index:3}
 .cpu-z .slot-support-0{bottom:4px;left:18%;z-index:2}
@@ -261,9 +261,10 @@ body::after{
   transform:translateY(-3px);
 }
 .bc.support-bot{
-  width:80px;opacity:.82;
-  transform:translateY(2px);
-  filter:brightness(.85) saturate(.8);
+  opacity:.8;
+  transform:scale(.6);
+  transform-origin:top center;
+  filter:brightness(.82) saturate(.8);
 }
 .bc.support-bot.clickable:hover,.bc.support-bot.sel{opacity:1;filter:none;transform:none}
 .bc.def{opacity:.2;filter:grayscale(1);transform:none!important;width:70px!important}
@@ -923,7 +924,9 @@ body::after{
 .fx-shadowveil{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(140,60,240,.35),transparent 60%);opacity:0;animation:fxVeil .7s ease-out forwards}
 @keyframes fxVeil{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
 /* ── Combo Cannon: red orb that launches and bursts ── */
-.fx-orb{position:absolute;left:50%;top:60%;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#40b0ff 42%,#1050e0 80%);box-shadow:0 0 56px #2090ff,0 0 110px #1060ff;transform:translate(-50%,-50%) scale(0);animation:fxOrb .75s cubic-bezier(.3,.7,.3,1) forwards}
+.fx-orb{position:absolute;left:50%;top:60%;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle at 42% 36%,#ffffff,#9fe0ff 28%,#40b0ff 55%,#1050e0 85%);box-shadow:0 0 50px 12px #40c0ff,0 0 110px 30px #2080ff,0 0 180px 60px rgba(40,140,255,.5),inset 0 0 40px rgba(255,255,255,.6);filter:brightness(1.25);transform:translate(-50%,-50%) scale(0);animation:fxOrb .8s cubic-bezier(.3,.7,.3,1) forwards}
+.fx-orb-aura{position:absolute;left:50%;top:60%;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(90,190,255,.55),transparent 65%);transform:translate(-50%,-50%) scale(.4);animation:fxOrbAura .8s ease-out forwards}
+@keyframes fxOrbAura{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}30%{opacity:.9;transform:translate(-50%,-50%) scale(1.6)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.6)}}
 @keyframes fxOrb{0%{transform:translate(-50%,-50%) scale(0);opacity:0}25%{transform:translate(-50%,-50%) scale(1);opacity:1}70%{transform:translate(-50%,-180%) scale(1.1);opacity:1}100%{transform:translate(-50%,-220%) scale(2.4);opacity:0}}
 /* ── Titan X (X Burst): giant blue FIRE X dropping on the enemy ── */
 .fx-bluex{position:absolute;left:50%;top:50%;transform:translate(-50%,-150%) rotate(0deg) scale(.4);font-size:180px;font-weight:900;font-family:'Orbitron',sans-serif;color:#d8f0ff;text-shadow:0 0 30px #2090ff,0 0 60px #1060ff,0 0 90px #40c0ff;opacity:0;animation:fxBlueX .85s cubic-bezier(.3,.9,.2,1) forwards}
@@ -1077,7 +1080,7 @@ body::after{
   <!-- HEADER -->
   <div id="hdr">
     <span class="m-logo">MW</span>
-    <span class="m-vtag">v3.1</span>
+    <span class="m-vtag">v3.2</span>
     <span class="m-turn" id="tnum">T1</span>
     <span class="m-phase charge" id="mphase">CHARGE</span>
     <div id="m-ticker">Ready.</div>
@@ -3626,6 +3629,7 @@ function fxShadowSlash(){
 function fxComboCannon(){
   try{
     const l=_fxLayer(1000);
+    const aura=document.createElement('div'); aura.className='fx-orb-aura'; l.appendChild(aura);
     const orb=document.createElement('div'); orb.className='fx-orb'; l.appendChild(orb);
     try{ if(typeof SFX==='object'){ if(SFX.zap)SFX.zap(); if(SFX.medaforce)setTimeout(()=>{try{SFX.medaforce();}catch(e){}},450); } }catch(e){}
     _fxShake();
@@ -4153,7 +4157,6 @@ function resolveAtk(a,d,sk,techId){
   if(a.key==='gokudo'&&(a._comboCount||0)>0){
     const bonus=a._comboCount*(a._finalShotLS?4:2); // Combo Cannon buffed: +2 per tech (×2 on Final Shot)
     total+=bonus;
-    try{ fxComboCannon(); }catch(e){} // Combo Cannon fires a red orb on trigger
     if(a._finalShotLS){G._pierceDmg=true;log('FINAL SHOT: Combo ×2 pierce!','chg');}
   }
   // Royal medal: +1 ATK per ally fallen this turn
@@ -4248,7 +4251,7 @@ function resolveAtk(a,d,sk,techId){
   // Gokudo Combo Cannon: +1 DMG per technique played this turn
   if(a.key==='gokudo'&&sk==='p'&&(a._comboCount||0)>0){
     log('Combo Cannon: +'+a._comboCount+' DMG from '+a._comboCount+' techniques this turn!','chg');
-    try{ triggerComboAnim(a._comboCount); }catch(e){}
+    try{ fxComboCannon(); }catch(e){}
   }
   // CPU MetalGurumemon missile barrage
   if(a.key==='metalgurumemon'&&sk==='c'){
