@@ -910,6 +910,27 @@ body::after{
 @keyframes fxHealPlus{0%{opacity:0;transform:translateY(20px) scale(.5)}30%{opacity:1}100%{opacity:0;transform:translateY(-90px) scale(1.1)}}
 .stage-card:active{transform:scale(.95)!important;border-color:#f0c040!important}
 .stage-card:hover{border-color:#f0c040!important}
+
+/* ── Shadow Blade medaforce: crossing purple slashes ── */
+.fx-slash{position:absolute;left:50%;top:50%;width:140vw;height:14px;background:linear-gradient(90deg,transparent,#c060ff 30%,#fff 50%,#c060ff 70%,transparent);box-shadow:0 0 24px #a040ff,0 0 48px #8020e0;transform-origin:center;opacity:0;border-radius:8px}
+.fx-slash.s1{animation:fxSlash1 .55s cubic-bezier(.2,.8,.2,1) forwards}
+.fx-slash.s2{animation:fxSlash2 .55s .12s cubic-bezier(.2,.8,.2,1) forwards}
+.fx-slash.s3{animation:fxSlash3 .55s .24s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes fxSlash1{0%{opacity:0;transform:translate(-50%,-50%) rotate(35deg) scaleX(0)}30%{opacity:1;transform:translate(-50%,-50%) rotate(35deg) scaleX(1)}100%{opacity:0;transform:translate(-50%,-50%) rotate(35deg) scaleX(1)}}
+@keyframes fxSlash2{0%{opacity:0;transform:translate(-50%,-50%) rotate(-50deg) scaleX(0)}30%{opacity:1;transform:translate(-50%,-50%) rotate(-50deg) scaleX(1)}100%{opacity:0;transform:translate(-50%,-50%) rotate(-50deg) scaleX(1)}}
+@keyframes fxSlash3{0%{opacity:0;transform:translate(-50%,-50%) rotate(8deg) scaleX(0)}30%{opacity:1;transform:translate(-50%,-50%) rotate(8deg) scaleX(1)}100%{opacity:0;transform:translate(-50%,-50%) rotate(8deg) scaleX(1)}}
+.fx-shadowveil{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(140,60,240,.35),transparent 60%);opacity:0;animation:fxVeil .7s ease-out forwards}
+@keyframes fxVeil{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
+/* ── Combo Cannon: red orb that launches and bursts ── */
+.fx-orb{position:absolute;left:50%;top:60%;width:90px;height:90px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#ff5030 45%,#c01010 80%);box-shadow:0 0 40px #ff3020,0 0 80px #ff2010;transform:translate(-50%,-50%) scale(0);animation:fxOrb .7s cubic-bezier(.3,.7,.3,1) forwards}
+@keyframes fxOrb{0%{transform:translate(-50%,-50%) scale(0);opacity:0}25%{transform:translate(-50%,-50%) scale(1);opacity:1}70%{transform:translate(-50%,-180%) scale(1.1);opacity:1}100%{transform:translate(-50%,-220%) scale(2.4);opacity:0}}
+.fx-orb-flash{position:absolute;left:50%;top:0;width:40vw;height:40vw;border-radius:50%;background:radial-gradient(circle,rgba(255,60,40,.5),transparent 60%);transform:translate(-50%,-30%) scale(0);animation:fxOrbFlash .5s .5s ease-out forwards}
+@keyframes fxOrbFlash{0%{opacity:0;transform:translate(-50%,-30%) scale(.3)}40%{opacity:1;transform:translate(-50%,-30%) scale(1.2)}100%{opacity:0;transform:translate(-50%,-30%) scale(1.6)}}
+/* ── Titan X (X Burst): giant blue FIRE X dropping on the enemy ── */
+.fx-bluex{position:absolute;left:50%;top:50%;transform:translate(-50%,-150%) rotate(0deg) scale(.4);font-size:180px;font-weight:900;font-family:'Orbitron',sans-serif;color:#d8f0ff;text-shadow:0 0 30px #2090ff,0 0 60px #1060ff,0 0 90px #40c0ff;opacity:0;animation:fxBlueX .85s cubic-bezier(.3,.9,.2,1) forwards}
+@keyframes fxBlueX{0%{opacity:0;transform:translate(-50%,-150%) rotate(-15deg) scale(.4)}55%{opacity:1;transform:translate(-50%,-50%) rotate(0deg) scale(1.3)}75%{transform:translate(-50%,-50%) rotate(0deg) scale(1.1)}100%{opacity:0;transform:translate(-50%,-50%) rotate(0deg) scale(1.15)}}
+.fx-bluefire{position:absolute;left:50%;top:50%;width:46vw;height:46vw;border-radius:50%;background:radial-gradient(circle,rgba(60,160,255,.5),rgba(30,90,255,.25) 45%,transparent 70%);transform:translate(-50%,-50%) scale(0);animation:fxBlueFire .8s ease-out forwards}
+@keyframes fxBlueFire{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}45%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}}
 </style>
 </head>
 <body>
@@ -1029,6 +1050,9 @@ body::after{
     </div>
     <div class="sbtn-row">
       <button class="sbtn" style="border-color:rgba(240,176,48,.6);color:var(--gold);background:linear-gradient(135deg,rgba(240,176,48,.14),rgba(255,110,160,.1))" onclick="openRanked()">🏆 RANKED</button>
+    </div>
+    <div class="sbtn-row">
+      <button class="sbtn" style="border-color:rgba(90,208,224,.5);color:#5ad0e0" onclick="openStore()">🛒 STORE</button>
     </div>
   </div>
 </div>
@@ -2719,7 +2743,7 @@ const CDEFS={
   // Chain traps
   counter_blade: C('counter_blade','trap',     'Counter Blade','eq_art',   'Counter+Combo','trap_counterblade','#e060f0','TRAP: Negate next attack. Nin-Ninja gains a free technique play next turn.'),
   // Equipment
-  ninja_scroll:  C('ninja_scroll', 'equipment','Ninja Scroll', 'eq_art',   '+2 ATK +Tech','eq_ninja_scroll','#4080f0','Nin-Ninja equipped: +2 ATK and the second technique this turn costs 0 actions.'),
+  ninja_scroll:  C('ninja_scroll', 'equipment','Ninja Scroll', 'eq_art',   '+2 ATK +Tech','eq_ninja_scroll','#4080f0','Equipped Shadow Blade bot: +2 ATK and may play a second technique each turn (the 2nd is free).'),
   combo_core:    C('combo_core',   'equipment','Combo Core',   'eq_art',   '+1 Combo/turn','eq_combo_core', '#e060f0','Gokudo equipped: gains +1 Combo counter automatically at start of each turn.'),
   // Chain Medaforce
   chain_strike:  C('chain_strike', 'medaforce','Chain Strike',  'mf_art',  '4+2/Tech',   'mf_chain_strike', '#e060f0','Deal 4 damage + 2 per technique played this match turn. Scales with chain length.'),
@@ -3573,6 +3597,46 @@ function fxHeal(){
 }
 
 
+// ── Shadow Blade medaforce: crossing purple slashes + shadow veil ──
+function fxShadowSlash(){
+  try{
+    const l=_fxLayer(900);
+    const veil=document.createElement('div'); veil.className='fx-shadowveil'; l.appendChild(veil);
+    ['s1','s2','s3'].forEach(c=>{ const sl=document.createElement('div'); sl.className='fx-slash '+c; l.appendChild(sl); });
+    try{ if(typeof SFX==='object'&&SFX.slash){ SFX.slash(); setTimeout(()=>{try{SFX.slash();}catch(e){}},120); setTimeout(()=>{try{SFX.slash();}catch(e){}},240); } }catch(e){}
+    _fxShake();
+  }catch(e){}
+}
+// ── Combo Cannon: a red orb launches and bursts ──
+function fxComboCannon(){
+  try{
+    const l=_fxLayer(1000);
+    const orb=document.createElement('div'); orb.className='fx-orb'; l.appendChild(orb);
+    const fl=document.createElement('div'); fl.className='fx-orb-flash'; l.appendChild(fl);
+    try{ if(typeof SFX==='object'){ if(SFX.zap)SFX.zap(); if(SFX.medaforce)setTimeout(()=>{try{SFX.medaforce();}catch(e){}},450); } }catch(e){}
+    _fxShake();
+  }catch(e){}
+}
+// ── Titan X Burst: a giant blue FIRE X drops onto the enemy ──
+function fxBlueX(){
+  try{
+    const l=_fxLayer(1000);
+    const fire=document.createElement('div'); fire.className='fx-bluefire'; l.appendChild(fire);
+    const x=document.createElement('div'); x.className='fx-bluex'; x.textContent='\u2715'; l.appendChild(x);
+    // a few cold sparks
+    for(let i=0;i<10;i++){
+      const sp=document.createElement('div'); sp.className='fx-spark';
+      const ang=(Math.PI*2/10)*i, dist=110+Math.random()*100;
+      sp.style.left='50%'; sp.style.top='50%';
+      sp.style.setProperty('--dx',(Math.cos(ang)*dist)+'px');
+      sp.style.setProperty('--dy',(Math.sin(ang)*dist)+'px');
+      l.appendChild(sp);
+    }
+    try{ if(typeof SFX==='object'){ if(SFX.medaforce)SFX.medaforce(); if(SFX.zap)setTimeout(()=>{try{SFX.zap();}catch(e){}},300); } }catch(e){}
+    _fxShake();
+  }catch(e){}
+}
+
 function banner(txt,color='#f0b820'){
   // Remove any existing banners so they never stack/overlap
   try{ document.querySelectorAll('.bnr').forEach(b=>b.remove()); }catch(e){}
@@ -3718,7 +3782,7 @@ function clickCard(card){
     // Auto-select the active bot so techniques are one-tap usable
     if(G.p.selBot===null){const _ab=getActiveBot('p');if(_ab)G.p.selBot=G.p.bots.indexOf(_ab);}
     const activeB=getActiveBot('p');
-    const nin=activeB&&activeB.key==='nin_ninja';
+    const nin=activeB&&(activeB.key==='nin_ninja'||(activeB.equip&&activeB.equip.fx==='eq_ninja_scroll'));
     if(nin){
       // Nin-Ninja: select technique then pick target (or auto-target active enemy)
       G.p.selCard=card.uid;
@@ -3742,7 +3806,8 @@ function clickCard(card){
 function ninjaFireTech(card, target){
   SFX.slash();
   const nin=getActiveBot('p');
-  if(!nin||nin.key!=='nin_ninja')return;
+  // Nin-Ninja OR any Shadow Blade bot equipped with the Ninja Scroll can dual-strike.
+  if(!nin||(nin.key!=='nin_ninja'&&!(nin.equip&&nin.equip.fx==='eq_ninja_scroll')))return;
   // Deduct action only for first technique; 2nd is passive free
   // Shadow Slash is a FREE chain technique: it never costs an action and never uses a technique slot.
   const _isShadowSlash=(card.fx==='deal3_chain_free');
@@ -3995,6 +4060,7 @@ function resolveAtk(a,d,sk,techId){
   if(a.key==='gokudo'&&(a._comboCount||0)>0){
     const bonus=a._comboCount*(a._finalShotLS?4:2); // Combo Cannon buffed: +2 per tech (×2 on Final Shot)
     total+=bonus;
+    try{ fxComboCannon(); }catch(e){} // Combo Cannon fires a red orb on trigger
     if(a._finalShotLS){G._pierceDmg=true;log('FINAL SHOT: Combo ×2 pierce!','chg');}
   }
   // Royal medal: +1 ATK per ally fallen this turn
@@ -4897,7 +4963,7 @@ function resolveMF(fx,bonus=0){
     openM('X Burst',
       'Deal <b style="color:#e04030">'+(dmgAmt*mfMult)+' damage</b> to '+tgt.name+(hasMB?' \u2014 Masterbeetle empowered, ignores reduction!':'.'),
       [{l:'\u26a1 FIRE X BURST',cls:'mb bad',cb:()=>{
-        try{ fxEnergyX(); }catch(e){}
+        try{ fxBlueX(); }catch(e){}
         if(hasMB) G._pierceDmg=true;
         dmg(tgt,dmgAmt*mfMult,'c');
         G._pierceDmg=false;
@@ -4995,6 +5061,7 @@ function resolveMF(fx,bonus=0){
     const chainDmg=(4+techCount*2)*mfMult;
     openM('Chain Strike','<b style="color:#e060f0">'+chainDmg+'</b> damage ('+'4 base + '+techCount+' techs × 2) to one enemy!',
       alive(G.c).map(t=>({l:'⚔ '+t.name+' — '+t.hp+' HP',cls:'mb bad',cb:()=>{
+        try{ fxShadowSlash(); }catch(e){}
         dmg(t,chainDmg,'c');
         log('Chain Strike: '+t.name+' hit for '+chainDmg+'!','atk');
         closeM();renderAll();
@@ -6831,7 +6898,8 @@ function canPlay(c){
   if(c.type==='action'||c.type==='equipment')return actionsLeft>0;
   if(c.type==='medachange')return actionsLeft>0&&!G.p.mcUsed&&alive(G.p).some(b=>b.key===c.fx.replace('mc_bot_',''));
   if(c.type==='technique'){
-    const nin=getActiveBot('p')&&getActiveBot('p').key==='nin_ninja';
+    const _ab=getActiveBot('p');
+    const nin=_ab&&(_ab.key==='nin_ninja'||(_ab.equip&&_ab.equip.fx==='eq_ninja_scroll'));
     const maxTechs=nin?(G.p._ninFreeExtra?3:2):1;
     const techsUsed=G.p._techsThisTurn||0;
     // Nin-Ninja: can play techniques standalone (no attack needed) up to maxTechs
@@ -9685,6 +9753,209 @@ const ArtCloud = (function(){
   return { check, upload, enabled(){ return _enabled===true; }, base(){ return httpBase(); } };
 })();
 
+// ═══════════════════════════════════════════════════════════
+// MWStore — client side of the cosmetic store.
+// Talks to the server's /store/* routes. Server-authoritative:
+// owned cosmetics come from the server, never trusted from localStorage.
+// localStorage only caches a player token + a copy of entitlements for
+// offline rendering; the server copy always wins on next load.
+// ═══════════════════════════════════════════════════════════
+const MWStore = (function(){
+  let _catalog = null;
+  let _owned = [];      // owned cosmetic item keys (from server)
+  let _packs = [];      // owned pack ids
+  let _preview = false; // server in preview (no real payments)
+  let _loaded = false;
+
+  function base(){ return (typeof ArtCloud!=='undefined' && ArtCloud.base) ? ArtCloud.base() : null; }
+
+  // Player token: prefer the beta token (so purchases follow the same identity),
+  // otherwise use/issue a dedicated play-token stored locally.
+  function token(){
+    try{
+      const beta = localStorage.getItem('mw_beta_token');
+      if(beta) return beta;
+      return localStorage.getItem('mw_store_token') || null;
+    }catch(e){ return null; }
+  }
+  async function ensureToken(){
+    let t = token();
+    if(t) return t;
+    const b = base();
+    if(!b) return null;
+    try{
+      const r = await fetch(b+'/store/token', {method:'POST'});
+      const j = await r.json();
+      if(j && j.token){ try{ localStorage.setItem('mw_store_token', j.token); }catch(e){} return j.token; }
+    }catch(e){}
+    return null;
+  }
+
+  async function loadCatalog(){
+    const b = base(); if(!b) return null;
+    try{
+      const r = await fetch(b+'/store/catalog');
+      const j = await r.json();
+      if(j && j.ok){ _catalog = j.catalog; _preview = !!j.preview; return _catalog; }
+    }catch(e){}
+    return null;
+  }
+
+  async function refreshEntitlements(){
+    const b = base(); const t = await ensureToken();
+    if(!b || !t) return;
+    try{
+      const r = await fetch(b+'/store/entitlements', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:t})});
+      const j = await r.json();
+      if(j && j.ok){
+        _owned = j.owned||[]; _packs = j.packs||[]; _loaded = true;
+        try{ localStorage.setItem('mw_store_owned', JSON.stringify({owned:_owned,packs:_packs})); }catch(e){}
+      }
+    }catch(e){
+      // Offline fallback: use cached copy (server still wins next time online).
+      try{ const c=JSON.parse(localStorage.getItem('mw_store_owned')||'null'); if(c){ _owned=c.owned||[]; _packs=c.packs||[]; } }catch(e){}
+    }
+  }
+
+  // Server-authoritative ownership check for a cosmetic key.
+  function owns(itemKey){ return _owned.indexOf(itemKey) >= 0; }
+  function ownsPack(packId){ return _packs.indexOf(packId) >= 0; }
+  function owned(){ return _owned.slice(); }
+  function catalog(){ return _catalog; }
+  function isPreview(){ return _preview; }
+
+  // Begin a purchase. In preview mode the server grants instantly; in live mode
+  // we redirect to Stripe Checkout and confirm on return.
+  async function buy(packId){
+    const b = base(); const t = await ensureToken();
+    if(!b || !t) return {ok:false,error:'no_server'};
+    try{
+      const r = await fetch(b+'/store/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:t,packId})});
+      const j = await r.json();
+      if(!j.ok) return j;
+      if(j.alreadyOwned){ await refreshEntitlements(); return {ok:true,alreadyOwned:true}; }
+      if(j.preview){
+        // Preview mode: already granted server-side. Just refresh.
+        await refreshEntitlements();
+        return {ok:true,preview:true};
+      }
+      // Live Stripe: go to the hosted checkout page.
+      if(j.url){ window.location.href = j.url; return {ok:true,redirecting:true}; }
+      return {ok:false,error:'no_url'};
+    }catch(e){ return {ok:false,error:'network'}; }
+  }
+
+  // Called on page load: if we returned from Stripe with a session id, confirm it.
+  async function handleReturn(){
+    try{
+      const p = new URLSearchParams(location.search);
+      const sid = p.get('sid');
+      const status = p.get('store');
+      if(status==='success' && sid){
+        const b=base(); const t=await ensureToken();
+        if(b && t){ try{ await fetch(b+'/store/confirm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:t,sessionId:sid})}); }catch(e){} }
+      }
+      if(status){
+        // Clean the URL so a refresh doesn't re-trigger.
+        try{ history.replaceState({}, '', location.pathname); }catch(e){}
+      }
+    }catch(e){}
+  }
+
+  async function init(){
+    await loadCatalog();
+    await refreshEntitlements();
+    await handleReturn();
+    if(location.search.indexOf('store=')>=0){ await refreshEntitlements(); }
+  }
+
+  return { init, loadCatalog, refreshEntitlements, owns, ownsPack, owned, catalog, isPreview, buy, handleReturn, token, ensureToken };
+})();
+
+
+// ═══════════════════════════════════════════════════════════
+// STORE SCREEN UI
+// ═══════════════════════════════════════════════════════════
+function openStore(){
+  // Build/refresh then render. Uses the modal system (openM).
+  openM('STORE', '<div style="text-align:center;padding:20px;color:var(--text3)">Loading store…</div>', [{l:'Close',cls:'mb',cb:()=>closeM()}]);
+  (async()=>{
+    try{
+      if(!MWStore.catalog()) await MWStore.loadCatalog();
+      await MWStore.refreshEntitlements();
+    }catch(e){}
+    renderStore();
+  })();
+}
+
+function renderStore(){
+  const cat = MWStore.catalog();
+  if(!cat){
+    openM('STORE',
+      '<div style="text-align:center;padding:16px;color:var(--text3);line-height:1.5">The store is unavailable right now.<br>It needs a server connection.</div>',
+      [{l:'Close',cls:'mb',cb:()=>closeM()}]);
+    return;
+  }
+  const typeIcon={battlefield:'\ud83c\udfdf\ufe0f',cardart:'\ud83c\udfa8',music:'\ud83c\udfb5',bundle:'\u2728'};
+  let html='';
+  if(MWStore.isPreview()){
+    html+='<div style="background:rgba(90,208,224,.12);border:1px solid rgba(90,208,224,.4);border-radius:8px;padding:8px 10px;margin-bottom:10px;font-size:10px;color:#5ad0e0;line-height:1.4">\ud83e\uddea PREVIEW MODE — purchases are simulated (no real payment). Wire Stripe keys to go live.</div>';
+  }
+  html+='<div style="display:flex;flex-direction:column;gap:10px;max-height:54vh;overflow-y:auto;padding:2px">';
+  cat.forEach(p=>{
+    const ownedPack = MWStore.ownsPack(p.id);
+    const price = '$'+(p.priceCents/100).toFixed(2);
+    html+='<div style="border:1px solid '+(ownedPack?'rgba(90,224,140,.5)':'var(--border)')+';border-radius:12px;padding:10px 12px;background:#0c1018">'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+        +'<div style="font-size:20px">'+(typeIcon[p.type]||'\ud83d\udecd\ufe0f')+'</div>'
+        +'<div style="flex:1;min-width:0">'
+          +'<div style="font-family:\'Orbitron\',monospace;font-size:12px;font-weight:800;color:var(--gold)">'+p.name+'</div>'
+          +'<div style="font-size:10px;color:var(--text3);line-height:1.3;margin-top:1px">'+p.blurb+'</div>'
+        +'</div>'
+        +'<div style="text-align:right">'
+          + (ownedPack
+              ? '<div style="font-size:11px;font-weight:800;color:#5ae08c">\u2713 OWNED</div>'
+              : '<button class="mb" style="padding:7px 12px;font-size:11px;white-space:nowrap" onclick="storeBuy(\''+p.id+'\')">'+price+'</button>')
+        +'</div>'
+      +'</div>'
+    +'</div>';
+  });
+  html+='</div>';
+  openM('STORE', html, [{l:'Close',cls:'mb',cb:()=>closeM()}]);
+}
+
+async function storeBuy(packId){
+  // Disable double-taps by re-rendering a brief state.
+  const r = await MWStore.buy(packId);
+  if(r.redirecting) return; // leaving to Stripe
+  if(r.ok){
+    if(r.alreadyOwned){ banner&&banner('ALREADY OWNED','#5ad0e0'); }
+    else { banner&&banner('PURCHASE COMPLETE!','#5ae08c'); try{ SFX&&SFX.victory&&SFX.victory(); }catch(e){} }
+    // Apply any newly-unlocked cosmetics immediately, then re-render the store.
+    try{ applyOwnedCosmetics(); }catch(e){}
+    renderStore();
+  } else {
+    const msg = r.error==='no_server' ? 'Store needs a server connection.' : 'Purchase could not be completed.';
+    openM('STORE', '<div style="padding:14px;text-align:center;color:#ff8080;line-height:1.5">'+msg+'</div>', [{l:'Back',cls:'mb',cb:()=>renderStore()},{l:'Close',cls:'mb',cb:()=>closeM()}]);
+  }
+}
+
+// Make owned cosmetics usable in-game. Cosmetic keys map to art/music overrides
+// only if the player owns them (server-authoritative via MWStore.owns()).
+// This keeps purchases from being faked by editing localStorage.
+function applyOwnedCosmetics(){
+  try{
+    if(typeof artOverrides!=='object') return;
+    // Example mapping: a cosmetic battlefield key can fill an arena slot if owned.
+    // (Art data for cosmetics is delivered the same way as other art — via uploads/R2;
+    //  here we just gate availability. Unowned cosmetics are never applied.)
+    MWStore.owned().forEach(key=>{
+      // Cosmetics are only honored when owned; nothing to force here unless art is present.
+      // Hook point for future: if(key==='cos_bg_neon_1' && cosmeticArt[key]) artOverrides['bg_arena_1']=cosmeticArt[key];
+    });
+  }catch(e){}
+}
+
 // Map of artKey -> R2 URL for art we've uploaded (mirrors artOverrides).
 // Persisted in IndexedDB alongside the raw images so we can share URLs online.
 const artCloudUrls = {};
@@ -10329,9 +10600,11 @@ function importArt(e) {
 
 // Load saved art once the DOM and all consts are ready
 if(document.readyState==='loading'){
-  document.addEventListener('DOMContentLoaded',()=>{try{loadArtFromStorage();if(typeof ArtDB!=='undefined')ArtDB.requestPersist();/* boot */}catch(e){console.warn(e);}});
+  document.addEventListener('DOMContentLoaded',()=>{try{loadArtFromStorage();if(typeof ArtDB!=='undefined')ArtDB.requestPersist();/* boot */}catch(e){console.warn(e);}
+    try{ if(typeof MWStore!=='undefined') MWStore.init(); }catch(e){}});
 }else{
   try{loadArtFromStorage();}catch(e){console.warn(e);}
+  try{ if(typeof MWStore!=='undefined') MWStore.init(); }catch(e){}
 }
 
 
