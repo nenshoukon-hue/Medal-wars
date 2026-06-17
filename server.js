@@ -8,6 +8,7 @@ const { WebSocketServer } = require('ws');
 const R2 = require('./r2');
 const BetaKeys = require('./betakeys');
 const Ranked = require('./ranked');
+const Store = require('./store');
 const fs = require('fs');
 const path = require('path');
 
@@ -17,6 +18,7 @@ const PORT = process.env.PORT || 8080;
 const BETA_GATE = process.env.BETA_GATE === 'on';
 BetaKeys.init(R2);
 Ranked.init(R2);
+Store.init(R2);
 
 // Matchmaking queue: array of { ws, playerId, rating, deck, mf, joinedAt }
 const rankedQueue = [];
@@ -45,6 +47,13 @@ function readJsonBody(req, cap, cb) {
     try { cb(null, JSON.parse(body)); }
     catch (e) { cb(new Error('bad_json')); }
   });
+  req.on('error', () => cb(new Error('req_error')));
+}
+
+function readRawBody(req, cap, cb) {
+  const chunks = []; let size = 0; let tooBig = false;
+  req.on('data', (chunk) => { size += chunk.length; if (size > cap) { tooBig = true; req.destroy(); } else chunks.push(chunk); });
+  req.on('end', () => { if (tooBig) return cb(new Error('too_large')); cb(null, Buffer.concat(chunks)); });
   req.on('error', () => cb(new Error('req_error')));
 }
 
@@ -323,6 +332,67 @@ const server = http.createServer((req, res) => {
   if (req.url === '/ranked/leaderboard' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ ok: true, board: Ranked.leaderboard(25) }));
+    return;
+  }
+
+  // ═══ STORE ROUTES ═══════════════════════════════════════
+  // Catalog (public). Client renders packs from this.
+  if (req.url === '/store/catalog' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, preview: Store.previewMode(), catalog: Store.catalogPublic() }));
+    return;
+  }
+
+  // Issue a play-token for users without a beta token (so anonymous players can own purchases).
+  if (req.url === '/store/token' && req.method === 'POST') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ ok: true, token: Store.issueToken() }));
+    return;
+  }
+
+  // What does this player own? Server-authoritative — client must call this, not trust local flags.
+  if (req.url === '/store/entitlements' && req.method === 'POST') {
+    readJsonBody(req, 4096, (err, data) => {
+      if (err || !data || !data.token) { res.writeHead(400,{'Content-Type':'application/json'}); res.end('{"ok":false,"error":"bad_request"}'); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, ...Store.entitlements(data.token) }));
+    });
+    return;
+  }
+
+  // Begin a purchase. Returns a Stripe Checkout URL (or a simulated grant in preview mode).
+  if (req.url === '/store/checkout' && req.method === 'POST') {
+    readJsonBody(req, 4096, (err, data) => {
+      if (err || !data || !data.token || !data.packId) { res.writeHead(400,{'Content-Type':'application/json'}); res.end('{"ok":false,"error":"bad_request"}'); return; }
+      const origin = (req.headers.origin) || ('https://' + (req.headers.host || ''));
+      Store.createCheckout(data.token, data.packId, origin).then(r => {
+        res.writeHead(r.ok ? 200 : 400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(r));
+      }).catch(() => { res.writeHead(500,{'Content-Type':'application/json'}); res.end('{"ok":false,"error":"server"}'); });
+    });
+    return;
+  }
+
+  // Confirm a returned Checkout session (fallback if the webhook is delayed/missed).
+  if (req.url === '/store/confirm' && req.method === 'POST') {
+    readJsonBody(req, 4096, (err, data) => {
+      if (err || !data || !data.token || !data.sessionId) { res.writeHead(400,{'Content-Type':'application/json'}); res.end('{"ok":false,"error":"bad_request"}'); return; }
+      Store.confirmSession(data.token, data.sessionId).then(r => {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(r));
+      }).catch(() => { res.writeHead(500,{'Content-Type':'application/json'}); res.end('{"ok":false}'); });
+    });
+    return;
+  }
+
+  // Stripe webhook — needs the RAW body for signature verification.
+  if (req.url === '/store/webhook' && req.method === 'POST') {
+    readRawBody(req, 1024 * 256, (err, raw) => {
+      if (err) { res.writeHead(400); res.end('bad_body'); return; }
+      const result = Store.handleWebhook(raw, req.headers['stripe-signature']);
+      res.writeHead(result.status, { 'Content-Type': 'application/json' });
+      res.end(result.body);
+    });
     return;
   }
 
