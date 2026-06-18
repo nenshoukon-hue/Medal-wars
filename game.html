@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <script>
-const MW_BUILD='v4.1-wakeping';
+const MW_BUILD='v4.3-blacktide-econ';
 
 // ═══ DEV MODE (art upload lock) ═══
 // When dev mode is ON, you (the operator) can sync/publish shared art.
@@ -773,6 +773,12 @@ body::after{
 .sbtn-primary{border-color:var(--storm2);background:rgba(42,128,240,.14);font-size:15px;padding:15px}
 .sbtn-row{display:flex;gap:8px;width:100%;max-width:420px}
 .sbtn-row .sbtn{flex:1;font-size:10px;padding:11px 8px;margin:0}
+/* Unified secondary button — replaces the old per-button rainbow inline colors with one calm, consistent glass look */
+.sbtn-secondary{border-color:rgba(255,225,190,.16) !important;color:#e8d8c8 !important;background:rgba(255,255,255,.03) !important;font-weight:600 !important}
+.sbtn-secondary:hover{border-color:rgba(255,210,150,.34) !important;background:rgba(255,255,255,.07) !important}
+/* Reserved highlight treatment — Ranked only, so it reads as the one premium destination */
+.sbtn-highlight{border-color:rgba(255,200,90,.55) !important;color:#ffe8b8 !important;background:linear-gradient(135deg,rgba(255,176,64,.16),rgba(255,110,160,.12)) !important;font-weight:800 !important;box-shadow:0 0 0 1px rgba(255,200,90,.08) inset}
+.sbtn-highlight:hover{border-color:rgba(255,210,120,.75) !important;box-shadow:0 0 18px rgba(255,176,64,.22)}
 
 
 /* ═══ BRIGHT INVITING TITLE THEME ═══ */
@@ -801,7 +807,6 @@ body::after{
 .dpk:hover{ border-color:rgba(255,220,150,.5) !important; background:rgba(52,66,98,.85) !important; }
 .dpk.sel{ background:rgba(60,76,114,.9) !important; box-shadow:0 0 20px rgba(255,180,100,.4) !important; }
 .dpk .dd{ color:#c8d4e8 !important; }
-.sbtn{ background:rgba(255,255,255,.06) !important; }
 .sbtn-primary{
   background:linear-gradient(135deg, rgba(255,160,80,.3), rgba(255,110,160,.3)) !important;
   border-color:#ffb060 !important; color:#fff0d8 !important;
@@ -1028,7 +1033,7 @@ body::after{
 
 <div id="title" style="display:none">
   <div class="tlogo">MEDAL WARS</div>
-  <div class="ttag">TCG · MOBILE · v3.0</div>
+  <div class="ttag">TCG · MOBILE · BETA</div>
 
   <!-- Deck picker — all 4 decks in one clean container -->
   <div class="dpks">
@@ -1081,19 +1086,17 @@ body::after{
   <div class="title-actions">
     <button class="sbtn sbtn-primary" onclick="startGameGate()">▶ START ROBATTLE</button>
     <div class="sbtn-row">
-      <button class="sbtn" style="border-color:rgba(96,180,255,.4);color:#60b4ff" onclick="openDeckEditor()">🔧 EDIT</button>
-      <button class="sbtn" style="border-color:rgba(64,216,152,.4);color:var(--green)" onclick="openPreMatchArt()">🎨 ART</button>
+      <button class="sbtn sbtn-secondary" onclick="openOnlineLobby()">🌐 ONLINE</button>
+      <button class="sbtn sbtn-highlight" onclick="openRanked()">🏆 RANKED</button>
     </div>
     <div class="sbtn-row">
-      <button class="sbtn" style="border-color:rgba(240,176,48,.4);color:var(--gold)" onclick="startInteractiveTutorial()">📖 HOW TO PLAY</button>
-      <button class="sbtn" style="border-color:rgba(160,120,255,.5);color:#b090ff" onclick="openDeckGuide()">📚 DECK GUIDE</button>
-      <button class="sbtn" style="border-color:rgba(64,160,240,.5);color:#60b4ff" onclick="openOnlineLobby()">🌐 ONLINE</button>
+      <button class="sbtn sbtn-secondary" onclick="startInteractiveTutorial()">📖 HOW TO PLAY</button>
+      <button class="sbtn sbtn-secondary" onclick="openDeckGuide()">📚 DECK GUIDE</button>
     </div>
     <div class="sbtn-row">
-      <button class="sbtn" style="border-color:rgba(240,176,48,.6);color:var(--gold);background:linear-gradient(135deg,rgba(240,176,48,.14),rgba(255,110,160,.1))" onclick="openRanked()">🏆 RANKED</button>
-    </div>
-    <div class="sbtn-row">
-      <button class="sbtn" style="border-color:rgba(90,208,224,.5);color:#5ad0e0" onclick="openStore()">🎒 ACCESSORIES</button>
+      <button class="sbtn sbtn-secondary" onclick="openDeckEditor()">🔧 EDIT</button>
+      <button class="sbtn sbtn-secondary" onclick="openPreMatchArt()">🎨 ART</button>
+      <button class="sbtn sbtn-secondary" onclick="openStore()">🎒 ACCESSORIES</button>
     </div>
   </div>
 </div>
@@ -1103,7 +1106,7 @@ body::after{
   <!-- HEADER -->
   <div id="hdr">
     <span class="m-logo">MW</span>
-    <span class="m-vtag">v4.1</span>
+    <span class="m-vtag">v4.3</span>
     <span class="m-turn" id="tnum">T1</span>
     <span class="m-phase charge" id="mphase">CHARGE</span>
     <div id="m-ticker">Ready.</div>
@@ -1188,7 +1191,7 @@ body::after{
   <div id="end-story"></div>
   <button class="sbtn" style="margin-top:8px" onclick="doRematch()">▶ REMATCH</button>
   <button class="sbtn" style="margin-top:6px" onclick="openDeckSwap()">DECK CHANGE</button>
-  <button class="sbtn" style="margin-top:6px;font-size:10px;border-color:rgba(255,255,255,.15);color:var(--text2)" onclick="location.reload()">↩ TITLE SCREEN</button>
+  <button class="sbtn" style="margin-top:6px;font-size:10px;border-color:rgba(255,255,255,.15);color:var(--text2)" onclick="goToMainMenu()">↩ MAIN MENU</button>
 </div>
 
 <script>
@@ -2598,7 +2601,7 @@ function gA(k,w,h){return(ART[k]||ART.act_art)(w,h);}
 // ═══ GAME DATA ═══
 const MEDAL={
   blaze:    {name:'Blaze',    hp:20,color:'#f06424',passive:'+1 DMG on attacks',mfFx:'mf_blaze'},
-  plunder:  {name:'Plunder',  hp:18,color:'#d4a020',passive:'Attacks earn 1 Doubloon. Turn start: 6+ coins, draw.',mfFx:'mf_broadside'},
+  plunder:  {name:'Plunder',  hp:18,color:'#d4a020',passive:'Attacks earn 2 Doubloons. Turn start: 6+ coins, draw.',mfFx:'mf_broadside'},
   lightning:{name:'Lightning',hp:16,color:'#2a80f0',passive:'Double atk if dmg ≥4',mfFx:'mf_lightning'},
   psycho:   {name:'Psycho',   hp:16,color:'#9070f0',passive:'Draw 1 on Medaforce',mfFx:'mf_psycho'},
   titan:    {name:'Titan',    hp:22,color:'#8090a0',passive:'-1 DMG taken',mfFx:'mf_titan'},
@@ -2613,7 +2616,7 @@ const MEDAL={
 };
 const BOTS={
   metabee:  {name:'Metabee',  atk:5,medal:'blaze',   art:'metabee',  mcart:'mc_meta',color:'#f06424',passive:'On attack: if target has burn, deal +1 extra dmg.'},
-  arcbeetle:{name:'Arcbeetle-',atk:4,medal:'lightning',hpBonus:4,art:'arcbeetle',mcart:'mc_arc', color:'#2a80f0',passive:'After attacking: gain +1 Charge on Lightning Medal.'},
+  arcbeetle:{name:'Arcbeetle-',atk:4,medal:'lightning',hpBonus:4,art:'arcbeetle',mcart:'mc_arc', color:'#2a80f0',passive:'Disruptor: after attacking, the enemy bot loses 2 Charge.'},
   warbandit:{name:'Warbandit',atk:4,medal:'psycho',   art:'warbandit',mcart:'mc_war', color:'#9070f0',passive:'Wildfire: when your Technique burns an enemy, spread 1 burn to another enemy.'},
   rokusho:  {name:'Roks',  atk:4,medal:'titan',    art:'rokusho',  mcart:'mc_rok', color:'#8090a0',passive:'Takes 1 less damage (stacks with Titan Medal).'},
   sumilidon:{name:'Sumilidon',atk:5,medal:'blaze',    art:'sumilidon',mcart:'mc_sumi',color:'#f06424',passive:'Ravager: +1 DMG for every 5 HP missing (the more wounded, the deadlier).'},
@@ -2637,7 +2640,7 @@ const BOTS={
 };
 const MFR={
   ikki:{name:'Ikki Tenryou',pass:'Bot ≤5 HP → +1 Charge.'},
-  redbeard:{name:'Captain Gene',pass:'Plunder: your bots earn 1 Doubloon whenever they attack. Bank coins, then spend them on pirate cards and Win Medals.'},
+  redbeard:{name:'Captain Gene',pass:'Plunder: your bots earn 2 Doubloons whenever they attack. Bank coins, then spend them on pirate cards and Win Medals.'},
   henry:{name:'Henry',pass:'Fusion Engineer: your Medachange & Fusion plays cost no action.'},
   roks:{name:'Rokusho (Partner)',pass:'When Omegaknight defeats a bot, gain 2 Charge instantly.'},
   tai:{name:'Tai Kamiya',pass:'When any bot defeats an enemy, all your bots gain +1 ATK this turn.'},
@@ -2655,7 +2658,7 @@ const CDEFS={
   hyper_missile: C('hyper_missile','technique','Hyper Missile','fire_art','+6 DMG','deal6_burn','#f06424','Deal +6 dmg. Target burns 2 next turn.'),
   chain_spark:   C('chain_spark','technique','Chain Spark','wind_art','+4 DMG','deal4_chain','#60c020','Deal +4 dmg. Splash 2 to another enemy.'),
   arc_bolt:      C('arc_bolt','technique','Arc Bolt','storm_art','+3 +1Chg','deal3_charge','#2a80f0','Deal +3 dmg. +1 Charge to your attacker.'),
-  iron_strike:   C('iron_strike','technique','Iron Strike','earth_art','+3 −2Chg','deal3_drain','#8090a0','Deal +3 dmg. Enemy loses 2 Charge.'),
+  iron_strike:   C('iron_strike','technique','Iron Strike','earth_art','+5 −2Chg','deal5_drain','#8090a0','Deal +5 dmg. Enemy loses 2 Charge.'),
   tidal_rush:    C('tidal_rush','technique','Tidal Rush','water_art','+2 +2Heal','deal2_heal','#10c090','Deal +2 dmg. Heal your attacker 2 HP.'),
   psycho_pulse:  C('psycho_pulse','technique','Psycho Pulse','psi_art','+2 Draw1','deal2_draw','#9070f0','Deal +2 dmg. Draw 1 card.'),
   inferno_surge: C('inferno_surge','medaforce','Inferno Surge','mf_art','8 Direct','mf_blaze','#f06424','Deal 8 unblockable dmg to one bot.'),
@@ -2754,7 +2757,7 @@ const CDEFS={
   overload:      C('overload','action','Overload','act_art','Next MF ×2','act_overload','#f06424','Your next Medaforce deals double damage. Lasts until fired.'),
   // ── TITAN EXCLUSIVE ──────────────────────────────────────────
   titan_call:    C('titan_call','action','Titan Call','act_art','Heal Team 2','act_titan_call','#8090a0','Heal ALL your bots for 2 HP. Doubled if Rokusho is active.'),
-  predator_mark: C('predator_mark','action','Predator Mark','act_art','Mark Target','act_pred_mark','#9050d0','Mark one enemy bot. Machairodus deals +4 DMG to marked bots.'),
+  predator_mark: C('predator_mark','action','Overload Surge','act_art','−2 All Chg','act_overload_surge','#2a80f0','Disrupt: every enemy bot loses 2 Charge.'),
   iron_wall:     C('iron_wall','trap','Iron Wall','eq_art','Block 4 DMG','trap_block','#8090a0','TRAP: Set face-down. The next attack against you deals 4 less damage (minimum 1).'),
   // ── DIGIMON COLLAB EXCLUSIVE CARDS ──────────────────────
   // WarGreymon exclusives
@@ -3896,10 +3899,6 @@ function runPhase(){
   if(G.phase==='charge'){
     doCharge('p');
     forgeStartOfTurn('p');
-    // PLUNDER medal: 6+ Doubloons at turn start → draw a card
-    if(alive(G.p).some(b=>b.medal==='plunder') && coins('p')>=6){
-      drw(G.p,1); log('Plunder: 6+ Doubloons — drew a card!','chg');
-    }
     applySupportPassives('p'); // re-apply so buffs show during action phase
     G._lsBannerThisTurn=false; // fresh turn — allow banner
     actionsLeft=calcActionsLeft();
@@ -3979,6 +3978,10 @@ function doCharge(sk){
   }
   // Reduce web counters on enemy bots each turn
   if(sk==='p'){G.c.bots.forEach(b=>{if(b._webbed>0){b._webbed--;if(b._webbed===0)log(b.name+' breaks free from the web!','info');}});}
+  // Plunder medal: 6+ Doubloons at turn start → draw a card (applies to whichever side is charging)
+  if(alive(G[sk]).some(b=>b.medal==='plunder') && coins(sk)>=6){
+    drw(G[sk],1); if(sk==='p')log('Plunder: 6+ Doubloons — drew a card!','chg');
+  }
 }
 
 function endTurn(){
@@ -4449,7 +4452,7 @@ function resolveAtk(a,d,sk,techId){
 
   // Arcbeetle passive: +1 charge after attacking
   if(a._fusionCharge){addChg(a,1);log('Masterbeetle: +1 Charge after attack!','chg');}
-  if(a.key==='arcbeetle'){addChg(a,1);log('Arcbeetle passive: +1 Charge after attack!','chg');}
+  if(a.key==='arcbeetle'&&d&&!d.def){d.charge=Math.max(0,(d.charge||0)-2);log('Arcbeetle Disruptor: '+d.name+' loses 2 Charge!','chg');}
   // Warbandit support draw
   if(a._warbDraw){drw(G.p,1);a._warbDraw=false;log('Warbandit support: drew 1 card!','chg');}
   // Foxuno Battle Remedy: heal lowest-HP ally after attacking
@@ -4464,7 +4467,7 @@ function resolveAtk(a,d,sk,techId){
   }
   // ── PLUNDER medal: earn Doubloons on attack ──
   if(a&&a.medal==='plunder'){
-    let earn=1;
+    let earn=2;
     if(a.key==='piraskull')earn+=1;               // Captain's Cut
     if(a.equip&&a.equip.fx==='bt_coincannon')earn+=1; // Coin Cannon
     const got=earnCoins(sk,earn);
@@ -4599,6 +4602,8 @@ function applyTech(c,a,d,sk){
     b=3;addChg(a,1);
   }else if(fx==='deal3_drain'){
     b=3;d.charge=Math.max(0,d.charge-2);
+  }else if(fx==='deal5_drain'){
+    b=5;d.charge=Math.max(0,d.charge-2);
   }else if(fx==='deal2_heal'){
     b=2;a.hp=Math.min(a.maxHp,a.hp+2);flt('+2','heal');
   }else if(fx==='deal2_draw'){
@@ -4848,14 +4853,12 @@ function playAct(card){
     log('Shadow Step: Nin-Ninja gets a free extra technique this turn!','chg');
     banner('SHADOW STEP!','#4080f0');renderAll();return;
   }
-  if(fx==='act_pred_mark'){
-    openM('Predator Mark','Mark a target for Machairodus (+4 DMG):',
-      alive(G.c).map(t=>({l:t.name+' — '+t.hp+' HP',cls:'mb bad',cb:()=>{
-        t._predatorMark=true;
-        log('Predator Mark: '+t.name+' marked! Machairodus deals +4 DMG!','chg');
-        banner('PREDATOR MARK!','#9050d0');
-        closeM();renderAll();
-      }})));
+  if(fx==='act_overload_surge'){
+    let hit=0;
+    alive(G.c).forEach(t=>{ if((t.charge||0)>0){ t.charge=Math.max(0,t.charge-2); hit++; } });
+    log('Overload Surge: every enemy bot loses 2 Charge!','chg');
+    banner('OVERLOAD SURGE!','#2a80f0');
+    renderAll();
     return;
   }
   if(fx==='act_locate'){
@@ -5632,15 +5635,15 @@ function cpuScoreTech(t,attacker,target){
   if(fx==='deal1_ember') s=attacker.charge<=2?12:attacker.charge<=3?8:4; // best early
   if(fx==='deal4_chain'){const n=alive(G.p).length;s=n>1?12:6;if(target.hp<=4)s+=3;}
   if(fx==='deal3_charge') s=attacker.charge>=3?10:attacker.charge>=1?7:4;
-  if(fx==='deal3_drain'){const near=alive(G.p).filter(b=>b.charge>=4);const ign=alive(G.p).filter(b=>b.charge>=5);s=ign.length?16:near.length?12:3;}
+  if(fx==='deal3_drain'||fx==='deal5_drain'){const near=alive(G.p).filter(b=>b.charge>=4);const ign=alive(G.p).filter(b=>b.charge>=5);s=ign.length?16:near.length?12:(fx==='deal5_drain'?5:3);}
   // Reactive: if player has burn on our bots, de-prioritize attacks (prefer healing/drain)
   const playerHasBurn=alive(G.p).some(b=>b.burn);
   const ourBotsBurning=alive(G.c).some(b=>b.burn);
   if(ourBotsBurning&&fx==='deal2_heal')s+=8; // urgently heal burning bots
-  if(playerHasBurn&&fx==='deal3_drain')s+=5; // disrupt player while they're set up
+  if(playerHasBurn&&(fx==='deal3_drain'||fx==='deal5_drain'))s+=5; // disrupt player while they're set up
   if(fx==='deal2_heal') s=attacker.hp<=attacker.maxHp*0.35?11:attacker.hp<=attacker.maxHp*0.6?5:1;
   if(fx==='deal2_draw') s=handSize<=2?12:handSize<=4?6:2;
-  const techDmg={deal5_burn:5,deal4_chain:4,deal3_charge:3,deal3_drain:3,deal2_heal:2,deal2_draw:2}[fx]||0;
+  const techDmg={deal5_burn:5,deal4_chain:4,deal3_charge:3,deal3_drain:3,deal5_drain:5,deal2_heal:2,deal2_draw:2}[fx]||0;
   const atk=attacker.atk+(attacker.changed?3:0)+(attacker.medal==='blaze'?1:0)+(attacker.equip&&attacker.equip.fx==='eq_blaze_arm'?2:0);
   if(target.hp<=(atk+techDmg))s+=6;
   // ── Royal/Digi techniques ─────────────────────────────
@@ -5687,10 +5690,11 @@ function cpuChooseAction(){
       const hasRok=alive(G.c).some(b=>b.key==='rokusho'&&G.c.activeBot===G.c.bots.indexOf(b));
       s=teamDmg>=8?15:teamDmg>=4?10:5;if(hasRok)s+=4;
     }
-    if(fx==='act_pred_mark'){
-      // Predator Mark: use when Machairodus is alive and ready to attack
-      const hasMach=alive(G.c).some(b=>b.key==='machairodus');
-      s=hasMach?11:1;
+    if(fx==='act_overload_surge'){
+      // Overload Surge: drain all enemy Charge — best when the player is loading up for a Medaforce
+      const charged=alive(G.p).filter(b=>(b.charge||0)>=3).length;
+      const anyCharge=alive(G.p).some(b=>(b.charge||0)>0);
+      s=charged>=2?14:charged===1?10:anyCharge?5:1;
     }
     if(fx==='act_heatwave'){
       const burning=alive(G.p).filter(b=>b.burn).length;
@@ -5865,7 +5869,7 @@ function aiBestTechBonus(a, d){
   if(!techs.length) return {bonus:0, tech:null};
   let best={bonus:0, tech:null};
   techs.forEach(t=>{
-    const b=({deal5_burn:5,deal6_burn:6,deal4_chain:4,deal3_charge:3,deal3_drain:3,deal2_heal:2,deal2_draw:2,deal3_burn_all:3,deal2_scorch:6,deal1_ember:1,iron_strike:4,gen_surge:(a.hp<a.maxHp/2?6:4),gen_pile:3,fb_scrapblast:5,fb_salvagestrike:3,fb_overloadslam:((a.key==='grand_beetle'?(a.equips||[]).length:(a.equip?1:0))*2)}[t.fx]||0);
+    const b=({deal5_burn:5,deal6_burn:6,deal4_chain:4,deal3_charge:3,deal3_drain:3,deal5_drain:5,deal2_heal:2,deal2_draw:2,deal3_burn_all:3,deal2_scorch:6,deal1_ember:1,iron_strike:4,gen_surge:(a.hp<a.maxHp/2?6:4),gen_pile:3,fb_scrapblast:5,fb_salvagestrike:3,fb_overloadslam:((a.key==='grand_beetle'?(a.equips||[]).length:(a.equip?1:0))*2)}[t.fx]||0);
     if(b>best.bonus) best={bonus:b, tech:t};
   });
   return best;
@@ -5975,6 +5979,13 @@ function aiProAttack(){
     let realTarget=target;
     if(trapRes.redirect){realTarget=trapRes.redirect;}
     G._curAtkr=a; dmg(realTarget,total,'p'); G._curAtkr=null;
+    // Plunder economy: the pro-AI attack path bypasses resolveAtk, so earn Doubloons here too.
+    if(a.medal==='plunder'){
+      let earn=2;
+      if(a.key==='piraskull')earn+=1;                  // Captain's Cut
+      if(a.equip&&a.equip.fx==='bt_coincannon')earn+=1; // Coin Cannon
+      earnCoins('c',earn);
+    }
     a.exhst=true;
     checkWin();
     // Lightning double-strike
@@ -6041,7 +6052,7 @@ function aiBrainTitan(){
     log('CPU drains '+pHigh.name+' (-2 Charge).','cpu');
   }
   // Mark a target so Machairodus hits harder, then play value actions.
-  aiPlayActionsByValue(['act_pred_mark','act_titan_call','act_charge']);
+  aiPlayActionsByValue(['act_overload_surge','act_titan_call','act_charge']);
   return false;
 }
 
@@ -6466,7 +6477,15 @@ function aiProMedaforce(){
   const anyKill=alive(G.p).some(b=>aiCanKill(b));
   const pMulti=alive(G.p).length>=2;
   const best=mfs[0];
-  const shouldFire=anyKill||pMulti||score<2||alive(G.p).some(b=>b.hp<=8);
+  let shouldFire=anyKill||pMulti||score<2||alive(G.p).some(b=>b.hp<=8);
+  // Win Medals (Black Tide) scales with banked Doubloons — don't waste it on a near-empty vault.
+  // Hold unless it's lethal right now or we've banked a worthwhile pile (≥4 coins).
+  const onlyBroadside=mfs.every(c=>c.fx==='mf_broadside');
+  if(onlyBroadside){
+    const have=coins('c');
+    const broadsideLethal=alive(G.p).some(b=>b.hp<=(4+2*have));
+    shouldFire = broadsideLethal || have>=4;
+  }
   if(!shouldFire)return;
 
   const caster=ign.sort((a,b)=>(b.changed?10:0)+b.charge-(a.changed?10:0)-a.charge)[0];
@@ -6495,6 +6514,17 @@ function aiProMedaforce(){
   else if(fx==='mf_aqua')alive(G.c).forEach(b=>{b.hp=Math.min(b.maxHp,b.hp+4+bonus);});
   else if(fx==='mf_nature')alive(G.c).forEach(b=>addChg(b,2));
   else if(fx==='mf_imperial')alive(G.p).forEach(b=>{G._curAtkr=caster;dmg(b,6+bonus,'p');G._curAtkr=null;});
+  else if(fx==='mf_broadside'){
+    // Win Medals: spend ALL Doubloons, deal 4 + 2 per coin to one enemy.
+    const have=coins('c');
+    const dmgAmt=(4+2*have)+bonus;
+    spendCoins('c',have);
+    // Aim at a bot we can kill if possible, else the biggest threat.
+    const killable=alive(G.p).filter(b=>b.hp<=dmgAmt);
+    const t=(killable.sort((a,b)=>(b.charge*2+b.atk)-(a.charge*2+a.atk))[0])
+          || alive(G.p).sort((a,b)=>(b.charge*2+b.atk)-(a.charge*2+a.atk))[0];
+    if(t){G._curAtkr=caster;dmg(t,dmgAmt,'p');G._curAtkr=null;log('CPU Win Medals: spent '+have+' Doubloons — '+t.name+' hit for '+dmgAmt+'!','cpu');}
+  }
   checkWin();
 }
 
@@ -6784,7 +6814,7 @@ function cpuAtk(){
 
   // Choose best technique first to factor into target choice
   const tech=cpuChooseTech(a, tgts[0]);
-  const techBonus=tech?({deal5_burn:5,deal6_burn:6,deal4_chain:4,deal3_charge:3,deal3_drain:3,deal2_heal:2,deal2_draw:2,deal3_burn_all:3,deal2_scorch:6,deal1_ember:1}[tech.fx]||0):0;
+  const techBonus=tech?({deal5_burn:5,deal6_burn:6,deal4_chain:4,deal3_charge:3,deal3_drain:3,deal5_drain:5,deal2_heal:2,deal2_draw:2,deal3_burn_all:3,deal2_scorch:6,deal1_ember:1}[tech.fx]||0):0;
   const totalPow=basePow+techBonus;
 
   // Now choose best target with full power known
@@ -6852,6 +6882,7 @@ function applyTechP(tech,a,d){
   }
   else if(fx==='deal4_exhaust'){b=4;d.exhst=true;log('Phantom Cut: +4, '+d.name+' exhausted!','atk');}
   else if(fx==='deal3_drain'){b=3;d.charge=Math.max(0,d.charge-2);log('Twin Strike: +3, -2 charge!','atk');}
+  else if(fx==='deal5_drain'){b=5;d.charge=Math.max(0,d.charge-2);log('Iron Strike: +5, -2 charge!','atk');}
   else if(fx==='deal2_heal'){
     b=2;
     const lowest=alive(G.p).sort((a2,b2)=>a2.hp-b2.hp)[0];
@@ -6889,6 +6920,8 @@ function applyTechC(c,a,d){
     b=3;addChg(a,1);
   }else if(fx==='deal3_drain'){
     b=3;const p=alive(G.p)[0];if(p)p.charge=Math.max(0,p.charge-2);
+  }else if(fx==='deal5_drain'){
+    b=5;const p=alive(G.p)[0];if(p)p.charge=Math.max(0,p.charge-2);
   }else if(fx==='deal2_heal'){
     b=2;a.hp=Math.min(a.maxHp,a.hp+2);
   }else if(fx==='deal2_draw'){
@@ -6950,6 +6983,7 @@ function executeCpuAction(act){
   const fx=act.fx;
   if(fx==='act_charge'){const b=alive(G.c).sort((x,y)=>y.charge-x.charge)[0];if(b)addChg(b,2);}
   if(fx==='act_drain'){const b=alive(G.p).sort((x,y)=>y.charge-x.charge)[0];if(b){b.charge=Math.max(0,b.charge-2);log(b.name+' −2 Charge','chg');}}
+  if(fx==='act_overload_surge'){alive(G.p).forEach(t=>{if((t.charge||0)>0)t.charge=Math.max(0,t.charge-2);});log('Overload Surge: every enemy bot loses 2 Charge!','chg');}
   if(fx==='act_draw2')drw(G.c,2);
   if(fx==='act_fusion'){const d=G.c.bots.filter(b=>b.def&&!b.fAway);const t=alive(G.c);if(d.length&&t.length){t[0].fusedMedal=d[0].medal;t[0].fusedPass=MEDAL[d[0].medal].passive;d[0].fAway=true;}}
   if(fx==='act_ikki')alive(G.c).forEach(b=>{if(b.hp<=5)addChg(b,1);});
@@ -6959,6 +6993,12 @@ function executeCpuAction(act){
 function endCpu(){
   if(G.winner)return;
   forgeEndOfTurn('c');
+  // TentaClam — Hoarder's Eye: end of turn, +1 Doubloon per other living crewmate (max +2). CPU side.
+  const _cTenta=alive(G.c).find(b=>b.key==='tentaclam');
+  if(_cTenta){
+    const others=Math.min(2, alive(G.c).filter(b=>b!==_cTenta).length);
+    if(others>0)earnCoins('c',others);
+  }
   G.c.bots.forEach(b=>{b.exhst=false;b._dbl=false;b._fury=false;});
   G.p.bots.forEach(b=>{b._dbl=false;b._fury=false;b.wallStacks=0;b.exhst=false;});
   turn++;G.phase='charge';atked=false;G.supportUsed=false;G.boostActive=null;G.tauntActive=false;G.p.switched=false;if(G.p._henryUsed)G.p._henryUsed=false;
@@ -7568,9 +7608,11 @@ function openGameMenu(){
   ];
   if(inMatch){
     btns.push({l:'\ud83c\udff3\ufe0f Surrender', cls:'mb', style:'color:var(--red);border-color:rgba(240,72,72,.4)', cb:()=>{ closeM(); confirmSurrender(); }});
+  } else {
+    btns.push({l:'\u21a9 Main Menu', cls:'mb', cb:()=>{ closeM(); goToMainMenu(); }});
   }
   btns.push({l:'Close', cls:'mb ok', cb:()=>closeM()});
-  openM('Menu','<div style="font-size:11px;color:var(--text2);text-align:center;padding:4px 0">Medal Wars v3.0</div>', btns);
+  openM('Menu','<div style="font-size:11px;color:var(--text2);text-align:center;padding:4px 0">Medal Wars Beta</div>', btns);
 }
 
 function confirmSurrender(){
@@ -8110,6 +8152,25 @@ function rematch(){
   setTimeout(initTooltipDelegation, 100);
   setTimeout(updateArenaColor, 200);
   offerMulligan();
+}
+
+// Return cleanly to the title screen from anywhere (mid-match, end screen, or a modal),
+// without the heavy-handed full page reload location.reload() used to require.
+function goToMainMenu(){
+  try{ closeM(); }catch(e){}
+  try{ if(_musicEl){ fadeAudio(_musicEl, _musicEl.volume||0.18, 0, 350, ()=>{ try{ stopBattleMusic(); }catch(e){} }); } else { stopBattleMusic(); } }catch(e){}
+  try{ if(G_online){ MWNet.leave(); G_online=false; } }catch(e){}
+  try{ document.getElementById('end').classList.remove('open'); }catch(e){}
+  try{ document.getElementById('arena').innerHTML=''; }catch(e){}
+  try{ _rotatingBgSlot=0; _rotatingBgUrl=''; }catch(e){}
+  G = {};
+  logs = [];
+  turn = 1;
+  atked = false;
+  G_myTurn = true;
+  _practiceMode = false;
+  document.getElementById('title').classList.remove('gone');
+  try{ renderDeckPreview(deck); }catch(e){}
 }
 
 function startLastStandTest(){

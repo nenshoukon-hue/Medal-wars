@@ -13,7 +13,7 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT || 8080;
-const MW_SERVER_BUILD = 'v4.0'; // keep in sync with the client's MW_BUILD so checkDeploySync() is meaningful
+const MW_SERVER_BUILD = 'v4.3-blacktide-econ'; // keep in sync with the client's MW_BUILD so checkDeploySync() is meaningful
 
 // Beta-key gating toggle. Set BETA_GATE=on in Railway to require keys for online play.
 const BETA_GATE = process.env.BETA_GATE === 'on';
