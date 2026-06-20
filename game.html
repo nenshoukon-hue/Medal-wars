@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <script>
-const MW_BUILD='v3.0-ranked';
+const MW_BUILD='v4.4-senbei-zanshin';
 
 // ═══ DEV MODE (art upload lock) ═══
 // When dev mode is ON, you (the operator) can sync/publish shared art.
@@ -806,6 +806,28 @@ body::after{
 <style>
 /* ── MOBILE SPECIFIC FIXES ─────────────────────── */
 /* bot-slot positioning for triangle formation */
+/* Captain slot: fixed far-left, always support role, untargetable */
+.slot-captain{
+  position:absolute;
+  left:2px;
+  top:50%;
+  transform:translateY(-50%);
+  z-index:2;
+  opacity:0.88;
+}
+.slot-captain .bc{
+  border:1.5px dashed rgba(200,50,50,.5) !important;
+  box-shadow:0 0 8px rgba(200,50,50,.2) !important;
+}
+.slot-captain::after{
+  content:'⚓';
+  position:absolute;
+  top:-8px;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:9px;
+  color:rgba(200,50,50,.7);
+}
 .bot-slot{
   position:absolute;
   transition:all .3s cubic-bezier(.34,1.2,.64,1);
@@ -931,6 +953,14 @@ body::after{
       <div class="dn" style="color:#e0a020">⚒ Forge Barons</div>
       <div class="dd">Grand Beetle · Neutranurse · Blackram<br>Equipment engine — build a juggernaut</div>
     </div>
+    <div class="dpk" data-deck="blacktide" onclick="pickDeck(this)" style="border-color:rgba(24,144,200,.4)">
+      <div class="dn" style="color:#1890c8">☠ Black Tide</div>
+      <div class="dd">Piraskull · Pirastar · TentaClam<br>Coin economy</div>
+    </div>
+    <div class="dpk" data-deck="senbei" onclick="pickDeck(this)" style="border-color:rgba(200,50,50,.4)">
+      <div class="dn" style="color:#c83232">⚔ Iron Dojo</div>
+      <div class="dd">Kensho · Samurai · Gobanko · Shinsaber<br>Stance mastery</div>
+    </div>
     <div class="dpk" data-deck="cross" onclick="pickDeck(this)" style="border-color:rgba(216,221,232,.4)">
       <div class="dn" style="color:#d8dde8">✦ Cross Messiah</div>
       <div class="dd">Cross Messiah · Moon Dragon · Seagull<br>Charge mastery — hoard Charge, then burst</div>
@@ -1015,7 +1045,8 @@ body::after{
   </div>
 
   <!-- HAND -->
-  <div id="m-hand">
+  <div id="dbl-count" style="display:none;font-size:11px;color:#1890c8;padding:2px 8px;background:rgba(24,144,200,.15);border-radius:8px;margin:2px 0"></div>
+<div id="m-hand">
     <div id="m-hhdr">
       <div>
         <span class="m-hlbl">HAND</span>
@@ -2475,6 +2506,8 @@ const MEDAL={
   emperor:  {name:'Emperor',  hp:60,color:'#60c030',passive:'Charge 2/turn. Medaforce fires at 4 Charge',mfFx:'mf_imperial'},
   zero:     {name:'Zero',     hp:26,color:'#d8dde8',passive:'Charge Mastery: gains +1 extra Charge each turn. Attacks deal +1 damage per 2 Charge held.',mfFx:'mf_crossburst'},
   forge:    {name:'Forge',    hp:21,color:'#e0a020',passive:'Attacks ignore 1 damage reduction.',mfFx:'mf_overforge'},
+  tide:     {name:'Tide',     hp:19,color:'#1890c8',passive:'Plunder: earn 1 Doubloon after every successful attack. Spend Doubloons on special abilities.',mfFx:'mf_broadside'},
+  senbei:   {name:'Senbei',   hp:22,color:'#c83232',passive:'Stance: each bot tracks its own Stance state. 2-bot Resonance unlocks bonus effects.',mfFx:'mf_zanshin'},
 };
 const BOTS={
   metabee:  {name:'Metabee',  atk:5,medal:'blaze',   art:'metabee',  mcart:'mc_meta',color:'#f06424',passive:'On attack: if target has burn, deal +1 extra dmg.'},
@@ -2496,6 +2529,13 @@ const BOTS={
   gokudo:     {name:'Gokudo',    atk:6,medal:'chain',art:'gokudo',    mcart:'mc_gokudo',color:'#f04020',passive:'Combo Cannon: deals +1 DMG per technique card played this turn before attacking.'},
   wargreymon:    {name:'WarGreymon',    atk:5,medal:'digicore',art:'wargreymon',    mcart:'mc_warg',  color:'#f0c040',passive:'Dramon Destroyer: deals +3 DMG to equipped bots.'},
   metalgurumemon:{name:'MetalGurumemon',atk:4,medal:'digicore',art:'metalgurumemon',mcart:'mc_metal', color:'#9050d0',passive:'Missile Barrage: after attacking, deal 1 DMG to another enemy.'},
+  piraskull:{name:'Piraskull', atk:5,medal:'tide',art:'piraskull',mcart:'mc_piraskull',color:'#1890c8',passive:'Boarding Strike: when you have 3+ Doubloons, attacks deal +2 DMG.'},
+  pirastar: {name:'Pirastar',  atk:4,medal:'tide',art:'pirastar', mcart:'mc_pirastar', color:'#c040a0',passive:'Plunder+: earns 2 Doubloons per attack instead of 1.'},
+  tentaclam:{name:'TentaClam', atk:3,medal:'tide',art:'tentaclam',mcart:'mc_tentaclam',color:'#40c0d0',passive:"Hoarder's Eye: at end of each turn, if you have 5+ Doubloons, gain 1 Charge."},
+  kensho:   {name:'Kensho',   atk:4,medal:'senbei',art:'kensho',  mcart:'mc_kensho',  color:'#c83232',passive:'Edge Captain: while in Edge Stance, attacks gain +1 pierce.',untargetable:true,unswitchable:true,captainSlot:true},
+  samurai:  {name:'Samurai',  atk:7,medal:'senbei',art:'samurai', mcart:'mc_samurai', color:'#e08020',passive:'Iron Will: while in Iron Stance, takes 1 less damage.'},
+  gobanko:  {name:'Gobanko',  atk:5,medal:'senbei',art:'gobanko', mcart:'mc_gobanko', color:'#6040c0',passive:'Shadow Pin: while in Shadow Stance, attacks may Exhaust 1 enemy (50%).'},
+  shinsaber:{name:'Shinsaber', atk:5,medal:'senbei',art:'shinsaber',mcart:'mc_shinsaber',color:'#20b0c8',passive:'Versatile: may enter any Stance. Gains +1 ATK per unique Stance among living allies.'},
 };
 const MFR={
   ikki:{name:'Ikki Tenryou',pass:'Bot ≤5 HP → +1 Charge.'},
@@ -2506,6 +2546,8 @@ const MFR={
   seaslug:{name:'Seaslug',pass:'When Robo Emperor drops below 20 HP, gain 3 Charge and draw 1 card.'},
   kasumi:{name:'Kasumi Asano',pass:'When you play an equipment card, that bot gains +1 Charge.'},
   nova_pilot:{name:'Arase Oosumi',pass:'When a bot reaches max Charge, draw a card and that bot gains +1 ATK.'},
+  captainsaw:{name:'Captain Saw',pass:'Each time you earn 3+ Doubloons in one turn, draw 1 card.'},
+  dojo_master:{name:'Dojo Master Ryo',pass:'When two allies share the same Stance at turn end, all gain +1 Charge.'},
 };
 let _uid=0;
 function uid(){return 'c'+(++_uid);}
@@ -2567,6 +2609,39 @@ const CDEFS={
   gen_pile_driver:  C('gen_pile_driver','technique','Pile Driver','earth_art','+3 no-switch','gen_pile','#8090a0','+3 DMG. Target cannot switch next turn. Generic.'),
   gen_last_resort:  C('gen_last_resort','action','Last Resort','act_art','6 unblockable','gen_lastresort','#f04040','Only if you have 2 or fewer cards in hand: deal 6 unblockable damage. Generic.'),
   gen_medal_reboot: C('gen_medal_reboot','action','Medal Reboot','act_art','Revive 6HP','gen_reboot','#f0b820','Once per game: return a defeated friendly bot with 6 HP. Generic.'),
+  // ═══ BLACK TIDE CARDS ═══
+  bt_plunder_shot:  C('bt_plunder_shot','technique','Plunder Shot','bt_art','3+Dbl→+3','bt_plunder','#1890c8','Deal 4 DMG. If you have 3+ Doubloons, deal +3 instead (7 total).'),
+  bt_broadside:     C('bt_broadside','technique','Broadside','bt_art','AoE 2+Dbl','bt_broad','#1890c8','Deal 2 DMG to all enemies. Earn 1 Doubloon per enemy hit.'),
+  bt_tide_surge:    C('bt_tide_surge','technique','Tide Surge','bt_art','5→flush','bt_surge','#1890c8','Deal 3 DMG. If you have 5+ Doubloons, spend all for +5 bonus DMG.'),
+  bt_cannonball:    C('bt_cannonball','technique','Cannonball','bt_art','8 pierce','bt_cannon','#1890c8','Deal 8 DMG, ignoring armor. Earn 1 Doubloon.'),
+  bt_plunder_all:   C('bt_plunder_all','action','Mass Plunder','bt_art','Earn 2Dbl','bt_all','#1890c8','Earn 2 Doubloons. Draw 1 card.'),
+  bt_sea_market:    C('bt_sea_market','action','Sea Market','bt_art','Spend 3→draw3','bt_market','#1890c8','Spend 3 Doubloons: draw 3 cards.'),
+  bt_buy_passage:   C('bt_buy_passage','action','Buy Passage','bt_art','Spend2→free','bt_pass','#1890c8','Spend 2 Doubloons: your next action this turn is free.'),
+  bt_hoarding:      C('bt_hoarding','action','Hoarding','bt_art','Dbl→charge','bt_hoard','#1890c8','Convert 2 Doubloons into 2 Charge on Tide Medal.'),
+  bt_ink_screen:    C('bt_ink_screen','trap','Ink Screen','bt_art','Negate+1Dbl','bt_ink','#1890c8','Negate one enemy attack. Earn 1 Doubloon.'),
+  bt_net_trap:      C('bt_net_trap','trap','Net Trap','bt_art','Exhaust+Dbl','bt_net','#1890c8','Exhaust one enemy bot for 1 turn. Earn 1 Doubloon.'),
+  bt_anchor_shot:   C('bt_anchor_shot','equipment','Anchor Cannon','eq_art','Dbl→+ATK','bt_anch','#1890c8','Equipped bot: +1 ATK. On attack, earn 1 extra Doubloon.'),
+  bt_shell_armor:   C('bt_shell_armor','equipment','Shell Armor','eq_art','-1dmg+2HP','bt_shell','#1890c8','Equipped bot: +2 max HP and takes 1 less damage.'),
+  mc_piraskull:     C('mc_piraskull','medachange','Piraskull Z','mc_art','Plunder×2','mc_pirs','#1890c8','Medachange Piraskull. While transformed: Plunder earns 2 Doubloons. Boarding Strike active at 2+ Dbl.'),
+  mc_tentaclam:     C('mc_tentaclam','medachange','TentaClam Titan','mc_art','Hoard wall','mc_tent','#40c0d0','Medachange TentaClam. While transformed: Hoarder Eye triggers at 3+ Dbl. +2 ATK.'),
+  mf_broadside:     C('mf_broadside','medaforce','Win Medal','mf_art','Spend4Dbl','mf_broad','#1890c8','MEDAFORCE: Spend 4 Doubloons. Deal 10 DMG to all enemies. Earn 2 Dbl per enemy defeated.'),
+  // ═══ SENBEI (IRON DOJO) CARDS ═══
+  sb_edge_strike:   C('sb_edge_strike','technique','Edge Strike','sb_art','EdgeStance+2','sb_edge','#c83232','Deal 5 DMG. If attacker is in Edge Stance, deal +2 bonus DMG.'),
+  sb_iron_cut:      C('sb_iron_cut','technique','Iron Cut','sb_art','IronStance-red','sb_iron','#c83232','Deal 6 DMG. If attacker is in Iron Stance, enemy armor -1 for 1 turn.'),
+  sb_shadow_draw:   C('sb_shadow_draw','technique','Shadow Draw','sb_art','ShadowStance+draw','sb_shad','#c83232','Deal 4 DMG. If attacker is in Shadow Stance, draw 1 card.'),
+  sb_dual_kata:     C('sb_dual_kata','technique','Dual Kata','sb_art','3+3','sb_dual','#c83232','Attack twice for 3 DMG each. Each hit can trigger Stance effects.'),
+  sb_resonance:     C('sb_resonance','action','Resonance Pulse','sb_art','All→stance','sb_res','#c83232','Set all bots to their optimal Stance. If 2+ share a Stance, each gains +1 Charge.'),
+  sb_set_iron:      C('sb_set_iron','action','Iron Stance','sb_art','Stance→Iron','sb_si','#c83232','Set one bot to Iron Stance. That bot takes 1 less damage until your next turn.'),
+  sb_set_edge:      C('sb_set_edge','action','Edge Stance','sb_art','Stance→Edge','sb_se','#c83232','Set one bot to Edge Stance. Its next attack deals +2 DMG.'),
+  sb_set_shadow:    C('sb_set_shadow','action','Shadow Stance','sb_art','Stance→Shadow','sb_ss','#c83232','Set one bot to Shadow Stance. Its next attack may Exhaust a target.'),
+  sb_zanshin_pulse: C('sb_zanshin_pulse','action','Zanshin Pulse','sb_art','Reso→+2Chg','sb_zp','#c83232','If 2+ bots are in Resonance (same Stance), all bots gain +2 Charge.'),
+  sb_iaijutsu:      C('sb_iaijutsu','trap','Iaijutsu Counter','sb_art','Counter+stance','sb_iai','#c83232','Negate one enemy attack. The defending bot enters Edge Stance.'),
+  sb_steel_veil:    C('sb_steel_veil','trap','Steel Veil','sb_art','Reduce2+Iron4','sb_sv','#c83232','Reduce next enemy attack by 2. If blocked bot in Iron Stance, reduce by 4 instead.'),
+  sb_senbei_blade:  C('sb_senbei_blade','equipment','Senbei Blade','eq_art','Stance+ATK','sb_bl','#c83232','Equipped bot: +1 ATK. When bot changes Stance, gain +1 Charge.'),
+  sb_iron_gi:       C('sb_iron_gi','equipment','Iron Gi','eq_art','-1dmg','sb_gi','#c83232','Equipped bot: takes 1 less damage. While in Iron Stance, take 2 less damage instead.'),
+  mc_kensho:        C('mc_kensho','medachange','Kensho Reborn','mc_art','Reso+pierce','mc_ken','#c83232','Medachange Kensho. While transformed: Edge Stance attacks pierce 1 armor. Resonance charges faster.'),
+  mc_samurai:       C('mc_samurai','medachange','Samurai Legend','mc_art','Iron wall','mc_sam','#e08020','Medachange Samurai. While transformed: Iron Stance reduces DMG by 2. Resonance ATK bonus +2.'),
+  mf_zanshin:       C('mf_zanshin','medaforce','Zanshin','mf_art','3-bot exec','mf_zan','#c83232','MEDAFORCE: Each bot fires once using its Stance effect. If 3-bot Resonance active, +5 bonus total DMG.'),
   // ═══ FORGE BARONS EQUIPMENT ENGINE ═══
   fb_sentry_drone:  C('fb_sentry_drone','equipment','Sentry Drone','eq_art','EOT: 1 dmg','fb_sentry','#e0a020','End of turn: deal 1 DMG to enemy active bot.'),
   fb_swarm_bay:     C('fb_swarm_bay','equipment','Swarm Bay','eq_art','SOT: 2 dmg','fb_swarm','#e0a020','Start of your turn: launch a drone dealing 2 DMG to enemy active.'),
@@ -2849,6 +2924,24 @@ const DECKS={
       // Medaforce (2)
       ['fb_overforge_mf',1],['inferno_surge',1],
     ])},
+  blacktide:{bots:['piraskull','pirastar','tentaclam'],mf:'captainsaw',
+    deck:mkDeck([
+      ['bt_plunder_shot',2],['bt_broadside',2],['bt_tide_surge',1],['bt_cannonball',2],
+      ['bt_plunder_all',2],['bt_sea_market',1],['bt_buy_passage',1],['bt_hoarding',2],
+      ['bt_ink_screen',1],['bt_net_trap',1],
+      ['bt_anchor_shot',1],['bt_shell_armor',1],
+      ['mc_piraskull',1],['mc_tentaclam',1],
+      ['mf_broadside',2],
+    ])},
+  senbei:{bots:['kensho','samurai','gobanko','shinsaber'],mf:'dojo_master',
+    deck:mkDeck([
+      ['sb_edge_strike',2],['sb_iron_cut',2],['sb_shadow_draw',1],['sb_dual_kata',2],
+      ['sb_resonance',1],['sb_set_iron',1],['sb_set_edge',1],['sb_set_shadow',1],['sb_zanshin_pulse',2],
+      ['sb_iaijutsu',1],['sb_steel_veil',1],
+      ['sb_senbei_blade',1],['sb_iron_gi',1],
+      ['mc_kensho',1],['mc_samurai',1],
+      ['mf_zanshin',2],
+    ])},
   cross:{bots:['cross_messiah','charge_corne','beetle_gun'],mf:'nova_pilot',
     deck:mkDeck([
       // Charge generation (5)
@@ -2884,10 +2977,14 @@ function mkBot(k){
     _shadowCloneLS:false,_foxFireLS:false,_finalShotLS:false,_comboCount:0,_dualTechUsed:false,_dominionLS:false,_throneArmor:0,_seaslugFired:false};
 }
 function init(){
+  if(G&&G.p) G.p._doubloons=0;
+  if(G&&G.c) G.c._doubloons=0;
+  const dc=document.getElementById('dbl-count');
+  if(dc){dc.style.display=(deck==='blacktide'?'block':'none');dc.textContent='☠ Doubloons: 0';}
   const pd=JSON.parse(JSON.stringify(DECKS[deck]));
   if(typeof applyDeckSwaps==='function'){ pd.deck=shuffle(applyDeckSwaps(deck, pd.deck)); }
   // CPU picks a random deck — can mirror the player's choice
-  const allDecks=['blaze','titan','royal','shadow','throne'];
+  const allDecks=['blaze','titan','royal','shadow','throne','forge','cross','blacktide','senbei'];
   const cpuDeckPick=(typeof G!=='undefined'&&G._forcedCpuDeck)?G._forcedCpuDeck:allDecks[Math.floor(Math.random()*allDecks.length)];
   const cd=JSON.parse(JSON.stringify(DECKS[cpuDeckPick]));
   G={
@@ -3452,6 +3549,9 @@ function endTurn(){
   // Overforge cleanup: shed equipment, restore base ATK
   G.p.bots.forEach(b=>{ if(b._overforged!==undefined){ b.atk=b._overforged; delete b._overforged; if(b.key==='grand_beetle'){b.equips=[];} else {b.equip=null;} log(b.name+' sheds all equipment after Overforge.','eq'); } });
   forgeEndOfTurn('p');
+  // Black Tide: Hoarders Eye
+  applyHoardersEye(G.p);
+  applyHoardersEye(G.c);
   log('Turn ends.','info');
   doCharge('c');drw(G.c,2); // mirrors opponent charge+draw online too
   if(!G_online) setTimeout(cpuTurn,900); // online: opponent plays, not CPU
@@ -3646,6 +3746,7 @@ function atkEnemy(idx){
     log('You can only attack the active bot \u2014 support bots are protected.','info');
     return;
   }
+  if(d.untargetable){log(d.name+' cannot be targeted.','info');return;}
   // If Nin-Ninja has a technique selected, fire it as standalone
   const activeB=getActiveBot('p');
   if(activeB&&activeB.key==='nin_ninja'&&G.p.selCard){
@@ -3786,6 +3887,8 @@ function resolveAtk(a,d,sk,techId){
 
   // Arcbeetle passive: +1 charge after attacking
   if(a.key==='arcbeetle'){addChg(a,1);log('Arcbeetle passive: +1 Charge after attack!','chg');}
+  // Plunder: Black Tide earn Doubloons on attack
+  if(a.medal==='tide'||a.fusedMedal==='tide') applyPlunder(a,sk==='p'?G.p:G.c);
   // Warbandit support draw
   if(a._warbDraw){drw(G.p,1);a._warbDraw=false;log('Warbandit support: drew 1 card!','chg');}
   // Foxuno Battle Remedy: heal lowest-HP ally after attacking
@@ -4519,7 +4622,7 @@ function resolveMF(fx,bonus=0){
 function openSwitch(){
   if(G.phase!=='action'||G.p.switched||alive(G.p).length<=1)return;
   const cur=getActiveBot('p');
-  const others=G.p.bots.map((b,i)=>({b,i})).filter(({b,i})=>!b.def&&i!==G.p.activeBot);
+  const others=G.p.bots.map((b,i)=>({b,i})).filter(({b,i})=>!b.def&&i!==G.p.activeBot&&!b.unswitchable);
   openM('Switch Active Medabot',
     'Move a bot from the support zone to the front.<br>'+
     '<span style="color:var(--text2);font-size:12px">Once per turn. Support bots keep their passives active.<br>'+
@@ -4635,7 +4738,7 @@ function cpuBestAttacker(){
 }
 
 function cpuBestTarget(power){
-  const tgts=alive(G.p);if(!tgts.length)return null;
+  const tgts=alive(G.p).filter(b=>!b.untargetable);if(!tgts.length)return null;
   if(G.tauntActive){const taunt=tgts.find(b=>b.taunting);if(taunt)return taunt;}
   const activeP=getActiveBot('p');
   // EASY: sometimes attack wrong bot or miss best play
@@ -5038,6 +5141,8 @@ function aiDeckBrain(){
   const keys=G.c.bots.map(b=>b.key);
   if(keys.includes('grand_beetle')) return aiBrainForge();
   if(keys.includes('robo_emperor')) return aiBrainThrone();
+  if(keys.includes('piraskull')||keys.includes('tentaclam')) return aiBrainBlackTide();
+  if(keys.includes('kensho')||keys.includes('samurai')) return aiBrainSenbei();
   if(G.c.bots.some(b=>b.medal==='titan')&&keys.includes('rokusho')) return aiBrainTitan();
   if(keys.includes('metabee')&&G.c.bots.some(b=>b.medal==='blaze')) return aiBrainBlaze();
   if(G.c.bots.some(b=>['omegaknight','wargreymon','metalgurumemon'].includes(b.key))) return aiBrainRoyal();
@@ -5101,6 +5206,34 @@ function aiBrainForge(){
   return false;
 }
 
+function aiBrainBlackTide(){
+  const coins=G.c._doubloons||0;
+  const surge=G.c.hand.find(c=>c.key==='bt_tide_surge');
+  const market=G.c.hand.find(c=>c.key==='bt_sea_market');
+  const hoard=G.c.hand.find(c=>c.key==='bt_hoarding');
+  if(coins>=5&&surge){dsc(G.c,surge.uid);G.c._doubloons=0;
+    const t=alive(G.p)[0];if(t){t.hp=Math.max(0,t.hp-8);log('CPU Tide Surge (flush) 8 DMG!','cpu');checkDead();}
+    return false;}
+  if(coins>=3&&market){dsc(G.c,market.uid);G.c._doubloons=(coins-3);drawCards(G.c,3);log('CPU Sea Market: -3 Dbl, draw 3.','cpu');return false;}
+  if(coins>=2&&hoard){dsc(G.c,hoard.uid);G.c._doubloons=(coins-2);
+    const tidBot=alive(G.c).find(b=>b.medal==='tide')||G.c.bots[0];
+    if(tidBot)addChg(tidBot,2);
+    log('CPU Hoarding: -2 Dbl, +2 Charge.','cpu');return false;}
+  aiPlayActionsByValue(['bt_plunder_all']);
+  return false;
+}
+
+function aiBrainSenbei(){
+  const res=G.c.hand.find(c=>c.key==='sb_resonance');
+  const pulse=G.c.hand.find(c=>c.key==='sb_zanshin_pulse');
+  if(res){dsc(G.c,res.uid);setOptimalStances(G.c);log('CPU Resonance Pulse.','cpu');return false;}
+  const bots=alive(G.c);const stances=bots.map(b=>b._stance).filter(Boolean);
+  const inRes=stances.length>=2&&stances.some(st=>stances.filter(s=>s===st).length>=2);
+  if(pulse&&inRes){dsc(G.c,pulse.uid);alive(G.c).forEach(b=>addChg(b,2));log('CPU Zanshin Pulse: +2 Charge all.','cpu');return false;}
+  aiPlayActionsByValue([]);
+  return false;
+}
+
 function aiBrainGeneric(){
   aiPlayActionsByValue([]);
   return false;
@@ -5122,6 +5255,36 @@ function aiPlayActionsByValue(priorityFx){
     if(played>=2) break; // at most 2 actions per turn (action economy)
   }
   return played>0;
+}
+
+// ─── BLACK TIDE helpers ───
+function earnDoubloons(side,amt){
+  side._doubloons=(side._doubloons||0)+amt;
+  if(side===G.p){const el=document.getElementById('dbl-count');if(el)el.textContent='☠ Doubloons: '+side._doubloons;}
+}
+function applyPlunder(attacker,side){
+  const amt=(attacker.key==='pirastar'||attacker.fusedKey==='pirastar')?2:1;
+  const extra=(attacker.equip&&attacker.equip.fx==='bt_anchor')?1:0;
+  earnDoubloons(side,amt+extra);
+  log('☠ Plunder! +'+(amt+extra)+' Dbl. Total: '+(side._doubloons||0),'chg');
+}
+function applyHoardersEye(side){
+  const tc=alive(side).find(b=>b.key==='tentaclam');
+  if(!tc)return;
+  const thresh=(tc.changed)?3:5;
+  if((side._doubloons||0)>=thresh){addChg(tc,1);log('TentaClam Hoarder Eye: +1 Charge!','chg');}
+}
+// ─── SENBEI helpers ───
+function setStance(bot,stance){
+  bot._stance=stance;
+  if(bot.equip&&bot.equip.fx==='sb_senbei_blade')addChg(bot,1);
+}
+function setOptimalStances(side){
+  const stanceMap={kensho:'edge',samurai:'iron',gobanko:'shadow',shinsaber:'edge'};
+  alive(side).forEach(b=>{ if(stanceMap[b.key])setStance(b,stanceMap[b.key]); });
+  const st=alive(side).map(b=>b._stance).filter(Boolean);
+  if(st.some(x=>st.filter(y=>y===x).length>=2))
+    alive(side).filter(b=>b._stance&&st.filter(y=>y===b._stance).length>=2).forEach(b=>addChg(b,1));
 }
 
 // ═══ PRO TURN ORCHESTRATOR (Hard difficulty) ═══
@@ -5975,6 +6138,7 @@ function renderTeam(sk){
   const side=G[sk];
 
   // Assign triangle slots:
+  //   captain (captainSlot) → slot-captain (fixed far-left, always support)
   //   active → slot-active
   //   support bots → slot-support-0, slot-support-1 (left then right)
   //   defeated → slot-dead (stacked in corner)
@@ -5989,6 +6153,10 @@ function renderTeam(sk){
     if(bot.def){
       deadBots.push({wrapper,card});
       wrapper.classList.add('slot-dead');
+    } else if(bot.captainSlot){
+      wrapper.classList.add('slot-captain');
+      wrapper.appendChild(card);
+      el.appendChild(wrapper);
     } else if(idx===side.activeBot){
       wrapper.classList.add('slot-active');
       wrapper.appendChild(card);
@@ -6159,6 +6327,7 @@ function switchActive(sk,newIdx){
   if(sk==='p'&&G_online&&G_myTurn){ MWNet.move({type:'switch',idx:newIdx}); _syncNow(); }
   if(side.bots[side.activeBot]&&side.bots[side.activeBot]._noSwitch){ log('Pinned — cannot switch this turn!','info'); return; }
   if(side.bots[newIdx]&&!side.bots[newIdx].def){
+    if(sk==='p'&&side.bots[newIdx].unswitchable){log(side.bots[newIdx].name+' is a fixed support — cannot move to front.','info');return;}
     // Check web — only CPU bots get webbed (player can always switch)
     if(sk==='c'&&side.bots[newIdx]._webbed>0){log('Cannot switch — '+side.bots[newIdx].name+' is webbed!','info');return;}
     const old=getActiveBot(sk);
