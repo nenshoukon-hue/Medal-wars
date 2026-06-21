@@ -503,7 +503,7 @@ body::after{
 .le-mc{border-color:var(--change);color:var(--change2)}
 
 /* ── TITLE ── */
-#title{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;background:radial-gradient(ellipse 90% 55% at 50% 0%,rgba(120,180,255,.26) 0%,transparent 58%),linear-gradient(180deg,#141c2e,#1a2540);padding:calc(var(--safe-top) + max(20px,4vh)) 20px calc(var(--safe-bot) + 28px)}
+#title{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;background:radial-gradient(ellipse 100% 60% at 50% 0%,rgba(150,188,228,.30) 0%,transparent 60%),linear-gradient(168deg,#313847,#404a5c);padding:calc(var(--safe-top) + max(20px,4vh)) 20px calc(var(--safe-bot) + 28px)}
 #title.gone{display:none}
 .tlogo{font-family:'Orbitron',monospace;font-size:clamp(32px,10vw,60px);font-weight:900;letter-spacing:4px;background:linear-gradient(135deg,var(--storm2),var(--psi2),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;margin-bottom:4px}
 .ttag{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;color:var(--gold);letter-spacing:4px;border:1px solid rgba(240,184,32,.3);padding:3px 12px;border-radius:3px;background:rgba(240,184,32,.06);margin-bottom:32px}
@@ -754,7 +754,7 @@ body::after{
 
 
 /* ═══ REDESIGNED TITLE SCREEN ═══ */
-#title{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(120,180,255,.22),transparent 60%),linear-gradient(180deg,#141c2e,#1a2540);padding:max(16px,env(safe-area-inset-top)) 14px 24px}
+#title{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;background:radial-gradient(ellipse 100% 55% at 50% 0%,rgba(150,188,228,.26),transparent 60%),linear-gradient(168deg,#313847,#404a5c);padding:max(16px,env(safe-area-inset-top)) 14px 24px}
 .tlogo{font-family:'Orbitron',monospace;font-size:clamp(30px,9vw,58px);font-weight:900;letter-spacing:4px;background:linear-gradient(135deg,#60b4ff,#a080ff,#f0a0c0);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-align:center;margin-top:6px;line-height:1}
 .ttag{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;color:var(--gold);border:1px solid rgba(240,176,48,.4);border-radius:6px;padding:5px 14px;margin:8px 0 4px;background:rgba(240,176,48,.06)}
 .title-inner{width:100%;max-width:560px;display:flex;flex-direction:column;align-items:center}
@@ -789,11 +789,11 @@ body::after{
 /* Warm silver-blue command deck — polished chrome with sapphire edge light */
 #title{
   background:
-    radial-gradient(ellipse 90% 55% at 50% 0%, rgba(120,180,255,.28), transparent 58%),
-    radial-gradient(ellipse 60% 40% at 12% 22%, rgba(140,200,255,.14), transparent 55%),
-    radial-gradient(ellipse 60% 40% at 88% 78%, rgba(100,170,240,.12), transparent 55%),
-    repeating-linear-gradient(115deg, rgba(255,255,255,.025) 0 2px, transparent 2px 5px),
-    linear-gradient(170deg, #141c2e 0%, #1a2540 45%, #111928 100%) !important;
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(150,188,228,.32), transparent 60%),
+    radial-gradient(ellipse 70% 48% at 14% 20%, rgba(228,216,198,.16), transparent 56%),
+    radial-gradient(ellipse 70% 48% at 86% 84%, rgba(138,170,212,.18), transparent 56%),
+    repeating-linear-gradient(118deg, rgba(255,250,242,.045) 0 2px, transparent 2px 6px),
+    linear-gradient(168deg, #313847 0%, #404a5c 44%, #2b323f 100%) !important;
 }
 /* faint grid seam behind everything */
 #title::before{
@@ -945,6 +945,49 @@ body::after{
 .hangar-tl{ top:calc(var(--safe-top) + 8px); left:10px; }
 .hangar-tr{ top:calc(var(--safe-top) + 8px); right:10px; text-align:right; }
 
+/* ═══ LIGHT WARM SILVER-BLUE TITLE (bright command-deck look) ═══ */
+/* Backdrop becomes warm brushed silver with pale-blue light; panels/buttons stay
+   as dark frosted glass so every label keeps its contrast. */
+#title{
+  background:
+    radial-gradient(ellipse 120% 72% at 50% -10%, rgba(150,192,236,.55), transparent 60%),
+    radial-gradient(ellipse 82% 55% at 13% 16%, rgba(246,232,208,.58), transparent 58%),
+    radial-gradient(ellipse 82% 55% at 88% 90%, rgba(176,206,238,.46), transparent 58%),
+    repeating-linear-gradient(118deg, rgba(255,255,255,.34) 0 2px, transparent 2px 7px),
+    linear-gradient(168deg, #eceae3 0%, #dde4ec 46%, #e9e3d9 100%) !important;
+}
+#title::before{ opacity:.32 !important; }
+/* Pull the title block up now that the crest + corner tags are gone */
+#title{ padding-top:max(8px, calc(env(safe-area-inset-top) - 4px)) !important; }
+#title .tlogo{ margin-top:0 !important; }
+/* Colorful logo tuned to read on light silver — warm gold → rose → periwinkle → sky */
+#title .tlogo{
+  background:linear-gradient(96deg, #d98a2a 0%, #e07398 30%, #9b80dc 62%, #4f8fcf 100%) !important;
+  -webkit-background-clip:text !important; background-clip:text !important;
+  -webkit-text-fill-color:transparent !important;
+  text-shadow:0 1px 1px rgba(255,255,255,.6), 0 2px 6px rgba(60,80,120,.26) !important;
+  filter:drop-shadow(0 2px 5px rgba(70,100,150,.30)) !important;
+}
+/* Version pill — readable warm-steel-blue on light */
+#title .ttag{
+  color:#3a6097 !important;
+  border-color:rgba(120,160,210,.5) !important;
+  background:rgba(255,255,255,.5) !important;
+  box-shadow:none !important;
+}
+/* Difficulty label + buttons sit directly on the bright backdrop → darken for contrast */
+#title .diff-row .dlabel{ color:#5a708c !important; }
+#title .diff-btn-r{ color:#3f648c !important; border:1px solid rgba(90,140,200,.45) !important; background:rgba(255,255,255,.34) !important; }
+#title .diff-btn-r.on, #title .diff-btn-r:hover{ color:#1f4f86 !important; border-color:rgba(70,130,200,.8) !important; background:rgba(120,170,230,.28) !important; }
+/* Deck panels — keep dark frosted glass, lift them off the bright surface */
+#title .dpk{
+  box-shadow:0 1px 0 rgba(255,255,255,.07) inset, 0 6px 16px rgba(70,90,130,.20) !important;
+}
+#title .dpk.sel{ box-shadow:0 0 22px rgba(110,170,240,.4), 0 0 0 1px rgba(140,200,255,.5) inset, 0 6px 16px rgba(70,90,130,.20) !important; }
+/* Buttons keep dark glass (legible on light) — softer shadow to float on the bright bg */
+#title .sbtn{ box-shadow:0 6px 16px rgba(70,90,130,.24), 0 1px 0 rgba(200,225,255,.2) inset, 0 -2px 6px rgba(0,0,0,.3) inset !important; }
+/* Corner hangar tags already carry their own dark pill — nudge for the light surface */
+#title .hangar-tag{ background:rgba(28,34,46,.6) !important; }
 
 .combo-badge{
   position:absolute;top:5px;right:5px;z-index:5;
@@ -1163,9 +1206,6 @@ body::after{
 <input type="file" id="bg-art-input" accept="image/*" onchange="uploadBattlefieldArt(this)" style="display:none">
 
 <div id="title" style="display:none">
-  <div class="hangar-tag hangar-tl"><b>MW-01</b><br>DECK COMMAND<br>CONTROL SECTOR</div>
-  <div class="hangar-tag hangar-tr">HANGAR <b>07</b><br>SECTOR <b>7A</b><br>STATUS NOMINAL</div>
-  <div class="medal-crest" aria-hidden="true"><span class="mc-hex"></span></div>
   <div class="tlogo"><span class="tl-1">MEDAL</span><span class="tl-2">WARS</span></div>
   <div class="ttag">TCG · MOBILE · BETA</div>
 
@@ -1206,7 +1246,7 @@ body::after{
     </div>
     <div class="dpk" data-deck="senbei" onclick="pickDeck(this)" style="border-color:rgba(176,128,64,.4)">
       <div class="dn" style="color:#c8a058">⚔ Iron Dojo</div>
-      <div class="dd">Kensho · Samurai · Gobanko<br>Stance · Resonance · Zanshin — 3-beat Verdict strike</div>
+      <div class="dd">Dr BokChoy · Samurai · Gobanko<br>Stance · Resonance · Zanshin — 3-beat Verdict strike</div>
     </div>
   </div>
 
@@ -2776,10 +2816,10 @@ const BOTS={
   piraskull:       {name:'Piraskull',      atk:6,medal:'plunder',hpBonus:3,art:'bot_piraskull',      mcart:'bot_piraskull_mc',      color:'#d4a020',passive:"Captain's Cut: your attacks earn +1 extra Doubloon."},
   taraba_craba:    {name:'Pirastar',        atk:5,medal:'plunder',hpBonus:1,art:'bot_taraba_craba',   mcart:'bot_taraba_craba_mc',   color:'#e0603a',passive:'Cannonade: before attacking, may spend 3 Doubloons to deal +5 dmg.'},
   tentaclam:       {name:'TentaClam',      atk:4,medal:'plunder',hpBonus:2,art:'bot_tentaclam',      mcart:'bot_tentaclam_mc',      color:'#3aa0c0',passive:"Hoarder's Eye: end of turn, +1 Doubloon per other living crewmate (max +2)."},
-  kensho:   {name:'Kensho',   atk:6,medal:'senbei',art:'bot_kensho',   mcart:'bot_kensho_mc',   color:'#b08040',passive:'Zanshin Threshold: when all 3 Stances are active, your next Medaforce becomes Zanshin — a 3-turn sequence that assigns Verdicts and strikes simultaneously.'},
-  samurai:  {name:'Samurai',  atk:5,medal:'senbei',art:'bot_samurai',  mcart:'bot_samurai_mc',  color:'#c0a060',passive:'Exposed Stance: after attacking, if in Exposed Stance, strip 1 defense tier from the target.'},
-  gobanko:  {name:'Gobanko',  atk:4,medal:'senbei',hpBonus:2,art:'bot_gobanko',  mcart:'bot_gobanko_mc',  color:'#907030',passive:'Bound Stance: after attacking, if in Bound Stance, the target cannot react on the following turn.'},
-  shinsaber:{name:'Shinsaber',atk:7,medal:'senbei',art:'bot_shinsaber',mcart:'bot_shinsaber_mc',color:'#d0b070',passive:'Execution Stance: while in Execution Stance, attacks are Unblockable.'},
+  kensho:   {name:'Dr BokChoy',   atk:6,medal:'senbei',hpBonus:-16,art:'bot_kensho',   mcart:'bot_kensho_mc',   color:'#b08040',passive:'Zanshin Threshold: when all 3 Stances are active, your next Medaforce becomes Zanshin — a 3-turn sequence that assigns Verdicts and strikes simultaneously.'},
+  samurai:  {name:'Samurai',  atk:7,medal:'senbei',hpBonus:2,art:'bot_samurai',  mcart:'bot_samurai_mc',  color:'#c0a060',passive:'Exposed Stance: after attacking, if in Exposed Stance, strip 1 defense tier from the target.'},
+  gobanko:  {name:'Gobanko',  atk:4,medal:'senbei',hpBonus:6,art:'bot_gobanko',  mcart:'bot_gobanko_mc',  color:'#907030',passive:'Bound Stance: after attacking, if in Bound Stance, the target cannot react on the following turn.'},
+  shinsaber:{name:'Shinsaber',atk:7,medal:'senbei',hpBonus:1,art:'bot_shinsaber',mcart:'bot_shinsaber_mc',color:'#d0b070',passive:'Execution Stance: while in Execution Stance, attacks are Unblockable.'},
 };
 const MFR={
   ikki:{name:'Ikki Tenryou',pass:'Bot ≤5 HP → +1 Charge.'},
@@ -2791,7 +2831,7 @@ const MFR={
   seaslug:{name:'Seaslug',pass:'When Robo Emperor drops below 20 HP, gain 3 Charge and draw 1 card.'},
   kasumi:{name:'Kasumi Asano',pass:'When you play an equipment card, that bot gains +1 Charge.'},
   nova_pilot:{name:'Arase Oosumi',pass:'When a bot reaches max Charge, draw a card and that bot gains +1 ATK.'},
-  senbei_mf: {name:'Senbei',pass:'Resonance: when a Stance activates, all Senbei bots gain +1 Charge. At Zanshin Threshold (all 3 Stances active), Kensho may choose which Verdict targets which enemy.'},
+  senbei_mf: {name:'Principal',pass:'Resonance: when a Stance activates, all Senbei bots gain +1 Charge. At Zanshin Threshold (all 3 Stances active), Dr BokChoy may choose which Verdict targets which enemy.'},
 };
 let _uid=0;
 function uid(){return 'c'+(++_uid);}
@@ -2998,19 +3038,19 @@ const CDEFS={
   ij_interval_step: C('ij_interval_step','technique','Interval Step','wind_art','+2 / Evade','ij_interval','#b08040','Deal +2 dmg. For this turn, incoming damage reduced by 3.'),
   ij_forward_draw:  C('ij_forward_draw','action','Forward Draw','act_art','Draw 2 / Stance','ij_fwdraw','#b08040','Draw 2 cards. If any Stance is active, also draw 1 more.'),
   ij_resonance_wave:C('ij_resonance_wave','action','Resonance Wave','act_art','All +2 Chg','ij_resonance','#c09050','All your bots gain +2 Charge. If all 3 Stances are active, +3 Charge instead.'),
-  ij_zanshin_prep:  C('ij_zanshin_prep','action','Zanshin Preparation','act_art','Ready MF','ij_prep','#d0b070','Kensho gains +3 Charge and reveals the number of Stances currently active. If 3 Stances are active, your next Medaforce costs 0 Charge.'),
+  ij_zanshin_prep:  C('ij_zanshin_prep','action','Zanshin Preparation','act_art','Ready MF','ij_prep','#d0b070','Dr BokChoy gains +3 Charge and reveals the number of Stances currently active. If 3 Stances are active, your next Medaforce costs 0 Charge.'),
   // Trap
   ij_stance_guard:  C('ij_stance_guard','trap','Stance Guard','trap_art','Counter Stance','ij_guard','#b08040','TRAP: negate next enemy attack. If any Stance active, deal 3 back to attacker.'),
   // Equipment
   ij_practice_blade:C('ij_practice_blade','equipment','Practice Blade','eq_art','+2 ATK / Stance','ij_blade','#b08040','Equipped bot gains +2 ATK. While in a Stance, +1 additional ATK.'),
   ij_iron_kote:     C('ij_iron_kote','equipment','Iron Kote','eq_art','-2 DMG taken','ij_kote','#907030','Equipped bot reduces all incoming damage by 2. Gobanko: Bound Stance auto-activates.'),
   // Medachange (one per bot)
-  mc_kensho:        C('mc_kensho','medachange','Kensho Zanshin','mc_card_art','+5ATK +14HP','mc_bot_kensho','#f04880','Fuse with Kensho: +5 ATK, +14 HP. All 3 Stances auto-activate. Zanshin Medaforce becomes True Zanshin (instant KO if one target holds all 3 Verdicts). Losing = instant loss.'),
+  mc_kensho:        C('mc_kensho','medachange','Dr BokChoy Zanshin','mc_card_art','+5ATK +14HP','mc_bot_kensho','#f04880','Fuse with Dr BokChoy: +5 ATK, +14 HP. All 3 Stances auto-activate. Zanshin Medaforce becomes True Zanshin (instant KO if one target holds all 3 Verdicts). Losing = instant loss.'),
   mc_samurai:       C('mc_samurai','medachange','Samurai Edge','mc_card_art','+4ATK +12HP','mc_bot_samurai','#f04880','Fuse with Samurai: +4 ATK, +12 HP. Exposed Stance strips 2 defense tiers instead of 1. Losing = instant loss.'),
   mc_gobanko:       C('mc_gobanko','medachange','Gobanko Ironclad','mc_card_art','+3ATK +16HP','mc_bot_gobanko','#f04880','Fuse with Gobanko: +3 ATK, +16 HP. Bound Stance also drains 2 Charge from the target. Losing = instant loss.'),
   mc_shinsaber:     C('mc_shinsaber','medachange','Shinsaber Final','mc_card_art','+6ATK +10HP','mc_bot_shinsaber','#f04880','Fuse with Shinsaber: +6 ATK, +10 HP. Execution Stance deals +3 bonus on every unblockable strike. Losing = instant loss.'),
   // Medaforce — Zanshin (the 3-beat sequence)
-  mf_zanshin:       C('mf_zanshin','medaforce','Zanshin — The Remaining Cut','mf_art','3-Beat Verdict','mf_zanshin','#d0b070','MEDAFORCE — Zanshin activates in 3 beats. Beat 1: Kensho assigns Verdicts (highest HP→Bound, highest DEF→Exposed, lowest HP→Execution). Beat 2: opponents cannot play normally — all defensive moves backfire in Beat 3. Beat 3: Gobanko Binds, Samurai Exposes, Shinsaber Executes simultaneously. If all 3 Verdicts land on one bot: True Zanshin — instant KO.'),
+  mf_zanshin:       C('mf_zanshin','medaforce','Zanshin — The Remaining Cut','mf_art','3-Beat Verdict','mf_zanshin','#d0b070','MEDAFORCE — Zanshin activates in 3 beats. Beat 1: Dr BokChoy assigns Verdicts (highest HP→Bound, highest DEF→Exposed, lowest HP→Execution). Beat 2: opponents cannot play normally — all defensive moves backfire in Beat 3. Beat 3: Gobanko Binds, Samurai Exposes, Shinsaber Executes simultaneously. If all 3 Verdicts land on one bot: True Zanshin — instant KO.'),
 };
 function mkDeck(list){
   const d=[];
@@ -4207,7 +4247,7 @@ function selBot(idx){
   if(G.phase!=='action'||atked)return;
   const bot=G.p.bots[idx];if(!bot||bot.def)return;
   // Kensho is pinned — cannot be switched to or selected as attacker
-  if(bot.key==='kensho'){log('Kensho watches the flow — he cannot be fronted.','info');return;}
+  if(bot.key==='kensho'){log('Dr BokChoy watches the flow — he cannot be fronted.','info');return;}
   // Clicking a support bot triggers a quick switch (if not already switched this turn)
   if(G.p.activeBot!==idx){
     if(G.p.switched){
@@ -4403,7 +4443,7 @@ function atkEnemy(idx){
   const d=G.c.bots[idx];
   if(!d||d.def)return;
   // Kensho is untargetable — even ranged attacks cannot hit him
-  if(d.key==='kensho'){log('Kensho cannot be targeted — strike at those before you.','info');return;}
+  if(d.key==='kensho'){log('Dr BokChoy cannot be targeted — strike at those before you.','info');return;}
   // Determine if this attack is RANGED (can snipe back-row support bots).
   // Ranged = Seagaru (beetle_gun) attacking, OR a ranged technique card is selected.
   const _atkBot = (G.p.selBot!==null)?G.p.bots[G.p.selBot]:getActiveBot('p');
