@@ -223,6 +223,10 @@ body::after{
 .plr-z .slot-active{bottom:4px;left:50%;transform:translateX(-50%);z-index:3}
 .plr-z .slot-support-0{top:4px;left:18%;z-index:2}
 .plr-z .slot-support-1{top:4px;right:18%;z-index:2}
+/* Kensho anchor — always far left, never active */
+.plr-z .slot-kensho{top:4px;left:2%;z-index:2;pointer-events:none;}
+.cpu-z .slot-kensho{bottom:4px;left:2%;z-index:2;pointer-events:none;}
+.slot-kensho .bc{opacity:.82;cursor:default !important;}
 /* CPU zone: active top-center, supports bottom sides */
 .cpu-z .slot-active{top:4px;left:50%;transform:translateX(-50%);z-index:3}
 .cpu-z .slot-support-0{bottom:4px;left:18%;z-index:2}
@@ -3197,7 +3201,7 @@ const DECKS={
       ['bt_broadside',1],['bt_broadside',1],['bt_broadside',1],
     ])},
   // ── IRON DOJO — Stance / Resonance / Zanshin ──────────────
-  senbei:{bots:['kensho','samurai','gobanko','shinsaber'].slice(0,3),mf:'senbei_mf',
+  senbei:{bots:['kensho','samurai','gobanko','shinsaber'],mf:'senbei_mf',
     deck:mkDeck([
       // Stances — core identity (one per offensive bot, 3 total)
       ['ij_bound_stance',2],   // Gobanko Bound (can run 2 for consistency)
@@ -3215,8 +3219,8 @@ const DECKS={
       ['ij_stance_guard',1],
       // Equipment (1)
       ['ij_practice_blade',1],
-      // Medachange (one per active bot, 3)
-      ['mc_kensho',1],['mc_samurai',1],['mc_gobanko',1],
+      // Medachange (one per active bot, 4)
+      ['mc_kensho',1],['mc_samurai',1],['mc_gobanko',1],['mc_shinsaber',1],
       // Medaforce — Zanshin (2)
       ['mf_zanshin',2],
     ])},
@@ -3273,6 +3277,9 @@ function init(){
     G.c.bots.forEach(b=>{ if(!b.def) b.charge=Math.min(5,(b.charge||0)+1); });
   }
   turn=1;atked=false;actionsLeft=1;G._lsBannerThisTurn=false;logs=[];G.p._evolveCount=0;G.c._evolveCount=0;
+  // Kensho is pinned — senbei deck starts with Samurai (index 1) as active bot
+  if(G.p.bots[0]&&G.p.bots[0].key==='kensho') G.p.activeBot=1;
+  if(G.c.bots[0]&&G.c.bots[0].key==='kensho') G.c.activeBot=1;
 }
 
 // ═══ HELPERS ═══
@@ -3555,7 +3562,7 @@ function defeat(bot,sk){
   ['p','c'].forEach(sk=>{
     const si=G[sk];
     if(si.bots.includes(bot)&&si.activeBot===si.bots.indexOf(bot)){
-      const nextAlive=si.bots.findIndex((b,i)=>!b.def&&i!==si.bots.indexOf(bot));
+      const nextAlive=si.bots.findIndex((b,i)=>!b.def&&i!==si.bots.indexOf(bot)&&b.key!=='kensho');
       if(nextAlive>=0){si.activeBot=nextAlive;log(si.bots[nextAlive].name+' steps up to front!','chg');}
     }
   });
@@ -4199,6 +4206,8 @@ function endTurn(){
 function selBot(idx){
   if(G.phase!=='action'||atked)return;
   const bot=G.p.bots[idx];if(!bot||bot.def)return;
+  // Kensho is pinned — cannot be switched to or selected as attacker
+  if(bot.key==='kensho'){log('Kensho watches the flow — he cannot be fronted.','info');return;}
   // Clicking a support bot triggers a quick switch (if not already switched this turn)
   if(G.p.activeBot!==idx){
     if(G.p.switched){
@@ -4393,6 +4402,8 @@ function atkEnemy(idx){
   if(G_online&&!G_myTurn){log('Not your turn.','info');return;}
   const d=G.c.bots[idx];
   if(!d||d.def)return;
+  // Kensho is untargetable — even ranged attacks cannot hit him
+  if(d.key==='kensho'){log('Kensho cannot be targeted — strike at those before you.','info');return;}
   // Determine if this attack is RANGED (can snipe back-row support bots).
   // Ranged = Seagaru (beetle_gun) attacking, OR a ranged technique card is selected.
   const _atkBot = (G.p.selBot!==null)?G.p.bots[G.p.selBot]:getActiveBot('p');
@@ -7234,8 +7245,20 @@ function renderTeam(sk){
     const card=mkBotEl(bot,idx,sk);
 
     if(bot.def){
-      deadBots.push({wrapper,card});
-      wrapper.classList.add('slot-dead');
+      // Kensho dead: anchor position, greyed
+      if(bot.key==='kensho'){
+        wrapper.classList.add('slot-kensho','slot-dead');
+        wrapper.appendChild(card);
+        el.appendChild(wrapper);
+      } else {
+        deadBots.push({wrapper,card});
+        wrapper.classList.add('slot-dead');
+      }
+    } else if(bot.key==='kensho'){
+      // Kensho always pinned far-left, never in active/support rotation
+      wrapper.classList.add('slot-kensho');
+      wrapper.appendChild(card);
+      el.appendChild(wrapper);
     } else if(idx===side.activeBot){
       wrapper.classList.add('slot-active');
       wrapper.appendChild(card);
@@ -7271,11 +7294,11 @@ function mkBotEl(bot,idx,sk){
   if(isActive)cls+=' active-bot';
   if(isSupport)cls+=' support-bot';
   if(!bot.def){
-    if(sk==='p'){
+    if(sk==='p'&&bot.key!=='kensho'){
       if(G.p.selBot===idx)cls+=' sel';
       else if(!atked)cls+=' clickable';
     }
-    if(sk==='c'&&G.p.selBot!==null&&!atked&&isActive)cls+=' target';
+    if(sk==='c'&&G.p.selBot!==null&&!atked&&isActive&&bot.key!=='kensho')cls+=' target';
   }
   div.className=cls;
   const isMob=window.innerWidth<600;
