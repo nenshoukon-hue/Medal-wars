@@ -8495,9 +8495,9 @@ function renderDeckPreview(dk){
   {
     const df=(typeof DECK_DIFFICULTY!=='undefined')?DECK_DIFFICULTY[dk]:null;
     if(df){
-      const colors={1:'#40d088',2:'#f0c040',3:'#f0883c',4:'#ff5050'};
+      const colors={1:'#40d088',2:'#f0c040',3:'#f0883c',4:'#ff5050',5:'#ff3030'};
       const col=colors[df.stars]||'#aaa';
-      const filled='\u2605'.repeat(df.stars), empty='\u2606'.repeat(4-df.stars);
+      const filled='\u2605'.repeat(df.stars), empty='\u2606'.repeat(Math.max(0,4-df.stars));
       diffHtml='<div style="display:flex;flex-direction:column;align-items:center;gap:2px;margin-bottom:6px">'+
         '<div style="font-size:11px;letter-spacing:1px"><span style="color:'+col+'">'+filled+'</span><span style="color:#444">'+empty+'</span></div>'+
         '<div style="font-size:9px;font-weight:700;color:'+col+';letter-spacing:.5px">'+df.tier.toUpperCase()+'</div>'+
