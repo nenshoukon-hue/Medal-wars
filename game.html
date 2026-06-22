@@ -1151,6 +1151,10 @@ body::after{
 .cfx-kanji{position:absolute;left:50%;top:45%;font-family:'Orbitron','Noto Serif JP',serif;font-weight:900;font-size:96px;color:var(--cfx,#d0b070);text-shadow:0 0 24px var(--cfx,#d0b070),0 2px 8px rgba(0,0,0,.55);transform:translate(-50%,-50%) scale(.4);opacity:0;animation:cfxPop .85s cubic-bezier(.3,.8,.25,1) forwards;letter-spacing:2px}
 .cfx-stance-ring{position:absolute;left:50%;top:50%;width:154px;height:154px;border-radius:50%;border:5px solid var(--cfx,#d0b070);box-shadow:0 0 32px var(--cfx,#d0b070),inset 0 0 26px var(--cfx,#d0b070);transform:translate(-50%,-50%) scale(.2);opacity:0;animation:cfxRing .7s ease-out forwards}
 .cfx-reso-wave{position:absolute;left:50%;top:52%;width:42vw;height:42vw;border-radius:50%;border:3px solid var(--cfx,#d8b860);box-shadow:0 0 22px var(--cfx,#d8b860);transform:translate(-50%,-50%) scale(.2);opacity:0;animation:cfxRing .8s ease-out forwards}
+/* Persistent per-bot Stance aura — pulses in the stance's colour while active */
+.bc .stance-aura{position:absolute;inset:0;border-radius:10px;pointer-events:none;z-index:3;border:2px solid var(--stance-col,#b08040);box-shadow:inset 0 0 16px -3px var(--stance-col,#b08040),inset 0 0 6px var(--stance-col,#b08040),0 0 10px -2px var(--stance-col,#b08040);opacity:.55;animation:stanceAura 1.9s ease-in-out infinite}
+@keyframes stanceAura{0%,100%{opacity:.4}50%{opacity:.95}}
+.btag.tgstance{font-weight:800;letter-spacing:.4px}
 </style>
 </head>
 <body>
@@ -3055,7 +3059,7 @@ const CDEFS={
   mc_gobanko:       C('mc_gobanko','medachange','Gobanko Ironclad','mc_card_art','+3ATK +16HP','mc_bot_gobanko','#f04880','Fuse with Gobanko: +3 ATK, +16 HP. Bound Stance also drains 2 Charge from the target. Losing = instant loss.'),
   mc_shinsaber:     C('mc_shinsaber','medachange','Shinsaber Final','mc_card_art','+6ATK +10HP','mc_bot_shinsaber','#f04880','Fuse with Shinsaber: +6 ATK, +10 HP. Execution Stance deals +3 bonus on every unblockable strike. Losing = instant loss.'),
   // Medaforce — Zanshin (the 3-beat sequence)
-  mf_zanshin:       C('mf_zanshin','medaforce','Zanshin — The Remaining Cut','mf_art','3-Beat Verdict','mf_zanshin','#d0b070','MEDAFORCE — Zanshin activates in 3 beats. Beat 1: Dr BokChoy assigns Verdicts (highest HP→Bound, highest DEF→Exposed, lowest HP→Execution). Beat 2: opponents cannot play normally — all defensive moves backfire in Beat 3. Beat 3: Gobanko Binds, Samurai Exposes, Shinsaber Executes simultaneously. If all 3 Verdicts land on one bot: True Zanshin — instant KO.'),
+  mf_zanshin:       C('mf_zanshin','medaforce','Zanshin — The Remaining Cut','mf_art','3-Beat Verdict','mf_zanshin','#d0b070','MEDAFORCE — Zanshin, the 3-beat Verdict. Unblockable, and scales with active Stances: 4 + 2 per Stance to EVERY enemy. • 3 Stances (Threshold) → 10 to each (caster Charge spent, all Stances cleared). • Fewer Stances → 6 with one, 8 with two. • Full setup vs a single remaining enemy → True Zanshin: instant KO.'),
 };
 function mkDeck(list){
   const d=[];
@@ -5621,7 +5625,7 @@ function resolveMF(fx,bonus=0){
       setTimeout(()=>{ try{ dmg(t,9999,'c'); clearStances('p'); checkWin(); renderAll(); if(G_online&&G_myTurn)_syncNow(); }catch(e){} }, 720);
       return;
     }
-    const per=Math.min(mfCap,(full?6:3)*mfMult);
+    const per=Math.min(mfCap,(4 + 2*(G.p._zanshinReady?3:sc))*mfMult);
     log('ZANSHIN '+(full?'\u2014 full Verdict':'(partial)')+' strike: '+per+' unblockable to every enemy.','atk');
     banner(full?'ZANSHIN!':'ZANSHIN (partial)','#d0b070');
     foes.forEach((t,i)=>{
@@ -6904,7 +6908,7 @@ function aiProMedaforce(){
   if(caster.medal==='psycho'||caster.fusedMedal==='psycho')drw(G.c,1);
   const fx=mf.fx;
   if(fx==='mf_blaze'){const t=alive(G.p).sort((a,b)=>(b.charge*2+b.atk)-(a.charge*2+a.atk))[0];if(t){G._curAtkr=caster;dmg(t,8+bonus,'p');G._curAtkr=null;}}
-  else if(fx==='mf_lightning')alive(G.p).forEach(b=>{G._curAtkr=caster;dmg(b,4+bonus,'p');G._curAtkr=null;});else if(fx==='mf_zanshin'){const _z=((typeof stanceCount==='function'&&stanceCount('c')>=3)?6:3)+bonus;alive(G.p).forEach(b=>{G._curAtkr=caster;G._pierceDmg=true;dmg(b,_z,'p');G._pierceDmg=false;b.exhst=true;G._curAtkr=null;});log('CPU ZANSHIN: '+_z+' unblockable to all enemies!','cpu');banner('CPU ZANSHIN!','#d0b070');try{if(typeof clearStances==='function')clearStances('c');}catch(e){}}
+  else if(fx==='mf_lightning')alive(G.p).forEach(b=>{G._curAtkr=caster;dmg(b,4+bonus,'p');G._curAtkr=null;});else if(fx==='mf_zanshin'){const _z=(4+2*(G.c._zanshinReady?3:(typeof stanceCount==='function'?stanceCount('c'):0)))+bonus;alive(G.p).forEach(b=>{G._curAtkr=caster;G._pierceDmg=true;dmg(b,_z,'p');G._pierceDmg=false;b.exhst=true;G._curAtkr=null;});log('CPU ZANSHIN: '+_z+' unblockable to all enemies!','cpu');banner('CPU ZANSHIN!','#d0b070');try{if(typeof clearStances==='function')clearStances('c');}catch(e){}}
   else if(fx==='mf_psycho'){const t=alive(G.p)[0];if(t)alive(G.p).filter(x=>x!==t).forEach(x=>dmg(x,t.atk,'p'));}
   else if(fx==='mf_titan')alive(G.p).forEach(b=>b.exhst=true);
   else if(fx==='mf_aqua')alive(G.c).forEach(b=>{b.hp=Math.min(b.maxHp,b.hp+4+bonus);});
@@ -7010,7 +7014,7 @@ function cpuTurn(){
       const hasDigiStrike=mfs.find(c=>c.fx==='mf_digistrike');
       const digiStrikers=alive(G.c).filter(b=>['omegaknight','wargreymon','metalgurumemon'].includes(b.key)).length;
       const pref=hasDigiStrike&&digiStrikers>=2?hasDigiStrike:
-        pA>1?mfs.find(c=>c.fx==='mf_lightning'):mfs.find(c=>c.fx==='mf_blaze');const mf=pref||mfs[0];dsc(G.c,mf.uid);ign[0].charge=0;log('CPU MF: '+mf.name+'!','cpu');banner('CPU MEDAFORCE!','#f04040');const _mfTrap=checkPlayerTraps('medaforce',ign[0]);if(_mfTrap.negate){setTimeout(cpuAtk,1300);return;}let bonus=0;if(ign[0].equip&&ign[0].equip.fx==='eq_lens'){bonus=3;ign[0].equip=null;}if(mf.fx==='mf_blaze'){const t=alive(G.p).sort((a,b)=>(b.charge*2+b.atk)-(a.charge*2+a.atk))[0];if(t)dmg(t,7+bonus,'p');}else if(mf.fx==='mf_lightning')alive(G.p).forEach(b=>dmg(b,4+bonus,'p'));else if(mf.fx==='mf_zanshin'){const _z=((typeof stanceCount==='function'&&stanceCount('c')>=3)?6:3)+bonus;alive(G.p).forEach(b=>{G._curAtkr=ign[0];G._pierceDmg=true;dmg(b,_z,'p');G._pierceDmg=false;b.exhst=true;G._curAtkr=null;});log('CPU ZANSHIN!','cpu');banner('CPU ZANSHIN!','#d0b070');try{if(typeof clearStances==='function')clearStances('c');}catch(e){}}else if(mf.fx==='mf_titan')alive(G.p).forEach(b=>b.exhst=true);setTimeout(cpuAtk,1300);return;}}cpuAtk();},500);
+        pA>1?mfs.find(c=>c.fx==='mf_lightning'):mfs.find(c=>c.fx==='mf_blaze');const mf=pref||mfs[0];dsc(G.c,mf.uid);ign[0].charge=0;log('CPU MF: '+mf.name+'!','cpu');banner('CPU MEDAFORCE!','#f04040');const _mfTrap=checkPlayerTraps('medaforce',ign[0]);if(_mfTrap.negate){setTimeout(cpuAtk,1300);return;}let bonus=0;if(ign[0].equip&&ign[0].equip.fx==='eq_lens'){bonus=3;ign[0].equip=null;}if(mf.fx==='mf_blaze'){const t=alive(G.p).sort((a,b)=>(b.charge*2+b.atk)-(a.charge*2+a.atk))[0];if(t)dmg(t,7+bonus,'p');}else if(mf.fx==='mf_lightning')alive(G.p).forEach(b=>dmg(b,4+bonus,'p'));else if(mf.fx==='mf_zanshin'){const _z=(4+2*(G.c._zanshinReady?3:(typeof stanceCount==='function'?stanceCount('c'):0)))+bonus;alive(G.p).forEach(b=>{G._curAtkr=ign[0];G._pierceDmg=true;dmg(b,_z,'p');G._pierceDmg=false;b.exhst=true;G._curAtkr=null;});log('CPU ZANSHIN!','cpu');banner('CPU ZANSHIN!','#d0b070');try{if(typeof clearStances==='function')clearStances('c');}catch(e){}}else if(mf.fx==='mf_titan')alive(G.p).forEach(b=>b.exhst=true);setTimeout(cpuAtk,1300);return;}}cpuAtk();},500);
     return;
   }
 
@@ -7046,7 +7050,7 @@ function cpuTurn(){
           const t=alive(G.p).sort((a,b)=>(b.charge*2+b.atk)-(a.charge*2+a.atk))[0];
           if(t)dmg(t,8+bonus,'p');
         }
-        else if(fx==='mf_lightning') alive(G.p).forEach(b=>dmg(b,4+bonus,'p'));else if(fx==='mf_zanshin'){const _z=((typeof stanceCount==='function'&&stanceCount('c')>=3)?6:3)+bonus;alive(G.p).forEach(b=>{G._curAtkr=caster;G._pierceDmg=true;dmg(b,_z,'p');G._pierceDmg=false;b.exhst=true;G._curAtkr=null;});log('CPU ZANSHIN: '+_z+' unblockable to all enemies!','cpu');banner('CPU ZANSHIN!','#d0b070');try{if(typeof clearStances==='function')clearStances('c');}catch(e){}}
+        else if(fx==='mf_lightning') alive(G.p).forEach(b=>dmg(b,4+bonus,'p'));else if(fx==='mf_zanshin'){const _z=(4+2*(G.c._zanshinReady?3:(typeof stanceCount==='function'?stanceCount('c'):0)))+bonus;alive(G.p).forEach(b=>{G._curAtkr=caster;G._pierceDmg=true;dmg(b,_z,'p');G._pierceDmg=false;b.exhst=true;G._curAtkr=null;});log('CPU ZANSHIN: '+_z+' unblockable to all enemies!','cpu');banner('CPU ZANSHIN!','#d0b070');try{if(typeof clearStances==='function')clearStances('c');}catch(e){}}
         else if(fx==='mf_xburst'){ const hasMB=G.c.bots.some(b=>b._masterbeetle&&!b.def); const t=getActiveBot('p'); if(t){ if(hasMB)G._pierceDmg=true; dmg(t,(hasMB?12:7)+bonus,'p'); G._pierceDmg=false; } }
         else if(fx==='mf_mastercannon'){ const hasMaster=G.c.bots.some(b=>b._masterMode&&!b.def); alive(G.p).forEach(b=>dmg(b,(hasMaster?11:6)+bonus,'p')); }
         else if(fx==='mf_psycho'){const t=alive(G.p)[0];if(t)alive(G.p).filter(x=>x!==t).forEach(x=>dmg(x,t.atk,'p'));}
@@ -7143,7 +7147,7 @@ function cpuTurnLegacy(){
       const hasDigiStrike=mfs.find(c=>c.fx==='mf_digistrike');
       const digiStrikers=alive(G.c).filter(b=>['omegaknight','wargreymon','metalgurumemon'].includes(b.key)).length;
       const pref=hasDigiStrike&&digiStrikers>=2?hasDigiStrike:
-        pA>1?mfs.find(c=>c.fx==='mf_lightning'):mfs.find(c=>c.fx==='mf_blaze');const mf=pref||mfs[0];dsc(G.c,mf.uid);ign[0].charge=0;log('CPU MF: '+mf.name+'!','cpu');banner('CPU MEDAFORCE!','#f04040');const _mfTrap=checkPlayerTraps('medaforce',ign[0]);if(_mfTrap.negate){setTimeout(cpuAtk,1300);return;}let bonus=0;if(ign[0].equip&&ign[0].equip.fx==='eq_lens'){bonus=3;ign[0].equip=null;}if(mf.fx==='mf_blaze'){const t=alive(G.p).sort((a,b)=>(b.charge*2+b.atk)-(a.charge*2+a.atk))[0];if(t)dmg(t,7+bonus,'p');}else if(mf.fx==='mf_lightning')alive(G.p).forEach(b=>dmg(b,4+bonus,'p'));else if(mf.fx==='mf_zanshin'){const _z=((typeof stanceCount==='function'&&stanceCount('c')>=3)?6:3)+bonus;alive(G.p).forEach(b=>{G._curAtkr=ign[0];G._pierceDmg=true;dmg(b,_z,'p');G._pierceDmg=false;b.exhst=true;G._curAtkr=null;});log('CPU ZANSHIN!','cpu');banner('CPU ZANSHIN!','#d0b070');try{if(typeof clearStances==='function')clearStances('c');}catch(e){}}else if(mf.fx==='mf_titan')alive(G.p).forEach(b=>b.exhst=true);setTimeout(cpuAtk,1300);return;}}cpuAtk();},500);
+        pA>1?mfs.find(c=>c.fx==='mf_lightning'):mfs.find(c=>c.fx==='mf_blaze');const mf=pref||mfs[0];dsc(G.c,mf.uid);ign[0].charge=0;log('CPU MF: '+mf.name+'!','cpu');banner('CPU MEDAFORCE!','#f04040');const _mfTrap=checkPlayerTraps('medaforce',ign[0]);if(_mfTrap.negate){setTimeout(cpuAtk,1300);return;}let bonus=0;if(ign[0].equip&&ign[0].equip.fx==='eq_lens'){bonus=3;ign[0].equip=null;}if(mf.fx==='mf_blaze'){const t=alive(G.p).sort((a,b)=>(b.charge*2+b.atk)-(a.charge*2+a.atk))[0];if(t)dmg(t,7+bonus,'p');}else if(mf.fx==='mf_lightning')alive(G.p).forEach(b=>dmg(b,4+bonus,'p'));else if(mf.fx==='mf_zanshin'){const _z=(4+2*(G.c._zanshinReady?3:(typeof stanceCount==='function'?stanceCount('c'):0)))+bonus;alive(G.p).forEach(b=>{G._curAtkr=ign[0];G._pierceDmg=true;dmg(b,_z,'p');G._pierceDmg=false;b.exhst=true;G._curAtkr=null;});log('CPU ZANSHIN!','cpu');banner('CPU ZANSHIN!','#d0b070');try{if(typeof clearStances==='function')clearStances('c');}catch(e){}}else if(mf.fx==='mf_titan')alive(G.p).forEach(b=>b.exhst=true);setTimeout(cpuAtk,1300);return;}}cpuAtk();},500);
     return;
   }
 
@@ -7179,7 +7183,7 @@ function cpuTurnLegacy(){
           const t=alive(G.p).sort((a,b)=>(b.charge*2+b.atk)-(a.charge*2+a.atk))[0];
           if(t)dmg(t,8+bonus,'p');
         }
-        else if(fx==='mf_lightning') alive(G.p).forEach(b=>dmg(b,4+bonus,'p'));else if(fx==='mf_zanshin'){const _z=((typeof stanceCount==='function'&&stanceCount('c')>=3)?6:3)+bonus;alive(G.p).forEach(b=>{G._curAtkr=caster;G._pierceDmg=true;dmg(b,_z,'p');G._pierceDmg=false;b.exhst=true;G._curAtkr=null;});log('CPU ZANSHIN: '+_z+' unblockable to all enemies!','cpu');banner('CPU ZANSHIN!','#d0b070');try{if(typeof clearStances==='function')clearStances('c');}catch(e){}}
+        else if(fx==='mf_lightning') alive(G.p).forEach(b=>dmg(b,4+bonus,'p'));else if(fx==='mf_zanshin'){const _z=(4+2*(G.c._zanshinReady?3:(typeof stanceCount==='function'?stanceCount('c'):0)))+bonus;alive(G.p).forEach(b=>{G._curAtkr=caster;G._pierceDmg=true;dmg(b,_z,'p');G._pierceDmg=false;b.exhst=true;G._curAtkr=null;});log('CPU ZANSHIN: '+_z+' unblockable to all enemies!','cpu');banner('CPU ZANSHIN!','#d0b070');try{if(typeof clearStances==='function')clearStances('c');}catch(e){}}
         else if(fx==='mf_xburst'){ const hasMB=G.c.bots.some(b=>b._masterbeetle&&!b.def); const t=getActiveBot('p'); if(t){ if(hasMB)G._pierceDmg=true; dmg(t,(hasMB?12:7)+bonus,'p'); G._pierceDmg=false; } }
         else if(fx==='mf_mastercannon'){ const hasMaster=G.c.bots.some(b=>b._masterMode&&!b.def); alive(G.p).forEach(b=>dmg(b,(hasMaster?11:6)+bonus,'p')); }
         else if(fx==='mf_psycho'){const t=alive(G.p)[0];if(t)alive(G.p).filter(x=>x!==t).forEach(x=>dmg(x,t.atk,'p'));}
@@ -7505,6 +7509,8 @@ function mkBotEl(bot,idx,sk){
   else if(bot.equip)cls+=' equipped';
   if(isActive)cls+=' active-bot';
   if(isSupport)cls+=' support-bot';
+  const _stInfo=(!bot.def&&bot._stance&&typeof SENBEI_STANCES==='object')?SENBEI_STANCES[bot._stance]:null;
+  if(_stInfo)cls+=' in-stance';
   if(!bot.def){
     if(sk==='p'&&bot.key!=='kensho'){
       if(G.p.selBot===idx)cls+=' sel';
@@ -7513,6 +7519,7 @@ function mkBotEl(bot,idx,sk){
     if(sk==='c'&&G.p.selBot!==null&&!atked&&isActive&&bot.key!=='kensho')cls+=' target';
   }
   div.className=cls;
+  if(_stInfo)div.style.setProperty('--stance-col',_stInfo.color);
   const isMob=window.innerWidth<600;
   const isAct=G[sk].activeBot===idx&&!bot.def;
   const baseBotW=isMob?96:114; // uniform size — active bot is shown by highlight, not by resizing
@@ -7536,7 +7543,7 @@ function mkBotEl(bot,idx,sk){
   const _eqList=(typeof botEquips==='function')?botEquips(bot):(bot.equip?[bot.equip]:[]);
   const equipBadge=(_eqList.length&&!bot.def)?`<div class="equip-badge" title="${_eqList.map(e=>e.name).join(', ')}">\u{1F527}${_eqList.length>1?'<span style="font-size:8px;font-weight:800;margin-left:1px">'+_eqList.length+'</span>':''}</div>`:'';
   const comboBadge=(bot.key==='gokudo'&&!bot.def&&(bot._comboCount||0)>0)?`<div class="combo-badge" title="Combo Cannon: +${bot._comboCount} DMG on next attack">\u{1F525}${bot._comboCount}${bot.changed?'\u26a1':''}</div>`:'';
-  div.innerHTML=`${equipBadge}${comboBadge}${botArtHtml}
+  div.innerHTML=`${_stInfo?'<div class="stance-aura"></div>':''}${equipBadge}${comboBadge}${botArtHtml}
 <div class="binfo" title="Click 🎨 Art to change bot artwork">
   <div class="btop">
     <span class="bname" style="color:${bot.color}${bot.changed?';text-shadow:0 0 8px '+bot.color:''}">${bot.name}${bot.changed?'⚡':''}</span><span class="bpassive-i" onclick="event.stopPropagation();showBotPassive('${sk}',${idx})" style="margin-left:4px;font-size:10px;color:var(--text3);cursor:pointer;border:1px solid var(--text3);border-radius:50%;width:13px;height:13px;display:inline-flex;align-items:center;justify-content:center;line-height:1">\u24d8</span>
@@ -7553,6 +7560,7 @@ function mkBotEl(bot,idx,sk){
   <div class="pips">${pips}</div>
   ${(bot.medal==='plunder'&&isActive)?`<div class="coin-badge" title="Doubloons">${(typeof coinArtUrl==='function'&&coinArtUrl())?`<img src="${coinArtUrl()}" class="coin-badge-icon">`:'🪙'} ${coins(sk)}</div>`:''}
   <div class="btags">
+    ${_stInfo?`<span class="btag tgstance" style="background:${_stInfo.color}26;color:${_stInfo.color};border:1px solid ${_stInfo.color}88">${_stInfo.kanji} ${_stInfo.label.toUpperCase()}</span>`:''}
     ${(bot.burn||bot._burnLinger)&&!bot.def?'<span class="btag tgbn">🔥 BURN'+(bot.burn&&bot.burnAmt>1?' '+bot.burnAmt:'')+'</span>':''}
     ${bot.key==='machairodus'&&(bot._stalkReady||bot._stalwaysOn)&&!bot.def?'<span class="btag" style="background:rgba(176,96,240,.2);color:#c89cff;border:1px solid rgba(176,96,240,.5)">\ud83d\udc41\ufe0f STALK +3</span>':''}
     ${bot._predatorMark&&!bot.def?'<span class="btag" style="background:rgba(144,80,208,.22);color:#c090ff;border:1px solid rgba(144,80,208,.5)">\ud83c\udfaf MARKED</span>':''}
