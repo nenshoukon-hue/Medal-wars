@@ -7926,7 +7926,7 @@ function renderLog(){
 // ═══ MODAL ═══
 
 // ── In-game menu (☰): decklist viewer, surrender, music, rules ──
-const DECK_GUIDE = {"blaze": {"name": "BLAZE CHAIN", "color": "#f06424", "mf": "Ikki", "plan": "Burn aggro. Ignite enemies early, then Metabee\u2019s passive adds damage to every burning target. Chain techniques for burst and close with Medachange.", "combo": "Flame Whip (burn ALL) \u2192 Scorch a burning target for 8 free \u2192 Metabee passive fires on each burning bot."}, "titan": {"name": "TITAN GUARD", "color": "#8090a0", "mf": "Henry", "plan": "Defensive bruiser. Soak hits, drain enemy Charge with Iron Strike, and grind value as Sumilidon/Machairodus scale in Last Stand.", "combo": "Iron Strike to strip 2 Charge \u2192 Guard Break their wall \u2192 Machairodus Last Stand bonus swings the race."}, "royal": {"name": "ROYAL COURT", "color": "#f0b020", "mf": "Tai", "plan": "Charge-control midrange. Build Charge across the team, protect Omegaknight\u2019s Vanguard, then convert with a big Medaforce turn.", "combo": "Royal Decree (draw 2, +1 Charge all) \u2192 Medaforce with Medal Lens bonus \u2192 WarGreymon Digi-Core finish."}, "shadow": {"name": "SHADOW BLADE", "color": "#9050d0", "mf": "Karin", "plan": "Tempo combo. Nin-Ninja chains multiple techniques per turn, Foxuno heals to outlast, Gokudo punishes with combo triggers.", "combo": "Nin-Ninja plays 2\u20133 techniques in one turn \u2192 Karin 3-card trigger draws \u2192 Gokudo combo count detonates."}, "throne": {"name": "IRON THRONE", "color": "#30b050", "mf": "Seaslug", "plan": "Solo emperor control. Robo Emperor tanks alone, drawing extra cards as it\u2019s wounded, snowballing Charge into unblockable Medaforce.", "combo": "Take damage \u2192 Seaslug wound-draws fuel the hand \u2192 Emperor Decree (+3 cards) \u2192 unblockable MF for lethal."},"forge":{"name":"FORGE BARONS","color":"#e0a020","mf":"Kasumi Asano","plan":"Equipment engine. Bolt gear onto Grand Beetle (holds 3), trigger start/end-of-turn effects, and cross Forge Counter thresholds (3+ team ATK, 5+ unblockable) to build an unstoppable juggernaut.","combo":"Stack 5+ equipment \u2192 Forge Core makes attacks unblockable \u2192 Overforge doubles ATK for a one-shot finish."},"senbei":{"name":"IRON DOJO","color":"#b08040","mf":"Senbei","plan":"Stance-Resonance-Zanshin. Shift each bot into their Stance (Bound/Exposed/Execution), build Charge through Resonance, reach Zanshin Threshold when all 3 are active, then fire Zanshin\u2019s 3-beat Verdict sequence.","combo":"All 3 Stances active (Threshold) \u2192 Zanshin fires: Beat 1 assigns Verdicts \u2192 Beat 2 the opponent can\u2019t play normally \u2192 Beat 3 Gobanko/Samurai/Shinsaber strike simultaneously. If all Verdicts converge on one bot: True Zanshin \u2014 instant KO."}};
+const DECK_GUIDE = {"blaze": {"name": "BLAZE CHAIN", "color": "#f06424", "mf": "Ikki", "plan": "Burn aggro. Ignite enemies early, then Metabee\u2019s passive adds damage to every burning target. Chain techniques for burst and close with Medachange.", "combo": "Flame Whip (burn ALL) \u2192 Scorch a burning target for 8 free \u2192 Metabee passive fires on each burning bot."}, "titan": {"name": "TITAN GUARD", "color": "#8090a0", "mf": "Henry", "plan": "Defensive bruiser. Soak hits, drain enemy Charge with Iron Strike, and grind value as Sumilidon/Machairodus scale in Last Stand.", "combo": "Iron Strike to strip 2 Charge \u2192 Guard Break their wall \u2192 Machairodus Last Stand bonus swings the race."}, "royal": {"name": "ROYAL COURT", "color": "#f0b020", "mf": "Tai", "plan": "Charge-control midrange. Build Charge across the team, protect Omegaknight\u2019s Vanguard, then convert with a big Medaforce turn.", "combo": "Royal Decree (draw 2, +1 Charge all) \u2192 Medaforce with Medal Lens bonus \u2192 WarGreymon Digi-Core finish."}, "shadow": {"name": "SHADOW BLADE", "color": "#9050d0", "mf": "Karin", "plan": "Tempo combo. Nin-Ninja chains multiple techniques per turn, Foxuno heals to outlast, Gokudo punishes with combo triggers.", "combo": "Nin-Ninja plays 2\u20133 techniques in one turn \u2192 Karin 3-card trigger draws \u2192 Gokudo combo count detonates."}, "throne": {"name": "IRON THRONE", "color": "#30b050", "mf": "Seaslug", "plan": "Solo emperor control. Robo Emperor tanks alone, drawing extra cards as it\u2019s wounded, snowballing Charge into unblockable Medaforce.", "combo": "Take damage \u2192 Seaslug wound-draws fuel the hand \u2192 Emperor Decree (+3 cards) \u2192 unblockable MF for lethal."},"forge":{"name":"FORGE BARONS","color":"#e0a020","mf":"Kasumi Asano","plan":"Equipment engine. Bolt gear onto Grand Beetle (holds 3), trigger start/end-of-turn effects, and cross Forge Counter thresholds (3+ team ATK, 5+ unblockable) to build an unstoppable juggernaut.","combo":"Stack 5+ equipment \u2192 Forge Core makes attacks unblockable \u2192 Overforge doubles ATK for a one-shot finish."},"senbei":{"name":"IRON DOJO","color":"#b08040","mf":"Senbei","plan":"Stance-Resonance-Zanshin. Shift each bot into their Stance (Bound/Exposed/Execution), build Charge through Resonance, reach Zanshin Threshold when all 3 are active, then fire Zanshin\u2019s 3-beat Verdict sequence.","combo":"All 3 Stances active (Threshold) \u2192 Zanshin fires: Beat 1 assigns Verdicts \u2192 Beat 2 the opponent can\u2019t play normally \u2192 Beat 3 Gobanko/Samurai/Shinsaber strike simultaneously. If all Verdicts converge on one bot: True Zanshin \u2014 instant KO."},"cross":{"name":"CROSS MESSIAH","color":"#d8dde8","mf":"Arase Oosumi","plan":"Charge mastery. Hoard Charge with the Zero Medal, scale every attack off it, then ignite at max Charge and unleash Cross Burst.","combo":"Bank Charge with Full Charge & Overcharge \u2192 attacks gain +1 per 2 Charge held \u2192 at max Charge, Cross Burst hits for 3\u00d7 your Charge."},"blacktide":{"name":"BLACK TIDE","color":"#d4a020","mf":"Captain Gene","plan":"Pirate coin economy. Earn Doubloons whenever your bots attack, then spend for tempo or bank toward a huge finish.","combo":"Plunder coins on every attack \u2192 TentaClam's Hoarder's Eye compounds at end of turn \u2192 dump the bank into Win Medals for 4 +2 per coin."}};
 
 
 // ── Per-deck records + stats profile ──
@@ -8044,16 +8044,15 @@ function confirmSurrender(){
     [
       {l:'Yes, Surrender', cls:'mb', style:'color:var(--red);border-color:rgba(240,72,72,.4)', cb:()=>{
         closeM();
-        if(G_online){ try{ MWNet.gameOver(1-G_mySeat); }catch(e){} }
         G.winner='c'; G.reason='You surrendered.';
-        showEnd();
+        showEnd(); // showEnd notifies the opponent online (winnerSeat derived from G.winner)
       }},
       {l:'Keep Fighting', cls:'mb ok', cb:()=>closeM()}
     ]);
 }
 
 function openDeckViewer(){
-  const order=['blaze','titan','royal','shadow','throne'];
+  const order=['blaze','titan','royal','shadow','throne','forge','cross','blacktide','senbei'];
   let html='<div style="max-height:60vh;overflow-y:auto">';
   order.forEach(k=>{
     const g=DECK_GUIDE[k]; if(!g)return;
@@ -8144,6 +8143,17 @@ function maybeShowRankedNudge(){
 }
 
 function showEnd(){
+  if(G._ended) return;            // run the end sequence exactly once per match
+  G._ended = true;
+  // Online: tell the opponent the match is over so the LOSER's screen also
+  // transitions to the end / rematch screen. Skip when we got here BECAUSE of a
+  // remote game_over message (don't echo the signal back to the sender).
+  if(typeof G_online!=='undefined' && G_online && !G._remoteEnd){
+    try{
+      const winnerSeat = (G.winner==='p') ? G_mySeat : (1 - G_mySeat);
+      MWNet.gameOver(winnerSeat);
+    }catch(e){}
+  }
   try{ _rotatingBgSlot=0; _rotatingBgUrl=''; }catch(e){}  // clear stage so next match re-selects
   try{ if(G_online && MWNet.clearSession) MWNet.clearSession(); }catch(e){}
   setTimeout(()=>{
@@ -8262,7 +8272,7 @@ function applyDeckSwaps(deckKey, deckArr){
 }
 
 function openDeckEditor(){
-  const names={blaze:'Blaze Chain',titan:'Titan Guard',royal:'Royal Court',shadow:'Shadow Blade',throne:'Iron Throne',forge:'Forge Barons',cross:'Cross Messiah'};
+  const names={blaze:'Blaze Chain',titan:'Titan Guard',royal:'Royal Court',shadow:'Shadow Blade',throne:'Iron Throne',forge:'Forge Barons',cross:'Cross Messiah',blacktide:'Black Tide',senbei:'Iron Dojo'};
   const dk=deck;
   const swaps=_getSwaps(dk);
   // Build the deck's current card list (counts)
@@ -8393,13 +8403,17 @@ const DECK_GUIDES={
   blacktide:{name:'Black Tide',color:'#d4a020',tier:'Intermediate',
     plan:"Pirate coin economy. Earn Doubloons whenever your bots attack, then choose between steady spending for tempo or banking toward a huge finish.",
     plays:["Piraskull's Captain's Cut doubles your coin income on every attack \u2014 keep him active early.",'Pirastar can spend 3 Doubloons before attacking for +5 damage \u2014 a burst option once you have a cushion.',"TentaClam's Hoarder's Eye pays out at end of turn for every other living crewmate, so protecting your team compounds your income.",'Powder Keg spends up to 5 coins to hit ALL enemies at once \u2014 a board-wide answer when you\u2019re flush.'],
-    win:'Bank toward Win Medals \u2014 spend every Doubloon you\u2019ve earned for 4 + 2 damage per coin to one enemy, often a one-shot finisher.'}
+    win:'Bank toward Win Medals \u2014 spend every Doubloon you\u2019ve earned for 4 + 2 damage per coin to one enemy, often a one-shot finisher.'},
+  senbei:{name:'Iron Dojo',color:'#b08040',tier:'Expert',
+    plan:'Stance-Resonance-Zanshin engine. Shift each bot into its Stance, build Charge through Resonance, then reach the Zanshin Threshold to fire a 3-beat Verdict strike.',
+    plays:['Open Stances early \u2014 Bound (Gobanko), Exposed (Samurai), Execution (Shinsaber). Every NEW Stance Resonates +1 Charge across the whole Dojo.','Pour Charge in with Resonance Wave and Zanshin Preparation; once all 3 Stances are active you hit the Threshold and ready Zanshin.','Kata of Three Forms snaps all three Stances on at once \u2014 your fastest route to the Threshold.'],
+    win:'Reach the Zanshin Threshold, then unleash Zanshin: a 3-beat Verdict sequence that strikes simultaneously. Converge every Verdict on a single bot for True Zanshin \u2014 an instant KO.'}
 };
 
 function openDeckGuide(dk){
   // If no deck chosen yet, show the picker
   if(!dk){
-    const order=['blaze','titan','royal','shadow','throne','forge','cross','blacktide'];
+    const order=['blaze','titan','royal','shadow','throne','forge','cross','blacktide','senbei'];
     let html='<div style="text-align:left"><div style="font-size:11px;color:var(--text2);text-align:center;margin-bottom:10px">Tap a deck for its strategy guide.</div>';
     order.forEach(k=>{
       const g=DECK_GUIDES[k]; if(!g)return;
@@ -8526,9 +8540,9 @@ function showRules(){
 
 // ── Change deck before rematch ──
 function openDeckSwap(){
-  const order=['blaze','titan','royal','shadow','throne','forge','cross','blacktide'];
-  const names={blaze:'Blaze Chain',titan:'Titan Guard',royal:'Royal Court',shadow:'Shadow Blade',throne:'Iron Throne',forge:'Forge Barons',cross:'Cross Messiah',blacktide:'Black Tide'};
-  const cols={blaze:'#f06424',titan:'#8090a0',royal:'#f0b020',shadow:'#9050d0',throne:'#30b050',forge:'#e0a020',cross:'#d8dde8',blacktide:'#d4a020'};
+  const order=['blaze','titan','royal','shadow','throne','forge','cross','blacktide','senbei'];
+  const names={blaze:'Blaze Chain',titan:'Titan Guard',royal:'Royal Court',shadow:'Shadow Blade',throne:'Iron Throne',forge:'Forge Barons',cross:'Cross Messiah',blacktide:'Black Tide',senbei:'Iron Dojo'};
+  const cols={blaze:'#f06424',titan:'#8090a0',royal:'#f0b020',shadow:'#9050d0',throne:'#30b050',forge:'#e0a020',cross:'#d8dde8',blacktide:'#d4a020',senbei:'#b08040'};
   const btns=order.map(k=>({l:(deck===k?'\u2713 ':'')+names[k], cls:'mb', style:'color:'+cols[k]+';border-color:'+cols[k]+'55', cb:()=>{
     deck=k; closeM();
     if(G_online){
@@ -10601,6 +10615,8 @@ function applyRemoteEndTurn(msg){
 
 function applyRemoteGameOver(msg){
   if(!G_online) return;
+  if(G._ended) return;          // already ended locally — ignore duplicate signal
+  G._remoteEnd = true;          // mark so showEnd doesn't echo game_over back
   // Opponent declared winner — apply to local state
   if(msg.winnerSeat === G_mySeat){ G.winner='p'; G.reason='You win!'; }
   else { G.winner='c'; G.reason='Opponent wins.'; }
