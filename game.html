@@ -2809,7 +2809,7 @@ const BOTS={
   rokusho:  {name:'Roks',  atk:4,medal:'titan',    art:'rokusho',  mcart:'mc_rok', color:'#8090a0',passive:'Takes 1 less damage (stacks with Titan Medal).'},
   sumilidon:{name:'Sumilidon',atk:5,medal:'blaze',    art:'sumilidon',mcart:'mc_sumi',color:'#f06424',passive:'Ravager: +1 DMG for every 5 HP missing (the more wounded, the deadlier).'},
   machairodus:{name:'Machairodus',atk:5,medal:'titan',art:'machairodus',mcart:'mc_mach',color:'#9050d0',passive:'Stalk: if did NOT attack last turn, next attack +2 DMG.'},
-  omegaknight:{name:'Omegaknight',atk:6,medal:'royal',art:'omegaknight',mcart:'mc_omega',color:'#f0c040',passive:'Vanguard: attacks on support bots redirect to Omegaknight.'},
+  omegaknight:{name:'Omegaknight',atk:6,medal:'royal',hpBonus:3,art:'omegaknight',mcart:'mc_omega',color:'#f0c040',passive:'Vanguard: attacks on support bots redirect to Omegaknight.'},
   robo_emperor:{name:'Robo Emperor',atk:8,medal:'emperor',art:'robo_emperor',mcart:'mc_robo',color:'#60c030',passive:'Cable Network: start of turn, deal 2 DMG to highest-charge enemy and drain 1 Charge.'},
   grand_beetle:{name:'Grand Beetle',atk:6,medal:'forge',art:'grand_beetle',mcart:'mc_grand_beetle',color:'#e0a020',passive:'Master Frame: holds up to 3 equipment. +1 ATK per equipment attached.'},
   cross_messiah:{name:'Cross Messiah',atk:5,medal:'zero',art:'cross_messiah',mcart:'mc_cross_messiah',color:'#d8dde8',passive:'Kabuto+Kuwagata: Charge Blade & Buster scale with Charge. At max Charge, attacks deal +4. Medachange to Cross Messiah Z.'},
@@ -2820,12 +2820,12 @@ const BOTS={
   nin_ninja:  {name:'Nin-Ninja', atk:6,medal:'chain',hpBonus:4,art:'nin_ninja', mcart:'mc_nin',  color:'#4080f0',passive:'Dual Technique: 2nd Technique each turn is FREE.'},
   foxuno:     {name:'Foxuno',    atk:5,medal:'chain',hpBonus:4,art:'foxuno',    mcart:'mc_foxuno',color:'#40d898',passive:'Battle Remedy: 2nd action each turn is FREE; on attack, heal lowest-HP ally 2 HP.'},
   gokudo:     {name:'Gokudo',    atk:8,medal:'chain',hpBonus:4,art:'gokudo',    mcart:'mc_gokudo',color:'#f04020',passive:'Combo Cannon: +2 DMG per technique played this turn before attacking.'},
-  wargreymon:    {name:'WarGreymon',    atk:5,medal:'digicore',art:'wargreymon',    mcart:'mc_warg',  color:'#f0c040',passive:'Dramon Destroyer: deals +3 DMG to equipped bots.'},
-  metalgurumemon:{name:'MetalGurumemon',atk:4,medal:'digicore',art:'metalgurumemon',mcart:'mc_metal', color:'#9050d0',passive:'Missile Barrage: after attacking, deal 1 DMG to another enemy.'},
+  wargreymon:    {name:'WarGreymon',    atk:6,medal:'digicore',hpBonus:3,art:'wargreymon',    mcart:'mc_warg',  color:'#f0c040',passive:'Dramon Destroyer: deals +3 DMG to equipped bots.'},
+  metalgurumemon:{name:'MetalGurumemon',atk:5,medal:'digicore',art:'metalgurumemon',mcart:'mc_metal', color:'#9050d0',passive:'Missile Barrage: after attacking, deal 1 DMG to another enemy.'},
   piraskull:       {name:'Piraskull',      atk:6,medal:'plunder',hpBonus:3,art:'bot_piraskull',      mcart:'bot_piraskull_mc',      color:'#d4a020',passive:"Captain's Cut: your attacks earn +1 extra Doubloon."},
-  taraba_craba:    {name:'Pirastar',        atk:5,medal:'plunder',hpBonus:1,art:'bot_taraba_craba',   mcart:'bot_taraba_craba_mc',   color:'#e0603a',passive:'Cannonade: before attacking, may spend 3 Doubloons to deal +5 dmg.'},
-  tentaclam:       {name:'TentaClam',      atk:4,medal:'plunder',hpBonus:2,art:'bot_tentaclam',      mcart:'bot_tentaclam_mc',      color:'#3aa0c0',passive:"Hoarder's Eye: end of turn, +1 Doubloon per other living crewmate (max +2)."},
-  kensho:   {name:'Dr BokChoy',   atk:6,medal:'senbei',hpBonus:-16,art:'bot_kensho',   mcart:'bot_kensho_mc',   color:'#b08040',passive:'Zanshin Threshold: when all 3 Stances are active, your next Medaforce becomes Zanshin — a 3-turn sequence that assigns Verdicts and strikes simultaneously.'},
+  taraba_craba:    {name:'Pirastar',        atk:5,medal:'plunder',hpBonus:3,art:'bot_taraba_craba',   mcart:'bot_taraba_craba_mc',   color:'#e0603a',passive:'Cannonade: before attacking, may spend 3 Doubloons to deal +5 dmg.'},
+  tentaclam:       {name:'TentaClam',      atk:5,medal:'plunder',hpBonus:2,art:'bot_tentaclam',      mcart:'bot_tentaclam_mc',      color:'#3aa0c0',passive:"Hoarder's Eye: end of turn, +1 Doubloon per other living crewmate (max +2)."},
+  kensho:   {name:'Dr BokChoy',   atk:6,medal:'senbei',hpBonus:-16,art:'bot_kensho',   mcart:'bot_kensho_mc',   color:'#b08040',passive:'Untouchable Dojo master — cannot be attacked or defeated. Sensei\u2019s Focus: +1 Charge to your front bot each turn. Zanshin Threshold: when all 3 Stances are active, your next Medaforce becomes Zanshin — a 3-beat sequence that assigns Verdicts and strikes simultaneously.'},
   samurai:  {name:'Samurai',  atk:7,medal:'senbei',hpBonus:2,art:'bot_samurai',  mcart:'bot_samurai_mc',  color:'#c0a060',passive:'Exposed Stance: after attacking, if in Exposed Stance, strip 1 defense tier from the target.'},
   gobanko:  {name:'Gobanko',  atk:4,medal:'senbei',hpBonus:6,art:'bot_gobanko',  mcart:'bot_gobanko_mc',  color:'#907030',passive:'Bound Stance: after attacking, if in Bound Stance, the target cannot react on the following turn.'},
   shinsaber:{name:'Shinsaber',atk:7,medal:'senbei',hpBonus:1,art:'bot_shinsaber',mcart:'bot_shinsaber_mc',color:'#d0b070',passive:'Execution Stance: while in Execution Stance, attacks are Unblockable.'},
@@ -3484,6 +3484,10 @@ function addChg(bot,n){
 
 function dmg(bot,raw,sk){
   if(bot.def)return;
+  // Dr BokChoy is the untouchable Dojo master. Direct targeting is already blocked elsewhere;
+  // this also shields him from AoE, burn, and enemy Medaforce so the Zanshin engine that the
+  // whole deck depends on can never be decapitated.
+  if(bot.key==='kensho') return 0;
   let d=raw;
   bot._tookDmgThisTurn=(bot._tookDmgThisTurn||0)+raw;
   try{ if(typeof SFX!=='undefined'&&SFX.hit) SFX.hit(raw); }catch(e){}
@@ -4253,6 +4257,15 @@ function doCharge(sk){
       banner('IKKI PASSIVE!','#60c020');
     }
   });
+  // Dr BokChoy — Sensei's Focus: while the Dojo master watches the flow, the front student
+  // gains +1 Charge each turn. Gives him value before the Zanshin Threshold comes online.
+  {
+    const _ken=G[sk].bots.find(b=>b.key==='kensho'&&!b.def);
+    if(_ken){
+      const _front=getActiveBot(sk);
+      if(_front&&!_front.def&&_front.key!=='kensho'){ addChg(_front,1); if(sk==='p')log("Sensei's Focus: Dr BokChoy feeds +1 Charge to "+_front.name+".",'chg'); }
+    }
+  }
   // Apply support passives after all charge processing
   applySupportPassives(sk);
   applyLastStandTurn(sk);
