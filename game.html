@@ -150,13 +150,13 @@ body::after{
   grid-template-columns:minmax(0,1fr);
   max-width:100vw;
   grid-template-rows:
-    38px            /* opponent leader bar */
-    18px            /* score / turn row */
-    minmax(158px,1fr) /* opponent field */
-    minmax(158px,1fr) /* player field */
-    38px            /* player leader bar */
+    42px            /* opponent leader bar */
+    23px            /* score / turn row */
+    minmax(146px,1fr) /* opponent field */
+    minmax(146px,1fr) /* player field */
+    42px            /* player leader bar */
     34px            /* action bar */
-    122px;          /* hand — tucked low, cards peek & rise on tap */
+    152px;          /* hand — full cards visible */
   overflow:hidden;
   grid-auto-rows:0;
 }
@@ -200,8 +200,8 @@ body::after{
   white-space:nowrap;text-overflow:ellipsis;font-style:italic;min-width:0;
 }
 .m-hbtn{
-  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
-  color:rgba(255,255,255,.45);font-size:9px;padding:3px 8px;border-radius:4px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);
+  color:rgba(255,255,255,.8);font-size:9px;padding:3px 8px;border-radius:4px;
   white-space:nowrap;flex-shrink:0;
 }
 
@@ -536,6 +536,56 @@ body.iso-on .m-zone .slot-kensho .bc{ filter:brightness(.9) saturate(.92); }
 .lead-name{font-family:'Orbitron',monospace;font-size:10.5px;font-weight:800;letter-spacing:.8px;color:var(--gold);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
 .lead-plr .lead-name{color:#8fd0ff}
+/* ══ TOUCH & MOBILE QoL ══ */
+button,.hc,.bc,.m-hbtn,.ma-btn,.ma-end{touch-action:manipulation}
+.bc,.hc,.lead-bar,#m-actions,#score-row,#m-hhdr{-webkit-user-select:none;user-select:none}
+html,body{overscroll-behavior:none}
+#m-hand{padding-bottom:env(safe-area-inset-bottom)}
+/* keyboard/focus visibility for desktop players */
+.m-hbtn:focus-visible,.ma-btn:focus-visible,.ma-end:focus-visible{outline:2px solid rgba(120,200,255,.7);outline-offset:1px}
+/* ══ POLISH LAYER — visuals, effects, QoL ══ */
+/* ambient floating embers over the whole board (pure CSS, super light) */
+#app::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:2;opacity:.5;
+  background-image:radial-gradient(2px 2px at 20% 80%,rgba(255,190,90,.5),transparent 60%),
+    radial-gradient(1.5px 1.5px at 70% 60%,rgba(255,160,70,.4),transparent 60%),
+    radial-gradient(2px 2px at 45% 90%,rgba(255,210,120,.35),transparent 60%),
+    radial-gradient(1.5px 1.5px at 88% 75%,rgba(255,170,80,.4),transparent 60%);
+  background-repeat:no-repeat;animation:mwEmbers 14s linear infinite}
+@keyframes mwEmbers{0%{background-position:0 0,0 0,0 0,0 0;opacity:.0}8%{opacity:.5}
+  100%{background-position:8px -105vh,-14px -118vh,10px -95vh,-6px -112vh;opacity:0}}
+/* glass shine sweeping the leader bars */
+.lead-bar::after{content:'';position:absolute;top:0;bottom:0;left:-40%;width:24%;pointer-events:none;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.05),transparent);
+  animation:mwShine 7s ease-in-out infinite}
+@keyframes mwShine{0%,60%{left:-40%}85%,100%{left:120%}}
+/* turn banner sweep */
+#mw-banner{position:fixed;left:0;right:0;top:42%;z-index:400;pointer-events:none;text-align:center;
+  font-family:'Orbitron',monospace;font-weight:900;font-size:26px;letter-spacing:6px;color:#fff;
+  text-shadow:0 0 18px var(--mwb,#40d898),0 2px 10px rgba(0,0,0,.8);opacity:0}
+#mw-banner.go{animation:mwBanner 1.5s cubic-bezier(.2,.8,.2,1) forwards}
+#mw-banner .mwb-line{display:block;height:2px;max-width:0;margin:6px auto 0;background:var(--mwb,#40d898);box-shadow:0 0 10px var(--mwb,#40d898);animation:mwBLine 1.5s ease forwards}
+@keyframes mwBanner{0%{opacity:0;transform:translateX(-28px) scale(.94)}18%{opacity:1;transform:translateX(0) scale(1)}78%{opacity:1}100%{opacity:0;transform:translateX(20px)}}
+@keyframes mwBLine{0%{max-width:0}30%{max-width:220px}100%{max-width:220px}}
+/* screen shake on heavy hits */
+#app.mw-shake{animation:mwShake .32s cubic-bezier(.36,.07,.19,.97)}
+@keyframes mwShake{10%,90%{transform:translate(-2px,0)}20%,80%{transform:translate(3px,1px)}30%,50%,70%{transform:translate(-4px,-1px)}40%,60%{transform:translate(4px,1px)}}
+/* low-HP heartbeat on wounded bots */
+.bc.low-hp:not(.def):not(.target){animation:mwLowHp 1.6s ease-in-out infinite}
+.bc.low-hp:not(.def) .binfo{background:linear-gradient(to top,rgba(60,0,0,.94) 30%,rgba(40,0,0,.5) 70%,transparent)!important}
+@keyframes mwLowHp{0%,100%{box-shadow:0 10px 26px rgba(0,0,0,.72)}50%{box-shadow:0 10px 26px rgba(0,0,0,.72),0 0 16px rgba(240,64,64,.55),inset 0 0 12px rgba(240,64,64,.18)}}
+/* KO'd bots drain to grayscale */
+.bc.def{filter:grayscale(.95) brightness(.55)!important;transition:filter .6s ease}
+/* playable hand cards breathe */
+.hc.play:not(.sel){animation:mwPlayable 2.6s ease-in-out infinite}
+@keyframes mwPlayable{0%,100%{box-shadow:0 4px 14px rgba(0,0,0,.5)}50%{box-shadow:0 4px 18px rgba(0,0,0,.5),0 0 14px color-mix(in srgb,var(--hc-color,#fff) 45%,transparent)}}
+/* button press feedback everywhere */
+.m-hbtn:active,.ma-btn:active,.ma-end:active,.mb:active{transform:scale(.93);transition:transform .08s}
+/* END TURN glows amber while AP remains */
+.ma-end.ap-left{border-color:rgba(240,184,32,.7);box-shadow:0 0 12px rgba(240,184,32,.35);}
+.ma-end.ap-left::after{content:'·';position:absolute;opacity:0}
+/* lane glow when a drag hovers a valid target */
+.bc.drop-enemy,.bc.drop-ally{box-shadow:0 0 0 2px currentColor,0 0 22px rgba(255,255,255,.25)!important;transition:box-shadow .12s}
+@media (prefers-reduced-motion:reduce){#app::before,.lead-bar::after,.bc.low-hp:not(.def),.hc.play:not(.sel){animation:none!important}}
 .lead-bots{margin-left:auto;display:flex;align-items:center;gap:5px;flex-shrink:0}
 .lead-bots .bdot{width:11px;height:11px;border-radius:50%;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--bd) 60%,#fff),var(--bd));box-shadow:0 0 6px color-mix(in srgb,var(--bd) 70%,transparent);border:1px solid rgba(255,255,255,.25)}
 .lead-bots .bdot.ko{background:rgba(255,255,255,.08);box-shadow:none;border-color:rgba(255,255,255,.12);opacity:.5}
@@ -543,8 +593,8 @@ body.iso-on .m-zone .slot-kensho .bc{ filter:brightness(.9) saturate(.92); }
 .lead-chip{display:flex;flex-direction:column;align-items:center;line-height:1;padding:3px 7px;border:1px solid var(--border);border-radius:7px;background:rgba(255,255,255,.03)}
 .lead-chip b{font-family:'Share Tech Mono',monospace;font-size:14px;color:var(--text)}
 .lead-chip i{font-size:6px;color:var(--text3);font-style:normal;letter-spacing:.5px;font-family:'Orbitron',monospace;margin-top:1px}
-.lead-hbtns{display:flex;flex-direction:column;gap:2px}
-.lead-hbtns .m-hbtn{padding:2px 6px;font-size:9px;line-height:1.3}
+.lead-hbtns{display:flex;flex-direction:row;gap:3px;flex-shrink:0;align-items:center}
+.lead-hbtns .m-hbtn{padding:4px 6px;font-size:11px;line-height:1.2;min-width:26px;min-height:26px;text-align:center;border-radius:6px}
 .lead-acts{gap:3px}
 .lead-acts .ma-btn{min-height:30px;min-width:28px;padding:0 6px;font-size:8px}
 
@@ -553,6 +603,8 @@ body.iso-on .m-zone .slot-kensho .bc{ filter:brightness(.9) saturate(.92); }
   background:rgba(4,6,12,.55);border-bottom:1px solid rgba(255,255,255,.05)}
 #turn-indicator{font-family:'Orbitron',monospace;font-size:10px;font-weight:800;letter-spacing:.5px;color:var(--green);white-space:nowrap;flex-shrink:0}
 #turn-indicator.cpu{color:var(--red)}
+#score-row .m-turn{font-size:9px;padding:1px 5px}
+#score-row .m-phase{font-size:8px;padding:2px 7px}
 #score-row #m-ticker{flex:1;min-width:0;font-size:9px;color:var(--text2);font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ══ ACTION BAR (AP / deck·hand / END) ══ */
@@ -585,9 +637,9 @@ body.iso-on .m-zone .slot-kensho .bc{ filter:brightness(.9) saturate(.92); }
 #m-hscroll{
   display:flex;flex-direction:row;
   justify-content:safe center;
-  padding:0 14px 0;
+  padding:0 14px 4px;
   overflow-x:auto;overflow-y:visible;
-  flex:1;align-items:flex-start;
+  flex:1;align-items:flex-end;
   -webkit-overflow-scrolling:touch;touch-action:pan-x;
   scrollbar-width:none;
 }
@@ -611,7 +663,7 @@ body.iso-on .m-zone .slot-kensho .bc{ filter:brightness(.9) saturate(.92); }
   will-change:transform;
   -webkit-tap-highlight-color:transparent;
 }
-.hc:active,.hc.sel{
+.hc:active,.hc.sel{z-index:120!important;
   transform:var(--hc-rot,rotate(0deg)) translateY(-56px) scale(1.08);
   z-index:25;border-color:var(--gold);
   box-shadow:0 14px 32px rgba(0,0,0,.85),0 0 18px rgba(240,184,32,.3);
@@ -632,9 +684,10 @@ body.iso-on .m-zone .slot-kensho .bc{ filter:brightness(.9) saturate(.92); }
 }
 .hc{animation:deal .22s cubic-bezier(.22,1,.36,1) backwards}
 .hc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--hc-color,rgba(255,255,255,.1));opacity:.5}
-.hart{width:100%;height:74px;min-height:74px;max-height:74px;display:block;flex-shrink:0;flex-grow:0;object-fit:cover}
-.hbody{padding:4px 6px 3px;flex:1;display:flex;flex-direction:column;justify-content:space-between;min-width:0;overflow:hidden}
-.htype{font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:1px}
+.hart{position:absolute;inset:0;width:100%!important;height:100%!important;min-height:0;max-height:none;display:block;object-fit:cover;object-position:center 22%;z-index:0}
+.hc{position:relative}
+.hbody{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:16px 6px 5px;display:flex;flex-direction:column;gap:1px;min-width:0;overflow:hidden;background:linear-gradient(to top,rgba(2,4,10,.96) 38%,rgba(2,4,10,.6) 74%,transparent)}
+.htype{align-self:flex-start;font-size:6.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:1px 5px;border:1px solid currentColor;border-radius:4px;background:rgba(0,0,0,.5);margin-bottom:2px}
 .hname{font-size:10px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
 .hstat{font-family:'Share Tech Mono',monospace;font-size:9px;font-weight:600;margin-top:1px}
 .hdesc{font-size:8px;color:var(--text2);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:2px}
@@ -1485,10 +1538,10 @@ body.iso-on .m-zone .slot-kensho .bc{ filter:brightness(.9) saturate(.92); }
     <div class="lead-side">
       <div class="lead-chip"><b id="cdeck">20</b><i>DECK</i></div>
       <div class="lead-hbtns">
-        <button class="m-hbtn" onclick="openGameMenu()">☰</button>
+        <button class="m-hbtn" onclick="openGameMenu()" title="Menu / Surrender">⚙️</button>
+        <button class="m-hbtn" id="fs-btn" onclick="toggleFullscreen()" title="Fullscreen" style="font-size:12px">⛶</button>
         <button class="m-hbtn" id="iso-btn" onclick="toggleIso()" title="3D view" style="font-size:12px">◈</button>
         <button class="m-hbtn" id="sfx-btn" onclick="toggleSFX()" style="font-size:11px">🔊</button>
-        <button class="m-hbtn" onclick="showRules()" style="font-size:10px">?</button>
       </div>
     </div>
   </div>
@@ -7669,6 +7722,16 @@ function renderLeaderBars(){
   // whose turn
   const ti=q('turn-indicator');
   if(ti){const cpuTurn=G.phase==='cpu_turn';ti.textContent=cpuTurn?((typeof G_online!=='undefined'&&G_online)?'OPPONENT':'CPU TURN'):'YOUR TURN';ti.classList.toggle('cpu',cpuTurn);}
+  // sweeping turn banner on turn changes (visual only, guarded)
+  try{
+    const st=(G.phase==='cpu_turn')?'cpu':(G.phase==='action')?'you':null;
+    if(st&&window._mwLastTurnState!==st&&!G.winner){
+      window._mwLastTurnState=st;
+      if(typeof _mwBanner==='function'&&turn>0&&(turn>1||st==='you'))_mwBanner(st==='cpu'?((typeof G_online!=='undefined'&&G_online)?'OPPONENT TURN':'ENEMY TURN'):'YOUR TURN',st==='cpu'?'#f0544c':'#40d898');
+    }
+  }catch(e){}
+  // END TURN glows amber while you still have AP to spend
+  try{ const be=q('btn-end'); if(be)be.classList.toggle('ap-left',G.phase==='action'&&actionsLeft>0); }catch(e){}
   // AP orbs
   const ap=q('ap-orbs');
   if(ap){const shown=Math.max(0,actionsLeft|0);const cap=Math.max(3,shown);let h='';for(let i=0;i<cap;i++){h+='<div class="ap'+(i<shown?' on':'')+'"></div>';}h+='<span class="ap-lbl">AP '+shown+'</span>';ap.innerHTML=h;}
@@ -7754,6 +7817,7 @@ function mkBotEl(bot,idx,sk){
     if(sk==='c'&&G.p.selBot!==null&&!atked&&isActive&&bot.key!=='kensho')cls+=' target';
   }
   div.className=cls;
+  try{ if(!bot.def&&Math.round(bot.hp/bot.maxHp*100)<=25)div.classList.add('low-hp'); }catch(e){}
   if(_stInfo)div.style.setProperty('--stance-col',_stInfo.color);
   const isMob=window.innerWidth<600;
   const isAct=G[sk].activeBot===idx&&!bot.def;
@@ -7957,7 +8021,7 @@ function mkCardEl(card,i,total){
     div.onclick=()=>clickCard(card);
   }
   const mob=window.innerWidth<600;
-  div.innerHTML=`${renderCardArt(card,mob?72:104,mob?48:69)}<div class="hbody"><div class="htype" style="color:${card.color}">${card.type}</div><div class="hname">${card.name}</div><div class="hstat" style="color:${card.color}">${card.stat||''}</div><div class="hdesc">${card.desc}</div></div>`;
+  div.innerHTML=`${renderCardArt(card,92,138)}<div class="hbody"><div class="htype" style="color:${card.color}">${card.type}</div><div class="hname">${card.name}</div><div class="hstat" style="color:${card.color}">${card.stat||''}</div><div class="hdesc">${card.desc}</div></div>`;
   attachTip(div,card);
   return div;
 }
@@ -9390,17 +9454,19 @@ const MF_ART = {
 
 
 // Show the player's Medafighter passive (tap the portrait).
-function showMfPassive(){
-  if(!G.p||!G.p.mf){ return; }
-  const mf=G.p.mf, key=G.p.mfKey;
+function showMfPassive(side){
+  const S=(side==='c')?G.c:G.p;
+  if(!S||!S.mf){ return; }
+  const mf=S.mf, key=S.mfKey;
   const art=(typeof renderMFArt==='function')?renderMFArt(key,90,90):'';
-  openM(mf.name,
+  openM(mf.name+(side==='c'?' (Opponent)':''),
     '<div style="text-align:center">'+
       '<div style="width:90px;height:90px;margin:0 auto 10px;border-radius:10px;overflow:hidden;border:1px solid rgba(240,184,32,.4)">'+art+'</div>'+
       '<div style="font-size:8px;font-weight:800;letter-spacing:1px;color:var(--gold);margin-bottom:4px">MEDAFIGHTER ABILITY</div>'+
       '<div style="font-size:13px;color:var(--text);line-height:1.5">'+mf.pass+'</div>'+
     '</div>',
-    [{l:'Got it',cls:'mb ok',cb:()=>closeM()},
+    side==='c'?[{l:'Got it',cls:'mb ok',cb:()=>closeM()}]
+      :[{l:'Got it',cls:'mb ok',cb:()=>closeM()},
      {l:'\ud83c\udfa8 Customize Art',cls:'mb',cb:()=>{ closeM(); if(typeof openPreMatchArt==='function')openPreMatchArt(); }}]);
 }
 
@@ -12314,6 +12380,67 @@ function toggleIso(){
   // re-render so bot art/card sizes recompute for lane vs triangle layout
   try{ if(typeof renderAll==='function' && typeof G==='object' && G && G.p){ renderAll(); } }catch(e){}
 }
+/* ── Fullscreen toggle (mobile-friendly, with graceful fallback) ── */
+function _fsEl(){ return document.documentElement; }
+function _fsIsOn(){
+  return !!(document.fullscreenElement||document.webkitFullscreenElement||document.msFullscreenElement);
+}
+function _fsSyncBtn(){
+  var b=document.getElementById('fs-btn');
+  if(b) b.textContent = _fsIsOn() ? '⛶' : '⛶';
+  if(b) b.style.opacity = _fsIsOn() ? '1' : '.7';
+}
+function toggleFullscreen(){
+  try{
+    if(!_fsIsOn()){
+      var el=_fsEl();
+      var req=el.requestFullscreen||el.webkitRequestFullscreen||el.msRequestFullscreen;
+      if(req) req.call(el).catch(function(){});
+      else toast_fallback();
+    } else {
+      var exit=document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen;
+      if(exit) exit.call(document).catch(function(){});
+    }
+  }catch(e){ toast_fallback(); }
+}
+function toast_fallback(){
+  // iOS Safari has no Fullscreen API for regular tabs — guide the user to Add to Home Screen instead.
+  try{ if(typeof openM==='function'){ openM('Fullscreen','<div style="text-align:center;padding:6px 0;font-size:12px;color:var(--text2)">Your browser doesn\'t support in-page fullscreen.<br><br>For a true fullscreen feel on iPhone, tap Share → <b>Add to Home Screen</b> — it launches without the address bar.</div>',[{l:'Got it',cls:'mb ok',cb:()=>closeM()}]); } }catch(e){}
+}
+document.addEventListener('fullscreenchange',_fsSyncBtn);
+document.addEventListener('webkitfullscreenchange',_fsSyncBtn);
+
+/* ── Turn banner (sweeping announcement) ── */
+function _mwBanner(txt,color){
+  try{
+    var b=document.getElementById('mw-banner');
+    if(!b){ b=document.createElement('div'); b.id='mw-banner'; document.body.appendChild(b); }
+    b.style.setProperty('--mwb',color||'#40d898');
+    b.innerHTML=txt+'<span class="mwb-line"></span>';
+    b.classList.remove('go'); void b.offsetWidth; b.classList.add('go');
+  }catch(e){}
+}
+
+/* ── Screen shake on heavy hits (wraps global dmg; harmless if shape differs) ── */
+(function(){
+  try{
+    if(typeof window.dmg==='function'&&!window._mwDmgWrapped){
+      var _o=window.dmg;
+      window.dmg=function(bot,raw,sk){
+        var r=_o.apply(this,arguments);
+        try{
+          if((raw|0)>=6){
+            var app=document.getElementById('app');
+            if(app){ app.classList.remove('mw-shake'); void app.offsetWidth; app.classList.add('mw-shake');
+              setTimeout(function(){app.classList.remove('mw-shake');},360); }
+          }
+        }catch(e){}
+        return r;
+      };
+      window._mwDmgWrapped=true;
+    }
+  }catch(e){}
+})();
 (function initIso(){
   var on = true; // default: iso view on
   try{ if(localStorage.getItem('mw_iso')==='0') on=false; }catch(e){}
