@@ -189,7 +189,11 @@ const server = http.createServer((req, res) => {
   if (req.url === '/art/manifest' && req.method === 'POST') {
     if (!R2.enabled()) { res.writeHead(503, {'Content-Type':'application/json'}); res.end('{"error":"r2_disabled"}'); return; }
     readJsonBody(req, 1024 * 1024, async (err, data) => {
-      if (err || !data || typeof data.manifest !== 'object') {
+      // ADMIN-ONLY: this replaces the default art every player sees.
+      if (err || !data || !BetaKeys.checkAdmin(data.secret)) {
+        res.writeHead(403, {'Content-Type':'application/json'}); res.end('{"error":"forbidden"}'); return;
+      }
+      if (!data.manifest || typeof data.manifest !== 'object') {
         res.writeHead(400, {'Content-Type':'application/json'}); res.end('{"error":"bad_manifest"}'); return;
       }
       try {
@@ -218,6 +222,11 @@ const server = http.createServer((req, res) => {
       if (err) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: err.message }));
+        return;
+      }
+      if (!data || !BetaKeys.checkAdmin(data.secret)) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'forbidden' }));
         return;
       }
       try {
