@@ -404,17 +404,20 @@ body.iso-on .m-zone .bc:not(.def) .btop>div>span:first-child{font-size:12px!impo
 body.iso-on .m-zone .bc:not(.def) .bhp{font-size:15px;font-weight:800;line-height:1}
 /* slim hp bar + centered pips under the stats */
 body.iso-on .m-zone .bc:not(.def) .hpbar{display:none}
-body.iso-on .m-zone .bc:not(.def) .pips{display:none}
+body.iso-on .m-zone .bc:not(.def) .binfo{display:flex;flex-direction:column}
+body.iso-on .m-zone .bc:not(.def) .pips{display:flex;order:-1;gap:2px;width:78%;margin:0 auto 3px;padding:2px;border-radius:3px;background:rgba(0,0,0,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+body.iso-on .m-zone .bc:not(.def) .pip{height:4px;border-radius:1px;background:rgba(255,255,255,.14)}
 /* drop the dense readouts for the clean card face */
 body.iso-on .m-zone .bc:not(.def) .medrow,
-body.iso-on .m-zone .bc:not(.def) .bot-passive-line,
-body.iso-on .m-zone .bc:not(.def) .coin-badge{display:none}
+body.iso-on .m-zone .bc:not(.def) .bot-passive-line{display:none}
+body.iso-on .m-zone .bc:not(.def) .coin-badge{display:inline-flex;align-items:center;gap:2px;order:-2;align-self:center;margin:0 0 3px;padding:1px 6px;font-size:9px;line-height:1.3}
+body.iso-on .m-zone .bc:not(.def) .coin-badge-icon{width:10px;height:10px}
 /* keep status as tiny chips across the top */
 body.iso-on .m-zone .bc:not(.def) .btags{
-  position:absolute;top:5px;left:50%;transform:translateX(-50%);z-index:4;
-  flex-wrap:nowrap;max-width:84%;overflow:hidden;gap:2px;margin:0;
+  position:absolute;top:5px;left:4px;right:4px;z-index:4;justify-content:center;
+  flex-wrap:wrap;max-height:22px;overflow:hidden;gap:2px;margin:0;
 }
-body.iso-on .m-zone .bc:not(.def) .btag{font-size:6px;padding:1px 3px;white-space:nowrap}
+body.iso-on .m-zone .bc:not(.def) .btag{font-size:6px;padding:1px 3px;white-space:nowrap;background-color:rgba(4,7,13,.82)}
 body.iso-on .m-zone .bc:not(.def) .dhint{display:none}
 body.iso-on .m-zone .bc:not(.def) .equip-badge,
 body.iso-on .m-zone .bc:not(.def) .combo-badge{transform:scale(.8);transform-origin:top left}
@@ -664,7 +667,7 @@ body:not(.mw-myturn) .lead-cpu .lead-pic{animation:mwPicC 2s ease-in-out infinit
 .nx-log{width:26px;height:26px;border-radius:7px;padding:0;font-size:13px;line-height:1;background:rgba(10,14,24,.82);border:1px solid rgba(255,255,255,.18);
   box-shadow:0 2px 8px rgba(0,0,0,.6)}
 /* round END TURN — the Runeterra ATTACK button */
-#rail-r #btn-end.ma-end{width:64px;height:64px;min-height:0!important;border-radius:50%!important;padding:0!important;margin:-3px 0;z-index:2;
+#rail-r #btn-end.ma-end{width:64px;height:64px;min-height:0!important;border-radius:50%!important;padding:0 0 0 .6px!important;margin:-3px 0;z-index:2;display:flex!important;flex-direction:column;align-items:center!important;justify-content:center!important;
   font-family:'Orbitron',monospace;font-size:9.5px!important;font-weight:900;letter-spacing:.6px;line-height:1.15;white-space:normal;text-align:center;color:#fff;
   background:radial-gradient(circle at 50% 30%,#5aa8ff,#1650c8 55%,#081a52 100%)!important;border:3px solid #a8d0ff!important;
   box-shadow:0 0 0 3px rgba(8,14,30,.92),0 0 0 5px rgba(140,190,255,.35),0 0 22px rgba(70,150,255,.6),inset 0 -6px 12px rgba(0,0,0,.45),inset 0 4px 8px rgba(255,255,255,.3)!important;
@@ -744,6 +747,14 @@ html,body{overscroll-behavior:none}
 /* lane glow when a drag hovers a valid target */
 .bc.drop-enemy,.bc.drop-ally{box-shadow:0 0 0 2px currentColor,0 0 22px rgba(255,255,255,.25)!important;transition:box-shadow .12s}
 @media (prefers-reduced-motion:reduce){#app::before,.lead-bar::after,.bc.low-hp:not(.def),.hc.play:not(.sel){animation:none!important}}
+.lead-trait{margin-left:auto;display:flex;align-items:center;gap:4px;flex-shrink:0}
+.lead-trait:empty{display:none}
+.lead-trait .lt{font-family:'Orbitron',monospace;font-size:9px;font-weight:900;letter-spacing:.04em;padding:3px 6px;border-radius:3px;white-space:nowrap;background:rgba(4,7,13,.85);box-shadow:inset 0 0 0 1px currentColor}
+.lead-trait .lt.coin{color:#f6c453}
+.lead-trait .lt.stance{color:#d0b070}
+.lead-trait .lt.zan{color:#fff2c0;background:linear-gradient(180deg,#a07820,#5a3e08);box-shadow:0 0 10px rgba(240,190,80,.7)}
+.lead-trait .lt.chg{color:#7fd0ff}
+.lead-trait:not(:empty)+.lead-bots{margin-left:6px}
 .lead-bots{margin-left:auto;display:flex;align-items:center;gap:5px;flex-shrink:0}
 .lead-bots .bdot{width:11px;height:11px;border-radius:50%;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--bd) 60%,#fff),var(--bd));box-shadow:0 0 6px color-mix(in srgb,var(--bd) 70%,transparent);border:1px solid rgba(255,255,255,.25)}
 .lead-bots .bdot.ko{background:rgba(255,255,255,.08);box-shadow:none;border-color:rgba(255,255,255,.12);opacity:.5}
@@ -8163,6 +8174,18 @@ function renderLeaderBars(){
     const col=b.mColor||'#888';
     return '<i class="bdot'+(b.def?' ko':'')+'" style="--bd:'+col+'"></i>';
   }).join('');
+  const traitChip=(sk)=>{
+    const S=G[sk], out=[];
+    try{ const plunder=(S.bots||[]).some(b=>b.medal==='plunder'||b.fusedMedal==='plunder'||b.fusedMedal2==='plunder');
+      if(plunder||(typeof coins==='function'&&coins(sk)>0)) out.push('<span class="lt coin">\ud83e\ude99 '+(typeof coins==='function'?coins(sk):0)+'</span>'); }catch(e){}
+    try{ if(typeof senbeiBots==='function'&&senbeiBots(sk).length){ const n=typeof stanceCount==='function'?stanceCount(sk):0;
+      out.push(S._zanshinReady?'<span class="lt zan">\u6b8b ZANSHIN</span>':'<span class="lt stance">\u69cb '+n+'/3</span>'); } }catch(e){}
+    try{ const ready=(S.bots||[]).filter(b=>!b.def&&(b.charge||0)>=5).length; if(ready) out.push('<span class="lt chg">\u26a1 '+ready+' READY</span>'); }catch(e){}
+    return out.join('');
+  };
+  ['c','p'].forEach(sk=>{ const host=q(sk==='c'?'c-bots':'p-bots'); if(!host) return; let t=q(sk+'-trait');
+    if(!t){ t=document.createElement('span'); t.id=sk+'-trait'; t.className='lead-trait'; host.parentNode.insertBefore(t,host); }
+    t.innerHTML=traitChip(sk); });
   const cb=q('c-bots'); if(cb)cb.innerHTML=botDots('c');
   const pb=q('p-bots'); if(pb)pb.innerHTML=botDots('p');
   // portraits + names
