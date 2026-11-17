@@ -697,6 +697,32 @@ body.mw3d .lead-bar{background:linear-gradient(180deg,rgba(6,9,16,.9),rgba(6,9,1
 body.mw3d .lead-plr{background:linear-gradient(0deg,rgba(6,9,16,.9),rgba(6,9,16,.62))}
 body.mw3d #score-row{background:linear-gradient(180deg,rgba(4,6,12,.55),transparent)}
 body.mw3d #m-hand{background:linear-gradient(180deg,rgba(4,6,12,.35),rgba(4,6,12,.92) 40%)}
+
+/* ══ CARD PREVIEW (long-press) — the card itself, plus its full text ══ */
+html body #mobile-card-preview{ z-index:700 !important; align-items:center !important; background:radial-gradient(ellipse at center,rgba(10,16,32,.78),rgba(0,0,0,.92)) !important; }
+html body #mobile-card-preview.show .mcp-sheet{ animation:pmPrevIn .22s var(--pm-ease,ease) both; }
+@keyframes pmPrevIn{ from{ transform:scale(.88); opacity:0 } to{ transform:none; opacity:1 } }
+html body .mcp-sheet{ background:none !important; border:none !important; box-shadow:none !important; border-radius:0 !important; padding:0 16px !important;
+  width:100% !important; max-width:340px !important; display:flex; flex-direction:column; align-items:center; gap:12px; }
+html body .mcp-handle{ display:none; }
+html body .mcp-card{ --cc:#8aa; position:relative; width:min(240px,56vw,34vh); aspect-ratio:2/3; border-radius:12px; overflow:hidden; flex-shrink:0;
+  border:2px solid var(--cc); box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 30px color-mix(in srgb,var(--cc) 45%,transparent),0 18px 40px rgba(0,0,0,.7); background:#0a0e1a; }
+html body .mcp-card .mcp-art{ position:absolute !important; inset:0; width:100% !important; height:100% !important; }
+html body .mcp-card .mcp-art img,html body .mcp-card .mcp-art svg,html body .mcp-card .mcp-art canvas{ width:100% !important; height:100% !important; object-fit:cover; object-position:center 22%; display:block; }
+html body .mcp-card .mcp-info{ position:absolute; left:0; right:0; bottom:0; padding:30px 12px 12px !important; background:linear-gradient(to top,rgba(2,4,10,.97) 42%,rgba(2,4,10,.6) 75%,transparent); }
+html body .mcp-card .mcp-type-badge{ font-family:'Orbitron',sans-serif; font-size:8px !important; font-weight:800; letter-spacing:.14em; padding:2px 7px !important; border-radius:3px !important; background:rgba(0,0,0,.55) !important; margin-bottom:6px !important; }
+html body .mcp-card .mcp-name{ font-size:17px !important; font-weight:900 !important; margin-bottom:3px !important; text-shadow:0 2px 6px #000; }
+html body .mcp-card .mcp-stat{ font-size:13px !important; margin-bottom:0 !important; font-weight:700; }
+html body .mcp-sheet > .mcp-desc{ width:100%; padding:12px 14px; border-radius:6px; background:rgba(13,18,31,.92); border:1px solid rgba(150,185,255,.22); font-family:'Rajdhani',sans-serif; font-size:15px !important; font-weight:500; line-height:1.5 !important; color:#d0dbf2 !important; }
+html body .mcp-close{ margin:0 !important; width:100% !important; min-height:46px; font-family:'Orbitron',sans-serif !important; font-weight:800; letter-spacing:.14em; border-radius:3px !important; }
+.mcp-hint{ font-family:'Orbitron',sans-serif; font-size:8px; letter-spacing:.3em; color:rgba(255,255,255,.45); text-transform:uppercase; }
+/* stop iOS from treating card art as a photo (its own zoom/preview that hides the info) */
+.hc img,.bc img,.lead-pic img,.dpk img,.mcp-art img,#pm-vs img{ -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; -webkit-user-drag:none; }
+.hc img,.bc img,.dpk img,.lead-pic img{ pointer-events:none; }
+.hc,.bc,.dpk,.lead-pic{ -webkit-touch-callout:none; }
+/* Medafighter portraits fill and centre their frame */
+html body .lead-pic > img,html body .lead-pic > svg,html body .lead-pic > canvas{ width:100% !important; height:100% !important; object-fit:cover !important; object-position:center 18% !important; border-radius:0 !important; display:block; }
+#pm-vs .pic > img,#pm-vs .pic > svg{ object-position:center 18% !important; }
 /* ══ TOUCH & MOBILE QoL ══ */
 button,.hc,.bc,.m-hbtn,.ma-btn,.ma-end{touch-action:manipulation}
 .bc,.hc,.lead-bar,#m-actions,#score-row,#m-hhdr{-webkit-user-select:none;user-select:none}
@@ -8190,10 +8216,10 @@ function renderLeaderBars(){
   const pb=q('p-bots'); if(pb)pb.innerHTML=botDots('p');
   // portraits + names
   const cpic=q('c-mf-portrait');
-  if(cpic&&G.c.mf&&G.c.mfKey&&typeof renderMFArt==='function')cpic.innerHTML=renderMFArt(G.c.mfKey,40,40);
+  if(cpic&&G.c.mf&&G.c.mfKey&&typeof renderMFArt==='function')cpic.innerHTML=renderMFArt(G.c.mfKey,64,64);
   const cnm=q('cmfname'); if(cnm&&G.c.mf)cnm.textContent=G.c.mf.name;
   const ppic=q('m-mf-portrait');
-  if(ppic&&G.p.mf&&G.p.mfKey&&typeof renderMFArt==='function')ppic.innerHTML=renderMFArt(G.p.mfKey,40,40);
+  if(ppic&&G.p.mf&&G.p.mfKey&&typeof renderMFArt==='function')ppic.innerHTML=renderMFArt(G.p.mfKey,64,64);
   // whose turn
   const ti=q('turn-indicator');
   if(ti){const cpuTurn=G.phase==='cpu_turn';ti.textContent=cpuTurn?((typeof G_online!=='undefined'&&G_online)?'OPPONENT':'CPU TURN'):'YOUR TURN';ti.classList.toggle('cpu',cpuTurn);}
@@ -11920,9 +11946,12 @@ function showStageSelect(onChosen){
        +'</div></div>';
   });
   html+='</div><div style="text-align:center;font-size:9px;color:#888;margin-top:6px">Tap a stage to preview its music, then hit Battle.</div>';
+  let _dkName=''; try{ const d=document.querySelector('.dpk[data-deck="'+deck+'"] .dn'); _dkName=d?d.textContent.trim():deck; }catch(e){}
+  html='<div style="text-align:center;font-size:12px;color:var(--text2);margin:-4px 0 10px">Your deck: <b style="color:var(--gold)">'+_dkName+'</b></div>'+html;
   openM('SELECT BATTLEFIELD', html,
     [{l:'\u2694\ufe0f BATTLE',cls:'mb',cb:()=>{ _stopStagePreview(); _pickStage(_previewSel); }},
-     {l:'\ud83c\udfb2 Random',cls:'mb',cb:()=>{ _stopStagePreview(); _pickStage('random'); }}]);
+     {l:'\ud83c\udfb2 Random',cls:'mb',cb:()=>{ _stopStagePreview(); _pickStage('random'); }},
+     {l:'\u2039 Change Deck',cls:'mb',cb:()=>{ _stopStagePreview(); _afterStageSelect=null; closeM(); try{ goToMainMenu(); }catch(e){} }}]);
   // Live-load any missing stage art from IndexedDB and fill the card backgrounds when ready.
   try{
     if(typeof ArtDB==='object' && ArtDB.get){
@@ -12069,7 +12098,7 @@ function offerMulligan(){
         log('Mulligan — redrew '+n+' cards.','info');
         closeM();runPhase();
       }}
-    ]
+    ].concat((typeof G_online!=='undefined'&&G_online)?[]:[{l:'\u2039 Change Deck',cls:'mb',cb:()=>{ closeM(); goToMainMenu(); }}])
   );
 }
 
@@ -12677,7 +12706,9 @@ function showMobilePreview(card){
   if(!panel)return;
   // Populate
   const aw=panel.querySelector('.mcp-art');
-  if(aw)aw.innerHTML=renderCardArt(card,window.innerWidth,180);
+  if(aw)aw.innerHTML=renderCardArt(card,240,360);
+  const cc=panel.querySelector('.mcp-card'); if(cc) cc.style.setProperty('--cc',card.color||'#8aa');
+  window._mcpOpenedAt=Date.now();
   const badge=panel.querySelector('.mcp-type-badge');
   if(badge){badge.textContent=card.type.toUpperCase();badge.style.color=card.color;badge.style.border='1px solid '+card.color+'44';}
   const nm=panel.querySelector('.mcp-name');if(nm){nm.textContent=card.name;nm.style.color=card.color;}
@@ -12687,8 +12718,15 @@ function showMobilePreview(card){
 }
 function closeMobilePreview(){
   const panel=document.getElementById('mobile-card-preview');
+  // ignore the finger-lift that ends the long-press itself
+  if(window._mcpOpenedAt && Date.now()-window._mcpOpenedAt<350) return;
   if(panel)panel.classList.remove('show');
 }
+// the click that follows a long-press must not also select / raise the card underneath
+document.addEventListener('click',function(e){
+  if(window._mcpOpenedAt && Date.now()-window._mcpOpenedAt<700 && !(e.target.closest&&e.target.closest('#mobile-card-preview'))){ e.stopPropagation(); e.preventDefault(); }
+},true);
+document.addEventListener('keydown',function(e){ if(e.key==='Escape'){ window._mcpOpenedAt=0; closeMobilePreview(); } });
 
 
 // ── PC card/bot preview: click and hover (desktop) ──
@@ -12743,7 +12781,7 @@ function attachTip(div,card){
   div.addEventListener('touchstart',()=>{
     _mobilePreviewTimer=setTimeout(()=>showMobilePreview(card),450);
   },{passive:true});
-  div.addEventListener('touchend',()=>{clearTimeout(_mobilePreviewTimer);},{passive:true});
+  div.addEventListener('touchend',()=>{clearTimeout(_mobilePreviewTimer); const pv=document.getElementById('mobile-card-preview'); if(pv&&pv.classList.contains('show')) window._mcpOpenedAt=Date.now();},{passive:true});
   div.addEventListener('touchmove',()=>{clearTimeout(_mobilePreviewTimer);},{passive:true});
 }
 
@@ -12851,16 +12889,18 @@ function updateArenaColor(){
 
 <!-- MOBILE CARD PREVIEW -->
 <div id="mobile-card-preview" onclick="closeMobilePreview()">
-  <div class="mcp-sheet" onclick="event.stopPropagation()">
-    <div class="mcp-handle"></div>
-    <div class="mcp-art"></div>
-    <div class="mcp-info">
-      <div class="mcp-type-badge"></div>
-      <div class="mcp-name"></div>
-      <div class="mcp-stat"></div>
-      <div class="mcp-desc"></div>
+  <div class="mcp-sheet">
+    <div class="mcp-card">
+      <div class="mcp-art"></div>
+      <div class="mcp-info">
+        <div class="mcp-type-badge"></div>
+        <div class="mcp-name"></div>
+        <div class="mcp-stat"></div>
+      </div>
     </div>
+    <div class="mcp-desc"></div>
     <button class="mcp-close" onclick="closeMobilePreview()">✕ CLOSE</button>
+    <div class="mcp-hint">Tap anywhere to close</div>
   </div>
 </div>
 <script>try{ if(typeof MW_ART_UI!=='undefined' && MW_ART_UI){ var _ab=document.getElementById('btn-art-ui'); if(_ab) _ab.style.display=''; } }catch(e){}</script>
@@ -13577,6 +13617,7 @@ function inBattle(){
 function tick(){
   if(!enabled){ running=false; return; }
   requestAnimationFrame(tick);
+  if(canvas&&!canvas.isConnected){ var _ar=document.getElementById('arena'); if(_ar) _ar.appendChild(canvas); }
   if(document.hidden) return;
   var rawDt=clock.getDelta(), dt=Math.min(rawDt,.05), tt=clock.elapsedTime;
   if(!inBattle()) return;
