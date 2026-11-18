@@ -2005,6 +2005,7 @@ body.iso-on .m-zone .bot-slot .bc.mw-lunge-down{ animation:pmLungeDown .42s var(
       <button class="sbtn sbtn-secondary" onclick="openDeckEditor()">🔧 EDIT</button>
       <button class="sbtn sbtn-secondary" id="btn-art-ui" style="display:none" onclick="openPreMatchArt()">🎨 ART</button>
       <button class="sbtn sbtn-secondary" onclick="openStore()">🎒 ACCESSORIES</button>
+      <button class="sbtn sbtn-secondary sk-titlebtn" onclick="MWSkins&&MWSkins.openMenu()">✦ SKINS</button>
     </div>
   </div>
 </div>
@@ -13865,6 +13866,9 @@ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded'
 </script>
 <style id="mw-skins-css">
 /* ══ CARD SKINS ══ */
+#title .dpk{position:relative}
+#title .dpk .sk-chip{position:absolute;top:6px;left:6px;z-index:4;font:800 9px 'Share Tech Mono',monospace;letter-spacing:.12em;padding:3px 6px;border-radius:6px;color:#fff;background:linear-gradient(90deg,#ff3fb4,#ff7a3c);box-shadow:0 0 10px rgba(255,63,180,.6);pointer-events:none}
+.sk-titlebtn{background:linear-gradient(90deg,rgba(255,63,180,.22),rgba(63,230,255,.18))!important;border-color:rgba(255,63,180,.6)!important;color:#fff!important}
 #mw-skins{position:fixed;inset:0;z-index:650;display:none;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;color:#f4f0ff}
 #mw-skins.open{display:flex;animation:skIn .35s ease-out}
 @keyframes skIn{from{opacity:0}to{opacity:1}}
@@ -14066,10 +14070,10 @@ function build(){
   });
   el.querySelector('.sk-all').onclick=function(){ st.bots.forEach(function(k){ var s=skinsFor(k).filter(owned)[0]; if(s) st.pick[k]=s; }); render(); };
   el.querySelector('.sk-unlock').onclick=unlock;
-  el.querySelector('.sk-back').onclick=function(){ close(false); musicOff(true); try{ goToMainMenu(); }catch(e){} };
+  el.querySelector('.sk-back').onclick=function(){ var m=st&&st.menu; close(false); musicOff(true); if(!m){ try{ goToMainMenu(); }catch(e){} } };
   el.querySelector('.sk-go').onclick=function(){
     st.bots.forEach(function(k){ if(st.pick[k]) equipped[k]=st.pick[k]; else delete equipped[k]; });
-    save(equipped); var cb=st.done; close(true); musicOff(false); if(cb) cb();
+    save(equipped); var cb=st.done, m=st.menu; close(true); musicOff(!!m); if(m){ try{ banner&&banner('SKINS SAVED','#ff3fb4'); }catch(e){} try{ document.querySelectorAll('#title .pm-dk-art').forEach(function(x){x.remove();}); if(typeof pickDeck==='function'){ var s=document.querySelector('#title .dpk.sel'); if(s) pickDeck(s); } }catch(e){} } if(cb) cb();
   };
   document.addEventListener('keydown',function(e){
     if(!el.classList.contains('open')) return;
@@ -14091,11 +14095,13 @@ function unlock(){
   }).catch(function(){ busy=false; render(); });
 }
 function close(ok){ var el=$('mw-skins'); if(el) el.classList.remove('open'); if(!ok) st=null; }
-function open(dk,done){
+function open(dk,done,menu){
   var bots=deckBots(dk); if(!bots.length){ done&&done(); return; }
   var el=$('mw-skins')||build();
   var pick={}; bots.forEach(function(k){ pick[k]=equipped[k]||null; });
-  st={dk:dk,bots:bots,pick:pick,i:0,done:done};
+  st={dk:dk,bots:bots,pick:pick,i:0,done:done,menu:!!menu};
+  el.querySelector('.sk-go').textContent=menu?'SAVE ✓':'CONTINUE ›';
+  el.querySelector('.sk-back').textContent=menu?'‹ Back':'‹ Change Deck';
   var dn=''; try{ dn=(DECKS[dk].name||dk); }catch(e){ dn=dk; }
   el.querySelector('.sk-d').textContent=String(dn).toUpperCase()+' · SWIPE TO BROWSE';
   el.classList.add('open'); render(); musicOn();
@@ -14119,8 +14125,28 @@ function hookFlow(){
   f._skW=true; window.startGame=f; try{ startGame=f; }catch(e){}
 }
 
-window.MWSkins={audio:function(){ return _sk; },open:open,hasSkins:hasSkins,activeFor:activeFor,equipped:function(){ return JSON.parse(JSON.stringify(equipped)); },skins:SKINS};
-function boot(){ hookArt(); hookFlow(); }
+function hookGate(name){
+  var o=window[name]; if(typeof o!=='function'||o._skW) return;
+  var f=function(){
+    try{ if(!window._mwSkinPass&&typeof deck==='string'&&hasSkins(deck)){ var self=this,args=arguments;
+      open(deck,function(){ window._mwSkinPass=true; try{ o.apply(self,args); }finally{ window._mwSkinPass=false; } }); return; } }catch(e){}
+    return o.apply(this,arguments);
+  };
+  f._skW=true; window[name]=f;
+}
+function openMenu(){
+  var dk=(typeof deck==='string'&&hasSkins(deck))?deck:Object.keys(DECKS).filter(hasSkins)[0];
+  if(!dk) return;
+  if(dk!==deck){ try{ banner&&banner('SKINS: BLAZE CHAIN DECK','#ff7a3c'); }catch(e){} }
+  open(dk,null,true);
+}
+function chips(){
+  try{ document.querySelectorAll('#title .dpk[data-deck]').forEach(function(c){
+    if(!hasSkins(c.dataset.deck)||c.querySelector('.sk-chip')) return;
+    var t=document.createElement('div'); t.className='sk-chip'; t.textContent='✦ SKINS'; c.appendChild(t); }); }catch(e){}
+}
+window.MWSkins={openMenu:openMenu,audio:function(){ return _sk; },open:open,hasSkins:hasSkins,activeFor:activeFor,equipped:function(){ return JSON.parse(JSON.stringify(equipped)); },skins:SKINS};
+function boot(){ hookArt(); hookFlow(); hookGate('openOnlineLobby'); hookGate('openRanked'); chips(); setTimeout(chips,1500); setTimeout(chips,4000); }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
 })();
 
