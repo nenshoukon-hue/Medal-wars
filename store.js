@@ -43,11 +43,11 @@ const CATALOG = [
   {
     id: 'pack_chrome_bots',
     name: 'Blazing Neon Finish',
-    blurb: 'Neon pop-art skins for the Blaze Chain bots — Metabee, Sumilidon & Warbandit. Holo finish in battle.',
+    blurb: 'Neon pop-art skins for the Blaze Chain bots — Metabee, Sumilidon & Warbandit plus their Medachange forms. Holo finish in battle.',
     priceCents: 399,
     type: 'cardart',
     stripePriceId: null,
-    items: ['cos_skin_neon_metabee', 'cos_skin_neon_sumilidon', 'cos_skin_neon_warbandit']
+    items: ['cos_skin_neon_metabee', 'cos_skin_neon_sumilidon', 'cos_skin_neon_warbandit', 'cos_skin_neon_metabee_mc', 'cos_skin_neon_sumilidon_mc', 'cos_skin_neon_warbandit_mc']
   },
   {
     id: 'pack_ost_vol1',
@@ -68,6 +68,7 @@ const CATALOG = [
     items: [
       'cos_bg_neon_1', 'cos_bg_neon_2', 'cos_bg_neon_3',
       'cos_skin_neon_metabee', 'cos_skin_neon_sumilidon', 'cos_skin_neon_warbandit',
+      'cos_skin_neon_metabee_mc', 'cos_skin_neon_sumilidon_mc', 'cos_skin_neon_warbandit_mc',
       'cos_bgm_ost_1', 'cos_bgm_ost_2', 'cos_bgm_ost_3',
       'cos_badge_founder'
     ]
