@@ -10434,7 +10434,7 @@ function startBattleMusic(){
   // Per-battlefield soundtrack: if the chosen arena slot has an uploaded track, use it.
   try{
     const bgmKey = _rotatingBgSlot ? ('bgm_arena_'+_rotatingBgSlot) : '';
-    const customBgm = bgmKey && (artOverrides[bgmKey] || (typeof _embeddedBgm==='object' && _embeddedBgm[bgmKey]));
+    const customBgm = bgmKey && ((typeof _embeddedBgm==='object' && _embeddedBgm[bgmKey]) || artOverrides[bgmKey]); // shipped tracks win over old uploads
     const curBf = _musicEl.getAttribute('data-bf')||'';
     if(customBgm){
       // Always (re)assign when the target differs from what's loaded — forces the correct track.
@@ -11984,7 +11984,7 @@ function _selectStage(i){
   // Play a short music preview for this stage
   _stopStagePreview();
   try{
-    const src = artOverrides['bgm_arena_'+i] || (typeof _embeddedBgm==='object' && _embeddedBgm['bgm_arena_'+i]);
+    const src = (typeof _embeddedBgm==='object' && _embeddedBgm['bgm_arena_'+i]) || artOverrides['bgm_arena_'+i]; // shipped tracks win over old uploads
     if(src && localStorage.getItem('mw_music_on')!=='false'){
       // Pause title music during preview so they don't overlap
       try{ if(_titleMusicEl) _titleMusicEl.pause(); }catch(e){}
