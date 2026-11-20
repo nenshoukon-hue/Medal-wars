@@ -1182,7 +1182,28 @@ html,body{overscroll-behavior:none}
 /* Interactive tutorial coach box + highlight */
 #itut-box{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;width:min(92vw,440px);z-index:10001;background:linear-gradient(180deg,rgba(18,22,34,.98),rgba(10,12,20,.98));border:1.5px solid var(--gold);border-radius:14px;padding:14px 16px;box-shadow:0 12px 48px rgba(0,0,0,.7);backdrop-filter:blur(8px)}
 @keyframes itutPulse{0%,100%{box-shadow:0 0 0 2px rgba(240,176,48,.6),0 0 16px rgba(240,176,48,.4)}50%{box-shadow:0 0 0 4px rgba(240,176,48,.9),0 0 28px rgba(240,176,48,.7)}}
-.itut-glow{animation:itutPulse 1.4s ease-in-out infinite;border-radius:10px;position:relative;z-index:9999}
+.itut-glow{animation:itutPulse 1.4s ease-in-out infinite;border-radius:10px}
+#itut-spot{position:fixed;z-index:10000;pointer-events:none;border-radius:12px;border:2px solid var(--gold);animation:itutPulse 1.4s ease-in-out infinite;transition:left .25s,top .25s,width .25s,height .25s}
+#itut-box .itut-prog{height:3px;border-radius:3px;background:rgba(255,255,255,.08);margin:-4px 0 9px;overflow:hidden}
+#itut-box .itut-prog i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#ffdf80);border-radius:3px;transition:width .3s}
+#itut-box .itut-t{font-family:Orbitron,monospace;font-size:13.5px;font-weight:800;color:var(--gold);margin-bottom:6px;letter-spacing:.02em}
+#itut-box .itut-b{font-size:12.5px;line-height:1.5;color:var(--text);margin-bottom:10px}
+#itut-box .itut-b b{color:#fff}
+#itut-box .itut-row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+#itut-box .itut-n{font-size:9px;color:var(--text3)}
+#itut-box .itut-btn{font-family:Orbitron,monospace;font-size:11px;font-weight:700;padding:7px 16px;border-radius:7px;border:1px solid var(--gold);background:rgba(240,176,48,.18);color:var(--gold);cursor:pointer}
+#itut-box .itut-btn.ghost{font-family:inherit;font-size:10px;padding:7px 10px;border-color:var(--border);background:transparent;color:var(--text3)}
+#itut-box .itut-hint{font-size:10.5px;color:var(--storm2,#8fd0ff);margin-top:6px;text-align:center}
+#itut-box .itut-hint span{color:var(--text3);text-decoration:underline;cursor:pointer;pointer-events:auto}
+#itut-box .itut-flow{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px;margin:8px 0}
+#itut-box .itut-flow span{font-size:11px;font-weight:700;padding:4px 7px;border-radius:7px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);white-space:nowrap}
+#itut-box .itut-flow i{font-style:normal;color:var(--gold)}
+#itut-box .itut-moves{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
+#itut-box .itut-moves>div{padding:7px 6px;border-radius:9px;background:rgba(255,255,255,.05);border:1px solid rgba(240,176,48,.35);text-align:center}
+#itut-box .itut-moves b{display:block;font-family:Orbitron,monospace;font-size:10px;color:var(--gold);margin-bottom:3px}
+#itut-box .itut-moves span{font-size:10.5px;line-height:1.3;color:var(--text2,#ccc)}
+#itut-box .itut-moves.sm span{font-size:10px}
+#itut-box.wait{border-color:var(--storm2,#8fd0ff)}
 @media(min-width:900px){#itut-box{bottom:24px;width:440px}}
 
 
@@ -8225,6 +8246,7 @@ function renderAll(){
 // Leader/medafighter bars adapted to Medal Wars: portrait, MF name,
 // bots-alive dots (colored by medal, dimmed when KO'd). Fully guarded.
 function renderLeaderBars(){
+  try{ if(typeof itutOnRender==='function') itutOnRender(); }catch(e){}
   if(typeof G!=='object'||!G||!G.p||!G.c)return;
   const q=id=>document.getElementById(id);
   const botDots=(sk)=>(G[sk].bots||[]).map(b=>{
@@ -9406,13 +9428,16 @@ function renderDeckPreview(dk){
 }
 function showRules(){
   openM('⚡ Quick Rules',[
-    '<b style="color:var(--gold)">TURN:</b> Charge → Draw 2 → 1 Action → CPU',
-    '<b style="color:var(--gold)">ACTION:</b> Attack with active bot, play a card, or switch bots',
-    '<b style="color:var(--gold)">CHARGE:</b> Reach 5 to fire MEDAFORCE from hand',
-    '<b style="color:var(--gold)">MEDACHANGE:</b> Once per game — massive power boost',
+    '<b style="color:var(--gold)">TURN:</b> Charge (+1 every bot) → Draw 2 → your 3 moves → End Turn',
+    '<b style="color:var(--gold)">3 MOVES:</b> 🃏 1 ACTION · ⚔️ 1 ATTACK · 🔄 1 SWITCH — each once per turn; unused moves are lost',
+    '<b style="color:var(--gold)">ACTION:</b> Play 1 Action, Equipment, Trap or Medachange card',
+    '<b style="color:var(--gold)">ATTACK:</b> Active bot strikes. Add 1 TECHNIQUE to power it up — techniques use your attack',
+    '<b style="color:var(--gold)">SWITCH:</b> Free swap to a support bot — only before you attack',
+    '<b style="color:var(--gold)">CHARGE:</b> 5 Charge = ignite → MEDAFORCE card (uses your ATTACK)',
+    '<b style="color:var(--gold)">MEDACHANGE:</b> Once per game, uses your ACTION — massive power boost',
     '<b style="color:var(--gold)">MEDAL FUSION:</b> Defeated bot medal fuses to an ally (+4HP +1Chg)',
     '<b style="color:var(--gold)">LAST STAND:</b> Sole survivor + 1 fused medal = activated',
-    '<b style="color:var(--gold)">TRAPS:</b> Set face-down free anytime, fire automatically',
+    '<b style="color:var(--gold)">TRAPS:</b> Set face-down with your ACTION (max 3) — spring on the enemy turn',
     '<b style="color:var(--gold)">WIN:</b> KO all 3 enemy bots, or most HP at turn 12',
     '<b style="color:var(--green)">BLAZE:</b> Stack burn → cash in with Scorch &amp; Inferno Surge',
     '<b style="color:var(--titan2)">TITAN:</b> Drain charge → survive → Last Stand close',
@@ -10407,7 +10432,7 @@ const TUT_STEPS = [
   {t:'Your Bots', b:'Your three Medabots sit at the bottom. The one in front is ACTIVE — it attacks and defends. The two behind are protected until the active bot falls. Each bot has ATK (damage) and HP (health).'},
   {t:'Charge Phase', b:'Every turn starts by charging. Your active bot gains Charge automatically. When a bot reaches 5 Charge it IGNITES — unlocking its Medaforce, the deck\'s ultimate attack.'},
   {t:'Your Hand', b:'You draw cards each turn. Techniques boost an attack, Actions give effects, Equipment attaches buffs, Traps set face-down, and Medachange transforms a bot once per game. Tap a card to play it.'},
-  {t:'Taking Your Turn', b:'You get 1 Action per turn. Play a card OR attack — then tap an enemy bot to strike. Some cards are free. When you\'re done, end your turn and the CPU takes theirs.'},
+  {t:'Your 3 Moves', b:'Every turn you get 3 moves, each usable once: \ud83c\udccf 1 ACTION (play an Action, Equipment, Trap or Medachange card), \u2694\ufe0f 1 ATTACK (Techniques and Medaforce ride on your attack), and \ud83d\udd04 1 SWITCH (free, but only before you attack). Then tap END TURN.'},
   {t:'Medal Fusion', b:'When one of your bots is defeated, its Medal fuses into a surviving ally — granting bonus HP, Charge, and its passive. Losing a bot makes your others stronger.'},
   {t:'Last Stand', b:'When you\'re down to your final bot, it can enter LAST STAND — a massive power boost that scales with the Medals it carries (absorbed from fallen allies). Solo decks like Iron Throne always have their Last Stand active. Tap the \u24d8 on any bot to see its Last Stand. Comebacks happen here!'},
   {t:'You\'re Ready!', b:'That\'s the core loop: charge, play cards, attack, adapt. Tap the ? button anytime to review the rules. Good luck in the arena, Medafighter!'},
@@ -10418,16 +10443,25 @@ let _tutStep = 0;
 // ═══ INTERACTIVE WALKTHROUGH TUTORIAL ═══
 let _itutStep=0, _itutActive=false;
 const ITUT=[
-  {title:'Welcome, Medafighter!', body:'This is a hands-on walkthrough — you\'ll play a real turn as I guide you. Let\'s start a practice battle against an easy CPU.', action:'start', highlight:null},
-  {title:'Meet Your Team', body:'Your three Medabots sit at the bottom. The one in the center-front is ACTIVE — it attacks and defends. The other two are protected until it falls. Tap the ⓘ on any bot to see its abilities.', highlight:'#plr-team', action:'next'},
-  {title:'The Charge Bar', body:'See the pips under each bot? That\'s CHARGE. Your bots gain charge each turn. At 5 charge, a bot can unleash its powerful MEDAFORCE attack. Charge is your path to big plays.', highlight:'.pips', action:'next'},
-  {title:'Your Hand', body:'These cards at the bottom are your hand. TECHNIQUES boost an attack, ACTIONS give effects, EQUIPMENT bolts onto bots, and TRAPS set up defenses. Hover or long-press any card to read it.', highlight:'#m-hand', action:'next'},
-  {title:'Customize Your Deck', body:'Before any battle, tap EDIT DECK on the title screen to personalize your deck. You can swap up to 3 cards \u2014 trade ones that don\'t fit your style for cards you prefer. Small tweaks can shape your whole game plan. (You can\'t edit mid-battle, so plan ahead!)', highlight:null, action:'next'},
-  {title:'Make Your Move', body:'Now YOUR turn. To attack: tap your active bot, then tap an enemy. To play a card: tap it. Try attacking now — tap your front bot, then an enemy bot!', highlight:null, action:'wait_attack'},
-  {title:'Nice Hit!', body:'That\'s the core loop — attack to chip down enemy HP. KO a bot by reducing it to 0. When you\'re out of moves, tap END to pass to the CPU.', highlight:'#btn-end', action:'next'},
-  {title:'Switching Bots', body:'Tap SWITCH to bring a support bot to the front — useful to protect a wounded bot or set up a stronger attacker. Each switch uses your turn\'s switch.', highlight:'#btn-switch', action:'next'},
-  {title:'Medaforce & Medachange', body:'When a bot hits 5 charge, the MF button lights up for a devastating Medaforce. The MC button triggers a MEDACHANGE — transforming a bot to be bigger and stronger. These win games!', highlight:null, action:'next'},
-  {title:'You\'re Ready!', body:'KO all three enemy bots to win. Each deck plays differently — experiment to find your style. You can replay this anytime from the title. Now finish this battle — good luck, Medafighter!', highlight:null, action:'finish'}
+  {title:'Welcome, Medafighter! 🤖', body:'You\'re about to play a real practice Robattle while I coach you. It takes about 3 minutes. Tap <b>NEXT</b> whenever you\'re ready, or <b>Skip</b> to jump straight into the fight.', action:'start'},
+  {title:'How You Win 🏆', body:'<b>KO all 3 enemy Medabots</b> to win.<br>If nobody is wiped out by the end of <b>Turn 12</b>, the side with the most total HP left wins.', highlight:'#cpu-team', action:'next'},
+  {title:'Meet Your Team', body:'Your Medabots sit at the bottom. The bot at the front is your <b>ACTIVE</b> bot: it attacks, and it takes the hits. The bots behind it are <b>supports</b>, safe until they step up.<br>Every bot shows <b>ATK</b> (damage) and <b>HP</b> (health). <i>Long-press any bot to read its abilities.</i>', highlight:'#plr-team', action:'next'},
+  {title:'Your Medafighter', body:'This is <b>you</b>, the Medafighter. Every Medafighter has a <b>passive</b> that bends the rules for your deck. Tap the portrait anytime to read it.', highlight:'#lead-plr', action:'next'},
+  {title:'How a Turn Works ⏱', body:'Every turn runs in the same order:<div class="itut-flow"><span>⚡ Charge</span><i>→</i><span>🃏 Draw 2</span><i>→</i><span>🎮 Your 3 moves</span><i>→</i><span>⏭ End Turn</span></div>Charging and drawing happen automatically. Then it\'s your move.', action:'next'},
+  {title:'Your 3 Moves Each Turn', body:'Every turn you get <b>three different moves</b>. Each one can be used <b>once</b>:<div class="itut-moves"><div><b>🃏 ACTION</b><span>Play 1 Action, Equipment, Trap or Medachange card</span></div><div><b>⚔️ ATTACK</b><span>Your active bot strikes. Techniques &amp; Medaforce ride on this.</span></div><div><b>🔄 SWITCH</b><span>Swap a support to the front. Free, but only <u>before</u> you attack.</span></div></div>Moves you don\'t use are lost at the end of the turn, so spend them!', action:'next'},
+  {title:'Reading the Action Gem 💎', body:'This gem counts your <b>ACTIONS</b> left this turn. It shows <b>1</b> on most turns; some Medals and Last Stands give you more.<br>While you still have moves, the <b>END TURN</b> button glows amber as a reminder.', highlight:'#rail-r .rail-gem.ap', action:'next'},
+  {title:'Spend Your ACTION 🃏', body:'Try it: tap an <b>Action</b> or <b>Equipment</b> card in your hand to play it. Equipment bolts onto a bot and buffs it for the rest of the fight.', highlight:'#m-hscroll', action:'wait_action', hint:'Tap an Action or Equipment card'},
+  {title:'Action Spent ✔', body:'Your gem is now empty, so <b>no more Action cards this turn</b>. You still have your <b>ATTACK</b> and <b>SWITCH</b> though. Different moves don\'t share a budget.', highlight:'#rail-r .rail-gem.ap', action:'next'},
+  {title:'Techniques Power Up Your ATTACK ⚔️', body:'<b>Techniques</b> aren\'t Actions. They <b>ride on your attack</b>. Tap a Technique, then tap an enemy to fire both together.<br><b>1 Technique per turn</b>, and once you\'ve attacked, Techniques are done until next turn.', highlight:'#m-hscroll', action:'next'},
+  {title:'Make Your Attack!', body:'Your turn to strike! Tap a <b>Technique</b> first if you have one (optional), then tap an <b>enemy bot</b>. You can also tap your front bot, then an enemy, for a plain attack.', action:'wait_attack', hint:'Tap a Technique (optional), then an enemy bot'},
+  {title:'Nice Hit! 💥', body:'Each turn you get <b>one attack</b>. Your attack is spent now, which also means your <b>SWITCH is locked</b> until next turn. Switching only works <u>before</u> you attack.', highlight:'#cpu-team', action:'next'},
+  {title:'Switching 🔄', body:'Next turn, try a <b>SWITCH</b> <u>before</u> attacking: tap a support bot (or the SW button) to bring it to the front. It\'s free and doesn\'t use your Action. Use it to save a hurt bot or bring in your best attacker.', highlight:'#btn-switch', action:'next'},
+  {title:'Charge → Medaforce ⚡', body:'Every bot gains <b>+1 Charge</b> each turn (the pips on each bot). At <b>5 Charge</b> a bot <b>IGNITES</b>.<br>Play a <b>Medaforce</b> card from your hand (or tap <b>MF</b>) for your deck\'s ultimate attack. <b>Medaforce uses your ATTACK</b> for the turn, so fire it <u>instead of</u> a normal hit.', highlight:'#btn-mf', action:'next'},
+  {title:'Medachange 🔥', body:'A <b>Medachange</b> card transforms one bot into a bigger, stronger form. You can only do it <b>once per game</b>, and it <b>uses your ACTION</b>. Save it for the moment it swings the fight!', highlight:'#btn-mc', action:'next'},
+  {title:'Traps 🪤', body:'A <b>Trap</b> is set face-down with your <b>ACTION</b> (up to 3 at once). It springs <b>automatically on the enemy\'s turn</b> when its condition is met. Set them and let the CPU walk into them.', action:'next'},
+  {title:'When a Bot Falls 🏅', body:'A KO\'d bot isn\'t wasted. Its <b>Medal fuses</b> into a surviving ally: <b>+4 HP, +1 Charge</b> and its passive.<br>Down to your <b>last bot</b> with a fused Medal? It enters <b>LAST STAND</b>, a big power boost. Comebacks are real!', action:'next'},
+  {title:'Cheat Sheet 📋', body:'<div class="itut-moves sm"><div><b>🃏 1 ACTION</b><span>Action · Equipment · Trap · Medachange</span></div><div><b>⚔️ 1 ATTACK</b><span>+ 1 Technique, or a Medaforce instead</span></div><div><b>🔄 1 SWITCH</b><span>Free, before attacking</span></div></div>Tap <b>END TURN</b> when you\'re done. You can rewatch this from <b>HOW TO PLAY</b> anytime.', highlight:'#btn-end', action:'next'},
+  {title:'You\'re Ready! 🏁', body:'That\'s everything! Finish this practice battle and put your 3 moves to work. Good luck, Medafighter!', action:'finish'}
 ];
 
 
@@ -10620,55 +10654,72 @@ function showItutStep(){
   const step=ITUT[_itutStep];
   if(!step){ endInteractiveTutorial(); return; }
 
-  // Handle the 'start' action — launch the match behind the coach box
+  // Launch the practice match behind the coach box
   if(step.action==='start' && document.getElementById('title') && !document.getElementById('title').classList.contains('gone')){
     document.getElementById('title').classList.add('gone');
     fadeOutTitleMusic(700); startBattleMusic();
     init();
-    try{ closeM(); }catch(e){}            // skip mulligan prompt in the tutorial
-    try{ G.phase='charge'; runPhase(); }catch(e){}  // advance into ACTION phase so attacks work
+    try{ closeM(); }catch(e){}
+    try{ G.phase='charge'; runPhase(); }catch(e){}
     try{ initTooltipDelegation(); updateArenaColor(); }catch(e){}
   }
+  // Skip interactive steps that can't happen right now (keeps the flow moving)
+  try{
+    if(step.action==='wait_action'){
+      const playable=G.p.hand.some(c=>(c.type==='action'||c.type==='equipment')&&canPlay(c));
+      if(actionsLeft<=0||!playable){ _itutStep++; return showItutStep(); }
+      step._ap=actionsLeft;
+    }
+    if(step.action==='wait_attack'&&atked){ _itutStep++; return showItutStep(); }
+  }catch(e){}
 
-  // Clear any previous highlight
-  document.querySelectorAll('.itut-glow').forEach(el=>el.classList.remove('itut-glow'));
-  // Apply highlight to the target element
-  if(step.highlight){
-    const tgt=document.querySelector(step.highlight);
-    if(tgt) tgt.classList.add('itut-glow');
-  }
+  itutSpot(step.highlight||null);
 
-  // Build/refresh the coach box (small, bottom, non-blocking)
   let box=document.getElementById('itut-box');
-  if(!box){
-    box=document.createElement('div'); box.id='itut-box';
-    document.body.appendChild(box);
-  }
+  if(!box){ box=document.createElement('div'); box.id='itut-box'; document.body.appendChild(box); }
   const isLast=_itutStep===ITUT.length-1;
-  const waitMode=step.action==='wait_attack';
+  const waitMode=step.action==='wait_attack'||step.action==='wait_action';
+  const pct=Math.round((_itutStep+1)/ITUT.length*100);
   box.innerHTML=
-    '<div style="font-family:Orbitron,monospace;font-size:13px;font-weight:800;color:var(--gold);margin-bottom:5px">'+step.title+'</div>'+
-    '<div style="font-size:12px;line-height:1.5;color:var(--text);margin-bottom:10px">'+step.body+'</div>'+
-    '<div style="display:flex;gap:8px;align-items:center;justify-content:space-between">'+
-      '<span style="font-size:9px;color:var(--text3)">'+(_itutStep+1)+' / '+ITUT.length+'</span>'+
-      '<div style="display:flex;gap:6px">'+
-        (waitMode?'':'<button onclick="itutNext()" style="font-family:Orbitron,monospace;font-size:11px;font-weight:700;padding:6px 16px;border-radius:6px;border:1px solid var(--gold);background:rgba(240,176,48,.18);color:var(--gold);cursor:pointer">'+(isLast?'PLAY':'NEXT')+'</button>')+
-        (isLast?'':'<button onclick="endInteractiveTutorial()" style="font-size:10px;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer">Skip</button>')+
-      '</div>'+
-    '</div>'+
-    (waitMode?'<div style="font-size:10px;color:var(--storm2);margin-top:6px;text-align:center;pointer-events:auto">\u261d Tap your bot, then an enemy &nbsp;\u00b7&nbsp; <span onclick="itutForceNext()" style="color:var(--text3);text-decoration:underline;cursor:pointer">skip step</span></div>':'');
+    '<div class="itut-prog"><i style="width:'+pct+'%"></i></div>'+
+    '<div class="itut-t">'+step.title+'</div>'+
+    '<div class="itut-b">'+step.body+'</div>'+
+    '<div class="itut-row"><span class="itut-n">'+(_itutStep+1)+' / '+ITUT.length+'</span><div style="display:flex;gap:6px">'+
+      (_itutStep>1&&!waitMode?'<button class="itut-btn ghost" onclick="itutBack()">Back</button>':'')+
+      (waitMode?'':'<button class="itut-btn" onclick="itutNext()">'+(isLast?'PLAY':'NEXT')+'</button>')+
+      (isLast?'':'<button class="itut-btn ghost" onclick="endInteractiveTutorial()">Skip</button>')+
+    '</div></div>'+
+    (waitMode?'<div class="itut-hint">☝ '+(step.hint||'Your move')+' &nbsp;·&nbsp; <span onclick="itutForceNext()">skip step</span></div>':'');
   box.style.display='block';
-  // During the interactive attack step: move box to top + click-through so the
-  // player can actually reach the bots and hand it's pointing at.
+  box.classList.toggle('wait',waitMode);
   if(waitMode){
-    box.style.top='10px'; box.style.bottom='auto'; box.style.pointerEvents='none';
-    // Guarantee the game is in the action phase so taps register
-    try{ if(G && G.phase==='charge'){ runPhase(); } if(G){ atked=false; } }catch(e){}
-  }
-  else { box.style.top='auto'; box.style.bottom='14px'; box.style.pointerEvents='auto'; }
+    box.style.top='calc(env(safe-area-inset-top) + 8px)'; box.style.bottom='auto'; box.style.pointerEvents='none';
+    try{ if(G && G.phase==='charge'){ runPhase(); } }catch(e){}
+  } else { box.style.top='auto'; box.style.bottom='14px'; box.style.pointerEvents='auto'; }
+}
+
+/* spotlight ring that follows its target (works with fixed/absolute UI) */
+let _itutSpotSel=null, _itutSpotRaf=0;
+function itutSpot(sel){
+  _itutSpotSel=sel;
+  document.querySelectorAll('.itut-glow').forEach(el=>el.classList.remove('itut-glow'));
+  let s=document.getElementById('itut-spot');
+  if(!sel){ if(s) s.style.display='none'; cancelAnimationFrame(_itutSpotRaf); return; }
+  if(!s){ s=document.createElement('div'); s.id='itut-spot'; document.body.appendChild(s); }
+  s.style.display='block';
+  cancelAnimationFrame(_itutSpotRaf);
+  const loop=()=>{
+    if(!_itutActive||!_itutSpotSel){ s.style.display='none'; return; }
+    const t=document.querySelector(_itutSpotSel), r=t&&t.getBoundingClientRect();
+    if(r&&r.width){ s.style.display='block'; s.style.left=(r.left-5)+'px'; s.style.top=(r.top-5)+'px'; s.style.width=(r.width+10)+'px'; s.style.height=(r.height+10)+'px'; }
+    else s.style.display='none';
+    _itutSpotRaf=requestAnimationFrame(loop);
+  };
+  loop();
 }
 
 function itutForceNext(){ _itutStep++; showItutStep(); }
+function itutBack(){ let i=_itutStep-1; while(i>1&&(ITUT[i].action==='wait_attack'||ITUT[i].action==='wait_action'))i--; _itutStep=Math.max(1,i); showItutStep(); }
 function itutNext(){
   const step=ITUT[_itutStep];
   if(step.action==='finish'){ endInteractiveTutorial(); return; }
@@ -10681,14 +10732,26 @@ function itutOnAttack(){
   if(!_itutActive) return;
   const step=ITUT[_itutStep];
   if(step && step.action==='wait_attack'){
-    setTimeout(()=>{ _itutStep++; showItutStep(); }, 900);
+    const at=_itutStep;
+    setTimeout(()=>{ if(_itutStep===at){ _itutStep++; showItutStep(); } }, 1100);
   }
+}
+// Called after every render: advances the "spend your Action" step once an Action is used
+function itutOnRender(){
+  if(!_itutActive) return;
+  const step=ITUT[_itutStep];
+  if(step&&step.action==='wait_action'&&typeof step._ap==='number'&&actionsLeft<step._ap){
+    const at=_itutStep; step._ap=null;
+    setTimeout(()=>{ if(_itutStep===at){ _itutStep++; showItutStep(); } }, 900);
+  }
+  if(step&&step.action==='wait_attack'&&atked){ itutOnAttack(); }
 }
 
 function endInteractiveTutorial(){
   _itutActive=false;
-  document.querySelectorAll('.itut-glow').forEach(el=>el.classList.remove('itut-glow'));
+  itutSpot(null);
   const box=document.getElementById('itut-box'); if(box) box.style.display='none';
+  try{ localStorage.setItem('mw_tutorial_seen','1'); }catch(e){}
   log('Tutorial complete — battle on!','info');
 }
 
@@ -14310,14 +14373,15 @@ body.mw-cine .bnr,body.mw-cine #mc-burst,body.mw-cine .mwcut{opacity:0!important
 .f2fu .part .in{position:absolute;width:min(30vw,130px);aspect-ratio:200/270;transform:translate(-50%,-50%);border-radius:10px;overflow:hidden;border:2px solid #fff;box-shadow:0 0 18px var(--pc),0 0 46px var(--pc)}
 .f2fu .part .in>*{width:100%!important;height:100%!important;object-fit:cover;display:block}
 .f2fu .part .lbl{position:absolute;transform:translate(-50%,calc(min(20vw,88px) + 4px));white-space:nowrap;font:900 11px 'Orbitron',sans-serif;letter-spacing:.12em;color:#fff;text-shadow:0 0 8px var(--pc),1px 1px 0 #000}
-.f2fu .part.p0{animation:f2orbA 1.48s cubic-bezier(.5,0,.9,.6) forwards}
-.f2fu .part.p1{animation:f2orbB 1.48s cubic-bezier(.5,0,.9,.6) forwards}
+.f2fu .part.p0{animation:f2orbA 1.48s linear forwards}
+.f2fu .part.p1{animation:f2orbB 1.48s linear forwards}
 .f2fu .part .in,.f2fu .part .lbl{animation:f2cnt 1.48s cubic-bezier(.5,0,.9,.6) forwards}
 .f2fu .part.p1 .in,.f2fu .part.p1 .lbl{animation-name:f2cntB}
-@keyframes f2orbA{0%{transform:rotate(0deg) translateX(-60vw)}25%{transform:rotate(0deg) translateX(-30vw)}100%{transform:rotate(540deg) translateX(0)}}
-@keyframes f2orbB{0%{transform:rotate(0deg) translateX(60vw)}25%{transform:rotate(0deg) translateX(30vw)}100%{transform:rotate(540deg) translateX(0)}}
-@keyframes f2cnt{0%{rotate:0deg;filter:none}25%{rotate:0deg}80%{filter:brightness(1.8)}100%{rotate:-540deg;filter:brightness(3.5)}}
-@keyframes f2cntB{0%{rotate:0deg;filter:none}25%{rotate:0deg}80%{filter:brightness(1.8)}100%{rotate:-540deg;filter:brightness(3.5)}}
+/* balanced twin orbit: both halves share one centre, mirror each other 180° apart, and stay upright */
+@keyframes f2orbA{0%{transform:rotate(0deg) translateX(-62vw) rotate(0deg)}22%{transform:rotate(0deg) translateX(-30vw) rotate(0deg)}50%{transform:rotate(200deg) translateX(-22vw) rotate(-200deg)}75%{transform:rotate(400deg) translateX(-12vw) rotate(-400deg)}100%{transform:rotate(540deg) translateX(0vw) rotate(-540deg)}}
+@keyframes f2orbB{0%{transform:rotate(0deg) translateX(62vw) rotate(0deg)}22%{transform:rotate(0deg) translateX(30vw) rotate(0deg)}50%{transform:rotate(200deg) translateX(22vw) rotate(-200deg)}75%{transform:rotate(400deg) translateX(12vw) rotate(-400deg)}100%{transform:rotate(540deg) translateX(0vw) rotate(-540deg)}}
+@keyframes f2cnt{0%{filter:none}80%{filter:brightness(1.8)}100%{filter:brightness(3.5)}}
+@keyframes f2cntB{0%{filter:none}80%{filter:brightness(1.8)}100%{filter:brightness(3.5)}}
 /* master: Rokusho descends onto Masterbeetle */
 .f2fu.master .part.p0{animation:f2mA 1.48s cubic-bezier(.3,.8,.4,1) forwards}
 .f2fu.master .part.p1{animation:f2mB 1.48s cubic-bezier(.7,0,.9,.5) forwards}
