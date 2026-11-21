@@ -1,0 +1,32 @@
+name: fetch-live-art
+on:
+  push:
+    branches: [trailer-art]
+    paths: ['.github/workflows/fetch-art.yml']
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download published art manifest + images
+        run: |
+          mkdir -p live_art
+          curl -sSfL https://medalwarsonline.com/art/manifest -o live_art/manifest.json
+          node -e '
+            const fs=require("fs"); const m=JSON.parse(fs.readFileSync("live_art/manifest.json","utf8"));
+            const out=[]; for(const [k,v] of Object.entries(m)){ const u=typeof v==="string"?v:(v&&(v.url||v.src)); if(u&&/^https?:/.test(u)) out.push(k+"\t"+u); }
+            fs.writeFileSync("live_art/list.tsv",out.join("\n")); console.log(Object.keys(m).length,"keys,",out.length,"urls");'
+          while IFS=$'\t' read -r k u; do
+            ext="${u##*.}"; ext="${ext%%\?*}"; case "$k" in bgm_*) continue;; esac
+            curl -sSfL "$u" -o "live_art/$k.$ext" || echo "fail $k"
+          done < live_art/list.tsv
+          ls live_art | wc -l; du -sh live_art
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add live_art
+          git commit -m "Live art snapshot for trailer" || echo nothing
+          git push
