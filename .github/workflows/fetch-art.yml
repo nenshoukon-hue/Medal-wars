@@ -13,14 +13,14 @@ jobs:
       - name: Download published art manifest + images
         run: |
           mkdir -p live_art
-          curl -sSfL https://medalwarsonline.com/art/manifest -o live_art/manifest.json
+          for i in 1 2 3 4 5 6; do curl -sSfL --retry 3 --retry-delay 5 -A "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1" https://medalwarsonline.com/art/manifest -o live_art/manifest.json && break; echo "retry $i"; sleep 15; done; test -s live_art/manifest.json || curl -sSfL -A "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1" https://medal-wars.up.railway.app/art/manifest -o live_art/manifest.json
           node -e '
             const fs=require("fs"); const m=JSON.parse(fs.readFileSync("live_art/manifest.json","utf8"));
             const out=[]; for(const [k,v] of Object.entries(m)){ const u=typeof v==="string"?v:(v&&(v.url||v.src)); if(u&&/^https?:/.test(u)) out.push(k+"\t"+u); }
             fs.writeFileSync("live_art/list.tsv",out.join("\n")); console.log(Object.keys(m).length,"keys,",out.length,"urls");'
           while IFS=$'\t' read -r k u; do
             ext="${u##*.}"; ext="${ext%%\?*}"; case "$k" in bgm_*) continue;; esac
-            curl -sSfL "$u" -o "live_art/$k.$ext" || echo "fail $k"
+            curl -sSfL --retry 3 --retry-delay 3 -A "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1" "$u" -o "live_art/$k.$ext" || echo "fail $k"
           done < live_art/list.tsv
           ls live_art | wc -l; du -sh live_art
       - name: Commit
